@@ -1,0 +1,4 @@
+{
+  "testCommand": "npm run test:watch",
+  "paths": ["src/**/*.ts", "src/**/*.tsx", "prisma/**/*.prisma", "docs/**/*.md", "tasks/**/*.md"]
+}

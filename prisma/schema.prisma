@@ -1,0 +1,213 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum PoolType {
+  ATS
+  SU
+  POINTS_PLUS
+  SURVIVOR
+}
+
+enum GameStatus {
+  SCHEDULED
+  IN_PROGRESS
+  FINAL
+  CANCELLED
+}
+
+enum PickOutcome {
+  WIN
+  LOSS
+  PUSH
+  VOID
+}
+
+enum UploadKind {
+  CSV
+  IMAGE
+}
+
+// Core entities
+model Team {
+  id      String @id @default(cuid())
+  nflAbbr String @unique
+  name    String
+
+  // Relations
+  homeGames Game[] @relation("HomeTeam")
+  awayGames Game[] @relation("AwayTeam")
+  picks     Pick[]
+
+  @@map("teams")
+}
+
+model Game {
+  id         String    @id @default(cuid())
+  season     Int
+  week       Int
+  kickoff    DateTime
+  status     GameStatus @default(SCHEDULED)
+  homeTeamId String
+  awayTeamId String
+  venue      String?
+  lat        Decimal?
+  lon        Decimal?
+  apiRefs    Json?
+
+  // Relations
+  homeTeam Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  lines    Line[]
+  picks    Pick[]
+  result   Result?
+
+  @@unique([season, week, homeTeamId, awayTeamId])
+  @@index([season, week])
+  @@index([kickoff])
+  @@map("games")
+}
+
+model Line {
+  id             String   @id @default(cuid())
+  gameId         String
+  poolId         String?
+  source         String
+  spread         Decimal?
+  total          Decimal?
+  moneylineHome  Int?
+  moneylineAway  Int?
+  capturedAt     DateTime @default(now())
+  isUserProvided Boolean  @default(false)
+
+  // Relations
+  game Game  @relation(fields: [gameId], references: [id])
+  pool Pool? @relation(fields: [poolId], references: [id])
+
+  @@index([gameId])
+  @@index([capturedAt])
+  @@map("lines")
+}
+
+model Pool {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  type        PoolType
+  season      Int
+  buyIn       Decimal
+  maxEntries  Int
+  isActive    Boolean  @default(true)
+  description String?
+  rules       Json?
+
+  // Relations
+  entries Entry[]
+  lines   Line[]
+
+  @@index([season])
+  @@map("pools")
+}
+
+model Entry {
+  id     String @id @default(cuid())
+  poolId String
+  season Int
+
+  // Relations
+  pool  Pool   @relation(fields: [poolId], references: [id])
+  picks Pick[]
+
+  @@unique([poolId, season])
+  @@map("entries")
+}
+
+model Pick {
+  id             String    @id @default(cuid())
+  entryId        String
+  gameId         String
+  teamId         String
+  lockedAt       DateTime?
+  confidence     Decimal
+  sourceUploadId String?
+
+  // Relations
+  entry        Entry   @relation(fields: [entryId], references: [id])
+  game         Game    @relation(fields: [gameId], references: [id])
+  team         Team    @relation(fields: [teamId], references: [id])
+  sourceUpload Upload? @relation(fields: [sourceUploadId], references: [id])
+  grade        Grade?
+
+  @@unique([entryId, gameId])
+  @@index([gameId])
+  @@index([teamId])
+  @@map("picks")
+}
+
+model Result {
+  id        String     @id @default(cuid())
+  gameId    String     @unique
+  homeScore Int?
+  awayScore Int?
+  status    GameStatus @default(SCHEDULED)
+
+  // Relations
+  game Game @relation(fields: [gameId], references: [id])
+
+  @@map("results")
+}
+
+model Grade {
+  id      String      @id @default(cuid())
+  pickId  String      @unique
+  outcome PickOutcome
+  points  Decimal
+  details Json?
+
+  // Relations
+  pick Pick @relation(fields: [pickId], references: [id])
+
+  @@map("grades")
+}
+
+model Upload {
+  id               String @id @default(cuid())
+  kind             UploadKind
+  path             String
+  parsed           Json?
+  mappingProfileId String?
+
+  // Relations
+  mappingProfile MappingProfile? @relation(fields: [mappingProfileId], references: [id])
+  picks          Pick[]
+
+  @@map("uploads")
+}
+
+model MappingProfile {
+  id        String @id @default(cuid())
+  name      String @unique
+  columnMap Json
+
+  // Relations
+  uploads Upload[]
+
+  @@map("mapping_profiles")
+}
+
+model ModelWeights {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  weights   Json
+  createdAt DateTime @default(now())
+
+  @@map("model_weights")
+}
