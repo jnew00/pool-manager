@@ -15,6 +15,7 @@ export interface ModelWeights {
     revengeGameWeight: number // 0.05 default - revenge game motivation factor
     recentFormWeight: number // 0.025 default - NEW: recent form factor
     playoffImplicationsWeight: number // 0.015 default - NEW: playoff implications factor
+    travelScheduleWeight: number // 0.01 default - NEW: travel/scheduling disadvantage
     weatherPenaltyWeight: number // 0.015 default
     injuryPenaltyWeight: number // 0.005 default
     kElo: number // 24 default
@@ -57,6 +58,7 @@ export interface GameFactors {
   revengeGameFactor: number // Motivation from previous season matchups
   recentFormFactor: number // Recent performance advantage (positive = home team favored)
   playoffImplicationsFactor: number // Playoff motivation difference (positive = home team more motivated)
+  travelScheduleFactor: number // Travel/scheduling disadvantage (positive = away team disadvantaged)
 
   // Environmental penalties
   weatherPenalty: number

@@ -11,6 +11,7 @@ import { analyzeRevengeGame, type RevengeGameResult } from './revenge-game'
 import { NewsAnalysisService, type NewsAnalysisResult } from './news-analysis'
 import { RecentFormAnalyzer, type FormComparisonResult } from './recent-form'
 import { PlayoffImplicationsAnalyzer, type PlayoffImplicationsResult } from './playoff-implications'
+import { calculateTravelSchedulingFactors, type TravelSchedulingFactors } from './travel-scheduling'
 import { prisma } from '@/lib/prisma'
 
 /**
@@ -92,16 +93,19 @@ export class ConfidenceEngine {
       input.kickoffTime
     )
 
-    // 10. Weather penalty
+    // 10. Travel/scheduling factor
+    const travelScheduleFactor = this.calculateTravelScheduleFactor(input)
+
+    // 11. Weather penalty
     const weatherPenalty = this.calculateWeatherPenalty(
       input.weatherData,
       weights
     )
 
-    // 11. Injury penalty
+    // 12. Injury penalty
     const injuryPenalty = this.calculateInjuryPenalty(input.injuryData, weights)
 
-    // 12. Weighted combination
+    // 13. Weighted combination
     const rawConfidence = this.combineFactors(
       {
         marketProb,
@@ -113,6 +117,7 @@ export class ConfidenceEngine {
         revengeGameFactor,
         recentFormFactor,
         playoffImplicationsFactor,
+        travelScheduleFactor,
         weatherPenalty,
         injuryPenalty,
       },
@@ -216,6 +221,7 @@ export class ConfidenceEngine {
         revengeGameFactor,
         recentFormFactor,
         playoffImplicationsFactor,
+        travelScheduleFactor,
         weatherPenalty,
         injuryPenalty,
         rawConfidence,
@@ -248,6 +254,7 @@ export class ConfidenceEngine {
       revengeGameFactor,
       recentFormFactor,
       playoffImplicationsFactor,
+      travelScheduleFactor,
       weatherPenalty,
       injuryPenalty,
       newsAnalysis: finalNewsAnalysis,
@@ -572,6 +579,24 @@ export class ConfidenceEngine {
   }
 
   /**
+   * Calculate travel and scheduling factor
+   */
+  private calculateTravelScheduleFactor(input: ModelInput): number {
+    try {
+      const travelFactors = calculateTravelSchedulingFactors(input)
+      
+      console.log(
+        `[Travel/Schedule] ${travelFactors.description}, advantage: ${travelFactors.advantage} points`
+      )
+      
+      return travelFactors.advantage
+    } catch (error) {
+      console.error('Error calculating travel/schedule factor:', error)
+      return 0
+    }
+  }
+
+  /**
    * Estimate NFL week from game date
    */
   private getWeekFromDate(gameDate: Date, season: number): number {
@@ -661,6 +686,7 @@ export class ConfidenceEngine {
       revengeGameFactor: number
       recentFormFactor: number
       playoffImplicationsFactor: number
+      travelScheduleFactor: number
       weatherPenalty: number
       injuryPenalty: number
     },
@@ -673,6 +699,7 @@ export class ConfidenceEngine {
     const revengeGameProb = this.pointsToProb(factors.revengeGameFactor)
     const recentFormProb = this.pointsToProb(factors.recentFormFactor)
     const playoffImplicationsProb = this.pointsToProb(factors.playoffImplicationsFactor)
+    const travelScheduleProb = this.pointsToProb(factors.travelScheduleFactor)
     const weatherPenaltyProb = this.pointsToProb(-factors.weatherPenalty)
     const injuryPenaltyProb = this.pointsToProb(-factors.injuryPenalty)
     const lineValueProb = this.pointsToProb(factors.lineValue)
@@ -691,6 +718,7 @@ export class ConfidenceEngine {
     const revengeGameWeight = weights.revengeGameWeight || 0.05
     const recentFormWeight = weights.recentFormWeight || 0.025
     const playoffImplicationsWeight = weights.playoffImplicationsWeight || 0.015
+    const travelScheduleWeight = weights.travelScheduleWeight || 0.01
     const weatherWeight = weights.weatherPenaltyWeight || 0.005
     const injuryWeight = weights.injuryPenaltyWeight || 0.005
 
@@ -705,6 +733,7 @@ export class ConfidenceEngine {
       revengeGameProb * revengeGameWeight +
       recentFormProb * recentFormWeight +
       playoffImplicationsProb * playoffImplicationsWeight +
+      travelScheduleProb * travelScheduleWeight +
       weatherPenaltyProb * weatherWeight +
       injuryPenaltyProb * injuryWeight
 
@@ -719,6 +748,7 @@ export class ConfidenceEngine {
       revengeGameWeight +
       recentFormWeight +
       playoffImplicationsWeight +
+      travelScheduleWeight +
       weatherWeight +
       injuryWeight
 
@@ -868,6 +898,7 @@ export const defaultModelWeights: ModelWeights['weights'] = {
   revengeGameWeight: 0.05, // Revenge game motivation factor
   recentFormWeight: 0.025, // Recent form factor (team performance last 4 games)
   playoffImplicationsWeight: 0.015, // Playoff implications factor (motivation from playoff positioning)
+  travelScheduleWeight: 0.01, // Travel/scheduling disadvantage (distance, time zones, short weeks)
   weatherPenaltyWeight: 0.005, // Reduced from 0.010 to make weights sum to 1.0
   injuryPenaltyWeight: 0.005, // Injury penalty weight
   kElo: 24,

@@ -2,13 +2,14 @@
 
 import { useState, useCallback } from 'react'
 import { defaultModelWeights } from '@/lib/models/confidence-engine'
+import { Shield, Zap, Scale, BarChart3, CloudRain, Target, Activity, Trophy, Settings, Plane } from 'lucide-react'
 
 // Preset weight configurations for different betting strategies
 const presetConfigurations = {
   conservative: {
     name: 'Conservative',
     description: 'Trust market data heavily, minimal risk-taking',
-    icon: '🛡️',
+    icon: Shield,
     weights: {
       marketProbWeight: 0.6, // Trust Vegas lines heavily
       eloWeight: 0.25,
@@ -17,6 +18,7 @@ const presetConfigurations = {
       restWeight: 0.02,
       divisionalWeight: 0.015, // Minimal rivalry impact
       revengeGameWeight: 0.01, // Minimal revenge motivation
+      travelScheduleWeight: 0.005, // Minimal travel impact
       weatherPenaltyWeight: 0.02,
       injuryPenaltyWeight: 0.01,
       kElo: 24,
@@ -30,7 +32,7 @@ const presetConfigurations = {
   aggressive: {
     name: 'Aggressive',
     description: 'Chase arbitrage opportunities, contrarian plays',
-    icon: '⚡',
+    icon: Zap,
     weights: {
       marketProbWeight: 0.2, // Fade the public
       eloWeight: 0.15,
@@ -39,6 +41,7 @@ const presetConfigurations = {
       restWeight: 0.04, // 2x rest advantage
       divisionalWeight: 0.12, // High rivalry impact - contrarian on division games
       revengeGameWeight: 0.08, // High revenge motivation - emotional angles
+      travelScheduleWeight: 0.015, // Moderate travel impact
       weatherPenaltyWeight: 0.02,
       injuryPenaltyWeight: 0.01,
       kElo: 24,
@@ -52,13 +55,13 @@ const presetConfigurations = {
   balanced: {
     name: 'Balanced',
     description: 'Balanced approach using all factors equally',
-    icon: '⚖️',
+    icon: Scale,
     weights: { ...defaultModelWeights },
   },
   dataDriven: {
     name: 'Data-Driven',
     description: 'Heavy emphasis on statistical models and Elo ratings',
-    icon: '📊',
+    icon: BarChart3,
     weights: {
       marketProbWeight: 0.25,
       eloWeight: 0.45, // Heavy emphasis on Elo
@@ -67,6 +70,7 @@ const presetConfigurations = {
       restWeight: 0.01,
       divisionalWeight: 0.08, // Medium rivalry impact based on data
       revengeGameWeight: 0.04, // Medium revenge factor - data shows impact
+      travelScheduleWeight: 0.008, // Low travel weight - focus on data
       weatherPenaltyWeight: 0.005, // Minimal environmental factors
       injuryPenaltyWeight: 0.005,
       kElo: 32, // More volatile Elo adjustments
@@ -80,7 +84,7 @@ const presetConfigurations = {
   situational: {
     name: 'Situational',
     description: 'Emphasize environmental and game conditions',
-    icon: '🌦️',
+    icon: CloudRain,
     weights: {
       marketProbWeight: 0.25,
       eloWeight: 0.15,
@@ -89,6 +93,7 @@ const presetConfigurations = {
       restWeight: 0.08, // 4x rest factor
       divisionalWeight: 0.15, // High rivalry impact - key situational factor
       revengeGameWeight: 0.1, // High revenge motivation - key emotional factor
+      travelScheduleWeight: 0.02, // High travel impact - key situational factor
       weatherPenaltyWeight: 0.05, // 2.5x weather impact
       injuryPenaltyWeight: 0.02, // 2x injury impact
       kElo: 24,
@@ -179,8 +184,8 @@ export default function ControlPanel({
             Strategy Presets
           </h4>
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {currentPreset === 'custom'
-              ? '✏️ Custom'
+{currentPreset === 'custom'
+              ? 'Custom'
               : presetConfigurations[
                   currentPreset as keyof typeof presetConfigurations
                 ]?.name}
@@ -198,7 +203,7 @@ export default function ControlPanel({
               }`}
             >
               <div className="flex items-center space-x-2 mb-1">
-                <span className="text-lg">{preset.icon}</span>
+                <preset.icon className="w-4 h-4 text-current" />
                 <span className="font-medium text-sm">{preset.name}</span>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight">
@@ -209,9 +214,12 @@ export default function ControlPanel({
         </div>
         {currentPreset === 'custom' && (
           <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-            <p className="text-xs text-yellow-800 dark:text-yellow-300">
-              ✏️ Custom configuration - manually adjusted from preset
-            </p>
+            <div className="flex items-center space-x-2">
+              <Settings className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
+              <p className="text-xs text-yellow-800 dark:text-yellow-300">
+                Custom configuration - manually adjusted from preset
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -276,10 +284,12 @@ export default function ControlPanel({
 
                 {/* Line Value Weight - PROMINENT */}
                 <div className="space-y-2 border-2 border-green-200 dark:border-green-800 rounded-lg p-3 bg-green-50 dark:bg-green-950">
-                  <label className="block text-sm font-medium text-green-800 dark:text-green-200">
-                    🎯 Line Value (Arbitrage):{' '}
-                    {(weights.lineValueWeight * 100).toFixed(0)}%
-                  </label>
+                  <div className="flex items-center space-x-1 mb-2">
+                    <Target className="w-4 h-4 text-green-600" />
+                    <label className="block text-sm font-medium text-green-800 dark:text-green-200">
+                      Line Value (Arbitrage): {(weights.lineValueWeight * 100).toFixed(0)}%
+                    </label>
+                  </div>
                   <input
                     type="range"
                     min="0"
@@ -294,9 +304,12 @@ export default function ControlPanel({
                     }
                     className="w-full h-2 bg-green-200 dark:bg-green-700 rounded-lg appearance-none cursor-pointer slider-green"
                   />
-                  <p className="text-xs text-green-700 dark:text-green-300 font-medium">
-                    ⚡ Pool spreads vs current Vegas lines
-                  </p>
+                  <div className="flex items-center space-x-1">
+                    <Zap className="w-3 h-3 text-green-600" />
+                    <p className="text-xs text-green-700 dark:text-green-300 font-medium">
+                      Pool spreads vs current Vegas lines
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -349,9 +362,12 @@ export default function ControlPanel({
 
                 {/* Divisional Rivalry Factor */}
                 <div className="space-y-2 border-2 border-orange-200 dark:border-orange-800 rounded-lg p-3 bg-orange-50 dark:bg-orange-950">
-                  <label className="block text-sm font-medium text-orange-800 dark:text-orange-200">
-                    🏈 Division Rivalry: {(weights.divisionalWeight * 100).toFixed(0)}%
-                  </label>
+                  <div className="flex items-center space-x-1 mb-2">
+                    <Trophy className="w-4 h-4 text-orange-600" />
+                    <label className="block text-sm font-medium text-orange-800 dark:text-orange-200">
+                      Division Rivalry: {(weights.divisionalWeight * 100).toFixed(0)}%
+                    </label>
+                  </div>
                   <input
                     type="range"
                     min="0"
@@ -366,16 +382,22 @@ export default function ControlPanel({
                     }
                     className="w-full h-2 bg-orange-200 dark:bg-orange-700 rounded-lg appearance-none cursor-pointer slider-orange"
                   />
-                  <p className="text-xs text-orange-700 dark:text-orange-300 font-medium">
-                    ⚔️ AFC/NFC same division effects
-                  </p>
+                  <div className="flex items-center space-x-1">
+                    <Activity className="w-3 h-3 text-orange-600" />
+                    <p className="text-xs text-orange-700 dark:text-orange-300 font-medium">
+                      AFC/NFC same division effects
+                    </p>
+                  </div>
                 </div>
 
                 {/* NEW: Revenge Game Factor */}
                 <div className="space-y-2 border-2 border-purple-200 dark:border-purple-800 rounded-lg p-3 bg-purple-50 dark:bg-purple-950">
-                  <label className="block text-sm font-medium text-purple-800 dark:text-purple-200">
-                    ⚡ Revenge Game: {(weights.revengeGameWeight * 100).toFixed(0)}%
-                  </label>
+                  <div className="flex items-center space-x-1 mb-2">
+                    <Zap className="w-4 h-4 text-purple-600" />
+                    <label className="block text-sm font-medium text-purple-800 dark:text-purple-200">
+                      Revenge Game: {(weights.revengeGameWeight * 100).toFixed(0)}%
+                    </label>
+                  </div>
                   <input
                     type="range"
                     min="0"
@@ -390,9 +412,42 @@ export default function ControlPanel({
                     }
                     className="w-full h-2 bg-purple-200 dark:bg-purple-700 rounded-lg appearance-none cursor-pointer slider-purple"
                   />
-                  <p className="text-xs text-purple-700 dark:text-purple-300 font-medium">
-                    💀 Previous season loss motivation
-                  </p>
+                  <div className="flex items-center space-x-1">
+                    <Activity className="w-3 h-3 text-purple-600" />
+                    <p className="text-xs text-purple-700 dark:text-purple-300 font-medium">
+                      Previous season loss motivation
+                    </p>
+                  </div>
+                </div>
+
+                {/* Travel/Scheduling Factor */}
+                <div className="space-y-2 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-3 bg-blue-50 dark:bg-blue-950">
+                  <div className="flex items-center space-x-1 mb-2">
+                    <Plane className="w-4 h-4 text-blue-600" />
+                    <label className="block text-sm font-medium text-blue-800 dark:text-blue-200">
+                      Travel/Schedule: {(weights.travelScheduleWeight * 100).toFixed(0)}%
+                    </label>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="0.05"
+                    step="0.002"
+                    value={weights.travelScheduleWeight}
+                    onChange={(e) =>
+                      handleWeightChange(
+                        'travelScheduleWeight',
+                        parseFloat(e.target.value)
+                      )
+                    }
+                    className="w-full h-2 bg-blue-200 dark:bg-blue-700 rounded-lg appearance-none cursor-pointer slider-blue"
+                  />
+                  <div className="flex items-center space-x-1">
+                    <Activity className="w-3 h-3 text-blue-600" />
+                    <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                      Distance, time zones, short weeks
+                    </p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -520,6 +575,7 @@ export default function ControlPanel({
                   weights.restWeight +
                   weights.divisionalWeight +
                   weights.revengeGameWeight +
+                  weights.travelScheduleWeight +
                   weights.weatherPenaltyWeight +
                   weights.injuryPenaltyWeight
                 ).toFixed(2)}
@@ -580,6 +636,17 @@ export default function ControlPanel({
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
+        .slider-blue::-webkit-slider-thumb {
+          appearance: none;
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #3b82f6;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
         .slider::-moz-range-thumb {
           height: 20px;
           width: 20px;
@@ -615,6 +682,16 @@ export default function ControlPanel({
           width: 20px;
           border-radius: 50%;
           background: #9333ea;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .slider-blue::-moz-range-thumb {
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #3b82f6;
           cursor: pointer;
           border: 2px solid #ffffff;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
