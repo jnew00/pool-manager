@@ -87,7 +87,9 @@ export class ProviderRegistry {
    */
   async getOddsForGames(
     gameIds: string[],
-    providerName?: string
+    providerName?: string,
+    season?: number,
+    week?: number
   ): Promise<ApiResponse<OddsData[]>> {
     const provider = this.getOddsProvider(providerName)
     if (!provider) {
@@ -103,14 +105,16 @@ export class ProviderRegistry {
       }
     }
 
-    return provider.getOddsForGames(gameIds)
+    return provider.getOddsForGames(gameIds, season, week)
   }
 
   /**
    * Get all current odds from the provider (for team-based matching)
    */
   async getAllCurrentOdds(
-    providerName?: string
+    providerName?: string,
+    season?: number,
+    week?: number
   ): Promise<ApiResponse<OddsData[]>> {
     const provider = this.getOddsProvider(providerName)
     if (!provider) {
@@ -126,8 +130,12 @@ export class ProviderRegistry {
       }
     }
 
-    // Use the getOddsForGames method with empty array to get all current games
-    return provider.getOddsForGames([])
+    // Use the getAllCurrentOdds method if available, otherwise fallback to getOddsForGames
+    if (provider.getAllCurrentOdds) {
+      return provider.getAllCurrentOdds(season, week)
+    }
+    
+    return provider.getOddsForGames([], season, week)
   }
 
   /**

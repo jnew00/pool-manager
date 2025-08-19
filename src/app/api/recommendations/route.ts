@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
 
       // Get current market data from ESPN odds provider
       const currentMarketData = await dataProviderRegistry
-        .getAllCurrentOdds('espn-odds')
+        .getAllCurrentOdds('ESPN', season, week)
         .then((response) => {
           if (!response.success || !response.data) return undefined
 
@@ -235,9 +235,10 @@ export async function GET(request: NextRequest) {
         recommendation: {
           pick: result.recommendedPick || 'HOME',
           confidence: confidence,
-          factors: result.factors?.factorBreakdown || {},
+          factors: result.factors || {}, // Include all factors, not just factorBreakdown
           strength:
             confidence > 60 ? 'Strong' : confidence > 55 ? 'Moderate' : 'Weak',
+          modelVersion: '1.0.0',
         },
       })
     }

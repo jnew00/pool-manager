@@ -104,6 +104,41 @@ const DEFAULT_MODEL_WEIGHTS = {
   },
 }
 
+const WEEK1_GAMES_2025 = [
+  {
+    season: 2025,
+    week: 1,
+    kickoff: new Date('2025-01-12T18:00:00.000Z'), // Sunday 1:00 PM ET
+    awayTeamAbbr: 'BUF',
+    homeTeamAbbr: 'KC',
+    venue: 'GEHA Field at Arrowhead Stadium',
+  },
+  {
+    season: 2025,
+    week: 1,
+    kickoff: new Date('2025-01-12T21:25:00.000Z'), // Sunday 4:25 PM ET
+    awayTeamAbbr: 'DAL',
+    homeTeamAbbr: 'PHI',
+    venue: 'Lincoln Financial Field',
+  },
+  {
+    season: 2025,
+    week: 1,
+    kickoff: new Date('2025-01-13T01:20:00.000Z'), // Sunday 8:20 PM ET
+    awayTeamAbbr: 'SF',
+    homeTeamAbbr: 'SEA',
+    venue: 'Lumen Field',
+  },
+  {
+    season: 2025,
+    week: 1,
+    kickoff: new Date('2025-01-14T02:15:00.000Z'), // Monday 9:15 PM ET
+    awayTeamAbbr: 'NYJ',
+    homeTeamAbbr: 'PIT',
+    venue: 'Acrisure Stadium',
+  },
+]
+
 async function main() {
   console.log('🌱 Seeding database...')
 
@@ -126,6 +161,39 @@ async function main() {
     data: NFL_TEAMS,
   })
   console.log(`✅ Created ${teams.count} NFL teams`)
+
+  // Get team IDs for game creation
+  const teamLookup = new Map<string, string>()
+  const allTeams = await prisma.team.findMany()
+  allTeams.forEach((team) => {
+    teamLookup.set(team.nflAbbr, team.id)
+  })
+
+  // Seed Week 1 games
+  console.log('🏈 Creating Week 1 games...')
+  const games = await Promise.all(
+    WEEK1_GAMES_2025.map((game) => {
+      const homeTeamId = teamLookup.get(game.homeTeamAbbr)
+      const awayTeamId = teamLookup.get(game.awayTeamAbbr)
+      
+      if (!homeTeamId || !awayTeamId) {
+        throw new Error(`Could not find team IDs for ${game.awayTeamAbbr} @ ${game.homeTeamAbbr}`)
+      }
+
+      return prisma.game.create({
+        data: {
+          season: game.season,
+          week: game.week,
+          kickoff: game.kickoff,
+          homeTeamId,
+          awayTeamId,
+          venue: game.venue,
+          status: 'SCHEDULED',
+        },
+      })
+    })
+  )
+  console.log(`✅ Created ${games.length} Week 1 games`)
 
   // Seed sample pools
   console.log('🏊 Creating sample pools...')

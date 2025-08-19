@@ -133,7 +133,7 @@ describe('ConfidenceEngine', () => {
 
       // Check that factor breakdown sums make sense
       const breakdown = output.factors.factorBreakdown
-      expect(breakdown).toHaveLength(8) // All 8 factors (including line value and divisional)
+      expect(breakdown).toHaveLength(11) // All 11 factors (including line value, divisional, revenge game, recent form, and playoff implications)
 
       // Each factor should have proper structure
       breakdown.forEach((factor) => {

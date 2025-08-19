@@ -16,6 +16,7 @@ const presetConfigurations = {
       homeAdvWeight: 0.05,
       restWeight: 0.02,
       divisionalWeight: 0.015, // Minimal rivalry impact
+      revengeGameWeight: 0.01, // Minimal revenge motivation
       weatherPenaltyWeight: 0.02,
       injuryPenaltyWeight: 0.01,
       kElo: 24,
@@ -36,7 +37,8 @@ const presetConfigurations = {
       lineValueWeight: 0.35, // Heavy arbitrage emphasis
       homeAdvWeight: 0.08, // Higher situational advantages
       restWeight: 0.04, // 2x rest advantage
-      divisionalWeight: 0.15, // High rivalry impact - contrarian on division games
+      divisionalWeight: 0.12, // High rivalry impact - contrarian on division games
+      revengeGameWeight: 0.08, // High revenge motivation - emotional angles
       weatherPenaltyWeight: 0.02,
       injuryPenaltyWeight: 0.01,
       kElo: 24,
@@ -63,7 +65,8 @@ const presetConfigurations = {
       lineValueWeight: 0.15,
       homeAdvWeight: 0.03,
       restWeight: 0.01,
-      divisionalWeight: 0.1, // Medium rivalry impact based on data
+      divisionalWeight: 0.08, // Medium rivalry impact based on data
+      revengeGameWeight: 0.04, // Medium revenge factor - data shows impact
       weatherPenaltyWeight: 0.005, // Minimal environmental factors
       injuryPenaltyWeight: 0.005,
       kElo: 32, // More volatile Elo adjustments
@@ -84,7 +87,8 @@ const presetConfigurations = {
       lineValueWeight: 0.15,
       homeAdvWeight: 0.1, // Double home advantage
       restWeight: 0.08, // 4x rest factor
-      divisionalWeight: 0.2, // High rivalry impact - key situational factor
+      divisionalWeight: 0.15, // High rivalry impact - key situational factor
+      revengeGameWeight: 0.1, // High revenge motivation - key emotional factor
       weatherPenaltyWeight: 0.05, // 2.5x weather impact
       injuryPenaltyWeight: 0.02, // 2x injury impact
       kElo: 24,
@@ -302,7 +306,7 @@ export default function ControlPanel({
               <h4 className="font-medium text-gray-900 dark:text-white mb-3">
                 Situational Factors
               </h4>
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Home Advantage: {(weights.homeAdvWeight * 100).toFixed(0)}%
@@ -343,7 +347,7 @@ export default function ControlPanel({
                   />
                 </div>
 
-                {/* NEW: Divisional Rivalry Factor */}
+                {/* Divisional Rivalry Factor */}
                 <div className="space-y-2 border-2 border-orange-200 dark:border-orange-800 rounded-lg p-3 bg-orange-50 dark:bg-orange-950">
                   <label className="block text-sm font-medium text-orange-800 dark:text-orange-200">
                     🏈 Division Rivalry: {(weights.divisionalWeight * 100).toFixed(0)}%
@@ -364,6 +368,30 @@ export default function ControlPanel({
                   />
                   <p className="text-xs text-orange-700 dark:text-orange-300 font-medium">
                     ⚔️ AFC/NFC same division effects
+                  </p>
+                </div>
+
+                {/* NEW: Revenge Game Factor */}
+                <div className="space-y-2 border-2 border-purple-200 dark:border-purple-800 rounded-lg p-3 bg-purple-50 dark:bg-purple-950">
+                  <label className="block text-sm font-medium text-purple-800 dark:text-purple-200">
+                    ⚡ Revenge Game: {(weights.revengeGameWeight * 100).toFixed(0)}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="0.15"
+                    step="0.005"
+                    value={weights.revengeGameWeight}
+                    onChange={(e) =>
+                      handleWeightChange(
+                        'revengeGameWeight',
+                        parseFloat(e.target.value)
+                      )
+                    }
+                    className="w-full h-2 bg-purple-200 dark:bg-purple-700 rounded-lg appearance-none cursor-pointer slider-purple"
+                  />
+                  <p className="text-xs text-purple-700 dark:text-purple-300 font-medium">
+                    💀 Previous season loss motivation
                   </p>
                 </div>
 
@@ -490,6 +518,8 @@ export default function ControlPanel({
                   weights.lineValueWeight +
                   weights.homeAdvWeight +
                   weights.restWeight +
+                  weights.divisionalWeight +
+                  weights.revengeGameWeight +
                   weights.weatherPenaltyWeight +
                   weights.injuryPenaltyWeight
                 ).toFixed(2)}
@@ -528,6 +558,28 @@ export default function ControlPanel({
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
+        .slider-orange::-webkit-slider-thumb {
+          appearance: none;
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #f97316;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .slider-purple::-webkit-slider-thumb {
+          appearance: none;
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #9333ea;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
         .slider::-moz-range-thumb {
           height: 20px;
           width: 20px;
@@ -543,6 +595,26 @@ export default function ControlPanel({
           width: 20px;
           border-radius: 50%;
           background: #10b981;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .slider-orange::-moz-range-thumb {
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #f97316;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .slider-purple::-moz-range-thumb {
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #9333ea;
           cursor: pointer;
           border: 2px solid #ffffff;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);

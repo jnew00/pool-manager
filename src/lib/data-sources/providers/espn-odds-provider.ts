@@ -63,14 +63,15 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
   /**
    * Get odds for multiple games
    */
-  async getOddsForGames(gameIds: string[]): Promise<ApiResponse<OddsData[]>> {
+  async getOddsForGames(gameIds: string[], season?: number, week?: number): Promise<ApiResponse<OddsData[]>> {
     return this.withRetry(async () => {
       const allOdds: OddsData[] = []
 
-      // ESPN API doesn't support batch requests, so we'll get all games for the current week
-      // Use seasontype=2 for regular season, week=1 for Week 1
+      // ESPN API doesn't support batch requests, so we'll get all games for the specified week
+      // Use seasontype=2 for regular season, default to current week if not specified
+      const currentWeek = week || 1
       const response = await this.makeRequest<EspnApiResponse>(
-        '/scoreboard?seasontype=2&week=1'
+        `/scoreboard?seasontype=2&week=${currentWeek}`
       )
 
       if (!response.success || !response.data) {
@@ -121,7 +122,7 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
         }
       }
 
-      // Fall back to searching in current scoreboard
+      // Fall back to searching in current scoreboard (use week 1 as fallback)
       const scoreboardResponse = await this.makeRequest<EspnApiResponse>(
         '/scoreboard?seasontype=2&week=1'
       )
@@ -240,6 +241,13 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
     }
 
     return gameData
+  }
+
+  /**
+   * Get all current odds for a specific week
+   */
+  async getAllCurrentOdds(season?: number, week?: number): Promise<ApiResponse<OddsData[]>> {
+    return this.getOddsForGames([], season, week)
   }
 
   /**

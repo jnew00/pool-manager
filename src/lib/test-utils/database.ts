@@ -32,6 +32,8 @@ export class DatabaseTestUtils {
       },
     })
 
+    // Delete lines before games
+    await prisma.line.deleteMany({})
     await prisma.result.deleteMany({})
     await prisma.game.deleteMany({})
 

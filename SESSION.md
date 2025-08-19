@@ -3154,3 +3154,1903 @@ ac2b4fe feat: implement milestone 3 file upload system
 *[Auto-generated from git history - No LLM used]*
 
 ---
+
+
+## Session - 2025-08-18 23:12
+
+### Files Changed
+**Modified:**
+- src/app/pools/[id]/control-panel.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ src/app/pools/[id]/control-panel.tsx               |  82 +++++++++++++++--
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 100 +++++++++++++++++----
+ src/lib/models/types.ts                            |  14 +--
+ 4 files changed, 171 insertions(+), 27 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-18 23:25
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- src/app/pools/[id]/control-panel.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ SESSION.md                                         |  38 +++++
+ src/app/pools/[id]/control-panel.tsx               |  82 +++++++++-
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 167 ++++++++++++++++++---
+ src/lib/models/types.ts                            |  22 ++-
+ 5 files changed, 281 insertions(+), 30 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 07:02
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ SESSION.md                                         |  80 ++++++++++
+ package-lock.json                                  |  34 +++++
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 +++++++++-
+ .../projections/components/GameProjection.tsx      |  72 ++++++++-
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 167 ++++++++++++++++++---
+ src/lib/models/types.ts                            |  22 ++-
+ 8 files changed, 425 insertions(+), 36 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 07:13
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ SESSION.md                                         | 129 ++++++++++++++++
+ package-lock.json                                  |  34 +++++
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 +++++++++-
+ .../projections/components/GameProjection.tsx      |  72 ++++++++-
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 167 ++++++++++++++++++---
+ src/lib/models/types.ts                            |  22 ++-
+ 8 files changed, 474 insertions(+), 36 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 07:18
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   3 +-
+ SESSION.md                                         | 178 +++++++++++++++++++++
+ package-lock.json                                  |  34 ++++
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 +++++++++-
+ .../projections/components/GameProjection.tsx      |  72 ++++++++-
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 167 ++++++++++++++++---
+ src/lib/models/types.ts                            |  22 ++-
+ 9 files changed, 525 insertions(+), 37 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 07:24
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   3 +-
+ SESSION.md                                         | 229 +++++++++++++++++++++
+ package-lock.json                                  |  34 +++
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 +++++++-
+ .../projections/components/GameProjection.tsx      |  72 ++++++-
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 177 ++++++++++++++--
+ src/lib/models/types.ts                            |  22 +-
+ 9 files changed, 586 insertions(+), 37 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 07:32
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   8 +-
+ SESSION.md                                         | 280 +++++++++++++++++++++
+ package-lock.json                                  |  34 +++
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 +++++-
+ .../projections/components/GameProjection.tsx      |  72 +++++-
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 181 +++++++++++--
+ src/lib/models/types.ts                            |  22 +-
+ 9 files changed, 646 insertions(+), 37 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 07:40
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   8 +-
+ SESSION.md                                         | 331 +++++++++++++++++++++
+ package-lock.json                                  |  34 +++
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 ++++-
+ .../projections/components/GameProjection.tsx      |  72 ++++-
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 181 +++++++++--
+ src/lib/models/types.ts                            |  22 +-
+ 9 files changed, 697 insertions(+), 37 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 07:45
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   8 +-
+ SESSION.md                                         | 384 +++++++++++++++++++++
+ package-lock.json                                  |  34 ++
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 ++++-
+ .../projections/components/GameProjection.tsx      |  72 +++-
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 185 +++++++++-
+ src/lib/models/types.ts                            |  22 +-
+ 9 files changed, 754 insertions(+), 37 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 07:47
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   9 +-
+ SESSION.md                                         | 437 +++++++++++++++++++++
+ package-lock.json                                  |  34 ++
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 +++-
+ .../projections/components/GameProjection.tsx      |  72 +++-
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 188 ++++++++-
+ src/lib/models/types.ts                            |  22 +-
+ 9 files changed, 811 insertions(+), 37 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 08:02
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   9 +-
+ SESSION.md                                         | 490 +++++++++++++++++++++
+ package-lock.json                                  |  34 ++
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 +++-
+ .../projections/components/GameProjection.tsx      |  72 ++-
+ .../projections/components/ProjectionsList.tsx     |   7 +
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 188 +++++++-
+ src/lib/models/types.ts                            |  22 +-
+ 10 files changed, 871 insertions(+), 37 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 08:07
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   9 +-
+ SESSION.md                                         | 545 +++++++++++++++++++++
+ package-lock.json                                  |  34 ++
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 +++-
+ .../projections/components/GameProjection.tsx      |  75 ++-
+ .../projections/components/ProjectionsList.tsx     |   7 +
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 186 ++++++-
+ src/lib/models/types.ts                            |  22 +-
+ 10 files changed, 927 insertions(+), 37 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 08:12
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   9 +-
+ SESSION.md                                         | 600 +++++++++++++++++++++
+ package-lock.json                                  |  34 ++
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 ++-
+ .../projections/components/GameProjection.tsx      |  75 ++-
+ .../projections/components/ProjectionsList.tsx     |   7 +
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 186 ++++++-
+ src/lib/models/types.ts                            |  22 +-
+ 10 files changed, 982 insertions(+), 37 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 08:25
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   9 +-
+ SESSION.md                                         | 656 +++++++++++++++++++++
+ package-lock.json                                  |  34 ++
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 ++-
+ src/app/pools/[id]/page.tsx                        |  91 +++
+ .../projections/components/GameProjection.tsx      |  75 ++-
+ .../projections/components/ProjectionsList.tsx     |   7 +
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 186 +++++-
+ src/lib/models/types.ts                            |  22 +-
+ 11 files changed, 1129 insertions(+), 37 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 08:27
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   9 +-
+ SESSION.md                                         | 714 +++++++++++++++++++++
+ package-lock.json                                  |  34 +
+ package.json                                       |   2 +
+ src/app/pools/[id]/control-panel.tsx               |  82 ++-
+ src/app/pools/[id]/page.tsx                        | 101 ++-
+ .../projections/components/GameProjection.tsx      |  75 ++-
+ .../projections/components/ProjectionsList.tsx     |   7 +
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 186 +++++-
+ src/lib/models/types.ts                            |  22 +-
+ 11 files changed, 1193 insertions(+), 41 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 08:32
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   9 +-
+ SESSION.md                                         | 772 +++++++++++++++++++++
+ package-lock.json                                  |  34 +
+ package.json                                       |   2 +
+ src/app/api/recommendations/route.ts               |   3 +-
+ src/app/pools/[id]/control-panel.tsx               |  82 ++-
+ src/app/pools/[id]/page.tsx                        | 102 ++-
+ .../projections/components/GameProjection.tsx      |  75 +-
+ .../projections/components/ProjectionsList.tsx     |   7 +
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 186 ++++-
+ src/lib/models/types.ts                            |  22 +-
+ 12 files changed, 1254 insertions(+), 42 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 08:34
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   9 +-
+ SESSION.md                                         | 832 +++++++++++++++++++++
+ package-lock.json                                  |  34 +
+ package.json                                       |   2 +
+ src/app/api/recommendations/route.ts               |   3 +-
+ src/app/pools/[id]/control-panel.tsx               |  82 +-
+ src/app/pools/[id]/page.tsx                        | 102 ++-
+ .../projections/components/GameProjection.tsx      |  75 +-
+ .../projections/components/ProjectionsList.tsx     |   7 +
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 186 ++++-
+ src/lib/models/types.ts                            |  22 +-
+ 12 files changed, 1314 insertions(+), 42 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 08:36
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   9 +-
+ SESSION.md                                         | 892 +++++++++++++++++++++
+ package-lock.json                                  |  36 +-
+ package.json                                       |   2 +
+ src/app/api/recommendations/route.ts               |   3 +-
+ src/app/pools/[id]/control-panel.tsx               |  82 +-
+ src/app/pools/[id]/page.tsx                        | 102 ++-
+ .../projections/components/GameProjection.tsx      |  75 +-
+ .../projections/components/ProjectionsList.tsx     |   7 +
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 186 ++++-
+ src/lib/models/types.ts                            |  22 +-
+ 12 files changed, 1375 insertions(+), 43 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 08:41
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |   9 +-
+ SESSION.md                                         | 952 +++++++++++++++++++++
+ package-lock.json                                  |  36 +-
+ package.json                                       |   2 +
+ src/app/api/recommendations/route.ts               |   3 +-
+ src/app/pools/[id]/control-panel.tsx               |  82 +-
+ src/app/pools/[id]/page.tsx                        | 102 ++-
+ .../projections/components/GameProjection.tsx      |  85 +-
+ .../projections/components/ProjectionsList.tsx     |   7 +
+ src/lib/models/__tests__/confidence-engine.test.ts |   2 +-
+ src/lib/models/confidence-engine.ts                | 223 ++++-
+ src/lib/models/types.ts                            |  22 +-
+ 12 files changed, 1463 insertions(+), 62 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 09:12
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |    9 +-
+ SESSION.md                                         | 1012 ++++++++++++++++++++
+ package-lock.json                                  |   36 +-
+ package.json                                       |    2 +
+ src/app/api/recommendations/route.ts               |    3 +-
+ src/app/pools/[id]/control-panel.tsx               |   82 +-
+ src/app/pools/[id]/page.tsx                        |  102 +-
+ .../projections/components/GameProjection.tsx      |   85 +-
+ .../projections/components/ProjectionsList.tsx     |    7 +
+ src/lib/models/__tests__/confidence-engine.test.ts |    2 +-
+ src/lib/models/confidence-engine.ts                |  223 ++++-
+ src/lib/models/types.ts                            |   22 +-
+ 12 files changed, 1523 insertions(+), 62 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 09:35
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+- src/lib/test-utils/database.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/recent-form.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/recent-form.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |    9 +-
+ SESSION.md                                         | 1072 ++++++++++++++++++++
+ package-lock.json                                  |   36 +-
+ package.json                                       |    2 +
+ src/app/api/recommendations/route.ts               |    3 +-
+ src/app/pools/[id]/control-panel.tsx               |   82 +-
+ src/app/pools/[id]/page.tsx                        |  102 +-
+ .../projections/components/GameProjection.tsx      |   85 +-
+ .../projections/components/ProjectionsList.tsx     |    7 +
+ src/lib/models/__tests__/confidence-engine.test.ts |    2 +-
+ src/lib/models/confidence-engine.ts                |  297 +++++-
+ src/lib/models/types.ts                            |   24 +-
+ src/lib/test-utils/database.ts                     |    2 +
+ 13 files changed, 1659 insertions(+), 64 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 10:16
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/api/data-sources/route.ts
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/data-sources/provider-registry.ts
+- src/lib/data-sources/providers/espn-odds-provider.ts
+- src/lib/data-sources/types.ts
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+- src/lib/test-utils/database.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/playoff-implications.test.ts
+- src/lib/models/__tests__/recent-form.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/playoff-implications.ts
+- src/lib/models/recent-form.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |    9 +-
+ SESSION.md                                         | 1136 ++++++++++++++++++++
+ package-lock.json                                  |   36 +-
+ package.json                                       |    2 +
+ src/app/api/data-sources/route.ts                  |    9 +-
+ src/app/api/recommendations/route.ts               |    5 +-
+ src/app/pools/[id]/control-panel.tsx               |   82 +-
+ src/app/pools/[id]/page.tsx                        |  103 +-
+ .../projections/components/GameProjection.tsx      |   85 +-
+ .../projections/components/ProjectionsList.tsx     |    7 +
+ src/lib/data-sources/provider-registry.ts          |   18 +-
+ .../data-sources/providers/espn-odds-provider.ts   |   18 +-
+ src/lib/data-sources/types.ts                      |    3 +-
+ src/lib/models/__tests__/confidence-engine.test.ts |    2 +-
+ src/lib/models/confidence-engine.ts                |  385 ++++++-
+ src/lib/models/types.ts                            |   26 +-
+ src/lib/test-utils/database.ts                     |    2 +
+ 17 files changed, 1843 insertions(+), 85 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 10:27
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- src/app/api/data-sources/route.ts
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/data-sources/provider-registry.ts
+- src/lib/data-sources/providers/espn-odds-provider.ts
+- src/lib/data-sources/types.ts
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+- src/lib/test-utils/database.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/playoff-implications.test.ts
+- src/lib/models/__tests__/recent-form.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/playoff-implications.ts
+- src/lib/models/recent-form.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |    9 +-
+ SESSION.md                                         | 1210 ++++++++++++++++++++
+ package-lock.json                                  |   36 +-
+ package.json                                       |    2 +
+ src/app/api/data-sources/route.ts                  |    9 +-
+ src/app/api/recommendations/route.ts               |    5 +-
+ src/app/pools/[id]/control-panel.tsx               |   82 +-
+ src/app/pools/[id]/page.tsx                        |  104 +-
+ .../projections/components/GameProjection.tsx      |   85 +-
+ .../projections/components/ProjectionsList.tsx     |    7 +
+ src/lib/data-sources/provider-registry.ts          |   18 +-
+ .../data-sources/providers/espn-odds-provider.ts   |   18 +-
+ src/lib/data-sources/types.ts                      |    3 +-
+ src/lib/models/__tests__/confidence-engine.test.ts |    2 +-
+ src/lib/models/confidence-engine.ts                |  385 ++++++-
+ src/lib/models/types.ts                            |   26 +-
+ src/lib/test-utils/database.ts                     |    2 +
+ 17 files changed, 1918 insertions(+), 85 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 10:50
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- prisma/seed.ts
+- src/app/api/data-sources/route.ts
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/data-sources/provider-registry.ts
+- src/lib/data-sources/providers/espn-odds-provider.ts
+- src/lib/data-sources/types.ts
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+- src/lib/test-utils/database.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- scripts/
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/playoff-implications.test.ts
+- src/lib/models/__tests__/recent-form.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/playoff-implications.ts
+- src/lib/models/recent-form.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |    9 +-
+ SESSION.md                                         | 1284 ++++++++++++++++++++
+ package-lock.json                                  |   36 +-
+ package.json                                       |    7 +-
+ prisma/seed.ts                                     |   68 ++
+ src/app/api/data-sources/route.ts                  |    9 +-
+ src/app/api/recommendations/route.ts               |    5 +-
+ src/app/pools/[id]/control-panel.tsx               |   82 +-
+ src/app/pools/[id]/page.tsx                        |  104 +-
+ .../projections/components/GameProjection.tsx      |   85 +-
+ .../projections/components/ProjectionsList.tsx     |    7 +
+ src/lib/data-sources/provider-registry.ts          |   18 +-
+ .../data-sources/providers/espn-odds-provider.ts   |   18 +-
+ src/lib/data-sources/types.ts                      |    3 +-
+ src/lib/models/__tests__/confidence-engine.test.ts |    2 +-
+ src/lib/models/confidence-engine.ts                |  385 +++++-
+ src/lib/models/types.ts                            |   26 +-
+ src/lib/test-utils/database.ts                     |    2 +
+ 18 files changed, 2064 insertions(+), 86 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 11:06
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- prisma/seed.ts
+- src/app/api/data-sources/route.ts
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/data-sources/provider-registry.ts
+- src/lib/data-sources/providers/espn-odds-provider.ts
+- src/lib/data-sources/types.ts
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+- src/lib/test-utils/database.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- scripts/
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/playoff-implications.test.ts
+- src/lib/models/__tests__/recent-form.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/playoff-implications.ts
+- src/lib/models/recent-form.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |    9 +-
+ SESSION.md                                         | 1361 ++++++++++++++++++++
+ package-lock.json                                  |   36 +-
+ package.json                                       |    7 +-
+ prisma/seed.ts                                     |   68 +
+ src/app/api/data-sources/route.ts                  |   92 +-
+ src/app/api/recommendations/route.ts               |    5 +-
+ src/app/pools/[id]/control-panel.tsx               |   82 +-
+ src/app/pools/[id]/page.tsx                        |  104 +-
+ .../projections/components/GameProjection.tsx      |   85 +-
+ .../projections/components/ProjectionsList.tsx     |    7 +
+ src/lib/data-sources/provider-registry.ts          |   18 +-
+ .../data-sources/providers/espn-odds-provider.ts   |   18 +-
+ src/lib/data-sources/types.ts                      |    3 +-
+ src/lib/models/__tests__/confidence-engine.test.ts |    2 +-
+ src/lib/models/confidence-engine.ts                |  385 +++++-
+ src/lib/models/types.ts                            |   26 +-
+ src/lib/test-utils/database.ts                     |    2 +
+ 18 files changed, 2223 insertions(+), 87 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 11:13
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- prisma/seed.ts
+- src/app/api/data-sources/route.ts
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/data-sources/provider-registry.ts
+- src/lib/data-sources/providers/espn-odds-provider.ts
+- src/lib/data-sources/types.ts
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+- src/lib/test-utils/database.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- scripts/
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/playoff-implications.test.ts
+- src/lib/models/__tests__/recent-form.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/playoff-implications.ts
+- src/lib/models/recent-form.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |    9 +-
+ SESSION.md                                         | 1438 ++++++++++++++++++++
+ package-lock.json                                  |   36 +-
+ package.json                                       |    7 +-
+ prisma/seed.ts                                     |   68 +
+ src/app/api/data-sources/route.ts                  |   92 +-
+ src/app/api/recommendations/route.ts               |    5 +-
+ src/app/pools/[id]/control-panel.tsx               |   82 +-
+ src/app/pools/[id]/page.tsx                        |  104 +-
+ .../projections/components/GameProjection.tsx      |   85 +-
+ .../projections/components/ProjectionsList.tsx     |    7 +
+ src/lib/data-sources/provider-registry.ts          |   18 +-
+ .../data-sources/providers/espn-odds-provider.ts   |   18 +-
+ src/lib/data-sources/types.ts                      |    3 +-
+ src/lib/models/__tests__/confidence-engine.test.ts |    2 +-
+ src/lib/models/confidence-engine.ts                |  385 +++++-
+ src/lib/models/types.ts                            |   26 +-
+ src/lib/test-utils/database.ts                     |    2 +
+ 18 files changed, 2300 insertions(+), 87 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 11:15
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- prisma/seed.ts
+- src/app/api/data-sources/route.ts
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/data-sources/provider-registry.ts
+- src/lib/data-sources/providers/espn-odds-provider.ts
+- src/lib/data-sources/types.ts
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+- src/lib/test-utils/database.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- scripts/
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/playoff-implications.test.ts
+- src/lib/models/__tests__/recent-form.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/playoff-implications.ts
+- src/lib/models/recent-form.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |    9 +-
+ SESSION.md                                         | 1515 ++++++++++++++++++++
+ package-lock.json                                  |   36 +-
+ package.json                                       |    7 +-
+ prisma/seed.ts                                     |   68 +
+ src/app/api/data-sources/route.ts                  |   92 +-
+ src/app/api/recommendations/route.ts               |    5 +-
+ src/app/pools/[id]/control-panel.tsx               |   82 +-
+ src/app/pools/[id]/page.tsx                        |  104 +-
+ .../projections/components/GameProjection.tsx      |   85 +-
+ .../projections/components/ProjectionsList.tsx     |    7 +
+ src/lib/data-sources/provider-registry.ts          |   18 +-
+ .../data-sources/providers/espn-odds-provider.ts   |   18 +-
+ src/lib/data-sources/types.ts                      |    3 +-
+ src/lib/models/__tests__/confidence-engine.test.ts |    2 +-
+ src/lib/models/confidence-engine.ts                |  385 ++++-
+ src/lib/models/types.ts                            |   26 +-
+ src/lib/test-utils/database.ts                     |    2 +
+ 18 files changed, 2377 insertions(+), 87 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 11:24
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- prisma/seed.ts
+- src/app/api/data-sources/route.ts
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/data-sources/provider-registry.ts
+- src/lib/data-sources/providers/espn-odds-provider.ts
+- src/lib/data-sources/types.ts
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+- src/lib/test-utils/database.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- scripts/
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/playoff-implications.test.ts
+- src/lib/models/__tests__/recent-form.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/playoff-implications.ts
+- src/lib/models/recent-form.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |    9 +-
+ SESSION.md                                         | 1592 ++++++++++++++++++++
+ package-lock.json                                  |   36 +-
+ package.json                                       |    7 +-
+ prisma/seed.ts                                     |   68 +
+ src/app/api/data-sources/route.ts                  |  134 +-
+ src/app/api/recommendations/route.ts               |    5 +-
+ src/app/pools/[id]/control-panel.tsx               |   82 +-
+ src/app/pools/[id]/page.tsx                        |  143 +-
+ .../projections/components/GameProjection.tsx      |   85 +-
+ .../projections/components/ProjectionsList.tsx     |    7 +
+ src/lib/data-sources/provider-registry.ts          |   18 +-
+ .../data-sources/providers/espn-odds-provider.ts   |   18 +-
+ src/lib/data-sources/types.ts                      |    3 +-
+ src/lib/models/__tests__/confidence-engine.test.ts |    2 +-
+ src/lib/models/confidence-engine.ts                |  385 ++++-
+ src/lib/models/types.ts                            |   26 +-
+ src/lib/test-utils/database.ts                     |    2 +
+ 18 files changed, 2532 insertions(+), 90 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 11:26
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- prisma/seed.ts
+- src/app/api/data-sources/route.ts
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/data-sources/provider-registry.ts
+- src/lib/data-sources/providers/espn-odds-provider.ts
+- src/lib/data-sources/types.ts
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+- src/lib/test-utils/database.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- scripts/
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/playoff-implications.test.ts
+- src/lib/models/__tests__/recent-form.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/playoff-implications.ts
+- src/lib/models/recent-form.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |    9 +-
+ SESSION.md                                         | 1669 ++++++++++++++++++++
+ package-lock.json                                  |   36 +-
+ package.json                                       |    7 +-
+ prisma/seed.ts                                     |   68 +
+ src/app/api/data-sources/route.ts                  |  134 +-
+ src/app/api/recommendations/route.ts               |    5 +-
+ src/app/pools/[id]/control-panel.tsx               |   82 +-
+ src/app/pools/[id]/page.tsx                        |  143 +-
+ .../projections/components/GameProjection.tsx      |   85 +-
+ .../projections/components/ProjectionsList.tsx     |    7 +
+ src/lib/data-sources/provider-registry.ts          |   18 +-
+ .../data-sources/providers/espn-odds-provider.ts   |   18 +-
+ src/lib/data-sources/types.ts                      |    3 +-
+ src/lib/models/__tests__/confidence-engine.test.ts |    2 +-
+ src/lib/models/confidence-engine.ts                |  385 ++++-
+ src/lib/models/types.ts                            |   26 +-
+ src/lib/test-utils/database.ts                     |    2 +
+ 18 files changed, 2609 insertions(+), 90 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 11:31
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- prisma/seed.ts
+- src/app/api/data-sources/route.ts
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/data-sources/provider-registry.ts
+- src/lib/data-sources/providers/espn-odds-provider.ts
+- src/lib/data-sources/types.ts
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+- src/lib/test-utils/database.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- scripts/
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/playoff-implications.test.ts
+- src/lib/models/__tests__/recent-form.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/playoff-implications.ts
+- src/lib/models/recent-form.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |    9 +-
+ SESSION.md                                         | 1746 ++++++++++++++++++++
+ package-lock.json                                  |   36 +-
+ package.json                                       |    7 +-
+ prisma/seed.ts                                     |   68 +
+ src/app/api/data-sources/route.ts                  |  134 +-
+ src/app/api/recommendations/route.ts               |    5 +-
+ src/app/pools/[id]/control-panel.tsx               |   82 +-
+ src/app/pools/[id]/page.tsx                        |  229 ++-
+ .../projections/components/GameProjection.tsx      |   85 +-
+ .../projections/components/ProjectionsList.tsx     |    7 +
+ src/lib/data-sources/provider-registry.ts          |   18 +-
+ .../data-sources/providers/espn-odds-provider.ts   |   18 +-
+ src/lib/data-sources/types.ts                      |    3 +-
+ src/lib/models/__tests__/confidence-engine.test.ts |    2 +-
+ src/lib/models/confidence-engine.ts                |  385 ++++-
+ src/lib/models/types.ts                            |   26 +-
+ src/lib/test-utils/database.ts                     |    2 +
+ 18 files changed, 2765 insertions(+), 97 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-19 12:02
+
+### Files Changed
+**Modified:**
+- .env.example
+- SESSION.md
+- package-lock.json
+- package.json
+- prisma/seed.ts
+- src/app/api/data-sources/route.ts
+- src/app/api/recommendations/route.ts
+- src/app/pools/[id]/control-panel.tsx
+- src/app/pools/[id]/page.tsx
+- src/features/projections/components/GameProjection.tsx
+- src/features/projections/components/ProjectionsList.tsx
+- src/lib/data-sources/provider-registry.ts
+- src/lib/data-sources/providers/espn-odds-provider.ts
+- src/lib/data-sources/types.ts
+- src/lib/models/__tests__/confidence-engine.test.ts
+- src/lib/models/confidence-engine.ts
+- src/lib/models/types.ts
+- src/lib/test-utils/database.ts
+
+**Created:**
+- docs/NEWS_ANALYSIS_USAGE.md
+- scripts/
+- src/app/api/debug/
+- src/app/debug/
+- src/app/test-badge/
+- src/lib/models/__tests__/news-analysis.test.ts
+- src/lib/models/__tests__/playoff-implications.test.ts
+- src/lib/models/__tests__/recent-form.test.ts
+- src/lib/models/__tests__/revenge-game.test.ts
+- src/lib/models/news-analysis.ts
+- src/lib/models/playoff-implications.ts
+- src/lib/models/recent-form.ts
+- src/lib/models/revenge-game.ts
+
+### Git Statistics
+```
+ .env.example                                       |    9 +-
+ SESSION.md                                         | 1823 ++++++++++++++++++++
+ package-lock.json                                  |   44 +
+ package.json                                       |    8 +-
+ prisma/seed.ts                                     |   68 +
+ src/app/api/data-sources/route.ts                  |  134 +-
+ src/app/api/recommendations/route.ts               |    5 +-
+ src/app/pools/[id]/control-panel.tsx               |   82 +-
+ src/app/pools/[id]/page.tsx                        |  266 ++-
+ .../projections/components/GameProjection.tsx      |   85 +-
+ .../projections/components/ProjectionsList.tsx     |    7 +
+ src/lib/data-sources/provider-registry.ts          |   18 +-
+ .../data-sources/providers/espn-odds-provider.ts   |   18 +-
+ src/lib/data-sources/types.ts                      |    3 +-
+ src/lib/models/__tests__/confidence-engine.test.ts |    2 +-
+ src/lib/models/confidence-engine.ts                |  385 ++++-
+ src/lib/models/types.ts                            |   26 +-
+ src/lib/test-utils/database.ts                     |    2 +
+ 18 files changed, 2889 insertions(+), 96 deletions(-)
+
+```
+
+### Recent Commits
+```
+2da9bcc initial
+ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+3b94018 feat(uploads): implement file storage service
+a6eb658 feat: add data preview component with validation display
+ac2b4fe feat: implement milestone 3 file upload system
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---

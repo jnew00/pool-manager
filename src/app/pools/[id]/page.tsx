@@ -1,9 +1,28 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import Tippy from '@tippyjs/react'
+import 'tippy.js/dist/tippy.css'
+import {
+  Building2,
+  Sun,
+  Cloud,
+  CloudRain,
+  CloudSnow,
+  Zap,
+  Wind,
+  CloudFog,
+  CloudDrizzle,
+  Thermometer,
+  Droplets,
+  Eye
+} from 'lucide-react'
 import ControlPanel from './control-panel'
+import { GameProjection } from '@/features/projections/components/GameProjection'
+import type { ModelOutput } from '@/lib/models/types'
 
 interface Pool {
   id: string
@@ -51,6 +70,7 @@ export default function PoolDetailPage() {
   const [sortField, setSortField] = useState<string>('confidence')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [customWeights, setCustomWeights] = useState<any>(null)
+  const [expandedGameId, setExpandedGameId] = useState<string | null>(null)
 
   useEffect(() => {
     if (poolId) {
@@ -266,6 +286,48 @@ export default function PoolDetailPage() {
   }
 
   const weeks = Array.from({ length: 18 }, (_, i) => i + 1) // NFL weeks 1-18
+
+  // Helper function to transform recommendation to ModelOutput format
+  const transformRecommendationToModelOutput = (
+    game: Game,
+    rec: any
+  ): ModelOutput | null => {
+    if (!rec) return null
+
+    const factors = rec.recommendation.factors || {}
+
+
+    return {
+      gameId: game.id,
+      confidence: rec.recommendation.confidence || 0,
+      recommendedPick: rec.recommendation.pick || 'HOME',
+      factors: {
+        gameId: game.id,
+        homeTeamId: game.homeTeam.id,
+        awayTeamId: game.awayTeam.id,
+        marketProb: factors.marketProb || 0.5,
+        homeElo: factors.homeElo || 1500,
+        awayElo: factors.awayElo || 1500,
+        eloProb: factors.eloProb || 0.5,
+        homeAdvantage: factors.homeAdvantage || 3.0,
+        restAdvantage: factors.restAdvantage || 0,
+        weatherPenalty: factors.weatherPenalty || 0,
+        injuryPenalty: factors.injuryPenalty || 0,
+        divisionalFactor: factors.divisionalFactor || 0,
+        revengeGameFactor: factors.revengeGameFactor || 0,
+        recentFormFactor: factors.recentFormFactor || 0,
+        playoffImplicationsFactor: factors.playoffImplicationsFactor || 0,
+        lineValue: factors.lineValue || 0,
+        rawConfidence: factors.rawConfidence || 0.5,
+        adjustedConfidence: rec.recommendation.confidence || 50,
+        recommendedPick: rec.recommendation.pick || 'HOME',
+        factorBreakdown: factors.factorBreakdown || [],
+        newsAnalysis: factors.newsAnalysis || null,
+      },
+      modelVersion: rec.recommendation.modelVersion || '1.0.0',
+      calculatedAt: new Date(),
+    }
+  }
 
   if (loading) {
     return (
@@ -700,6 +762,9 @@ export default function PoolDetailPage() {
                         <th className="text-right py-3 px-4 font-semibold text-gray-900 dark:text-white">
                           AI Pick
                         </th>
+                        <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-white">
+                          Details
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -728,29 +793,155 @@ export default function PoolDetailPage() {
 
                           if (isDome) {
                             return (
-                              <span className="text-2xl" title="Domed Stadium">
-                                🏟️
-                              </span>
+                              <Tippy
+                                content={
+                                  <div className="text-center">
+                                    <div className="font-semibold">Domed Stadium</div>
+                                    <div className="text-sm text-gray-300">{game.venue}</div>
+                                    <div className="text-xs text-gray-400 mt-1">
+                                      Weather conditions don't affect gameplay
+                                    </div>
+                                  </div>
+                                }
+                                theme="dark"
+                                arrow={true}
+                              >
+                                <Building2 className="w-6 h-6 text-gray-600 cursor-help hover:text-gray-500 transition-colors" />
+                              </Tippy>
                             )
                           }
 
-                          // TODO: Integrate actual weather data from API
-                          // For now, show default outdoor icons
+                          // Check for actual weather data in apiRefs
+                          const weatherData = (game as any).apiRefs?.weather
+                          if (weatherData && weatherData.conditions) {
+                            const condition = weatherData.conditions.toLowerCase()
+                            const temp = weatherData.temperature ? `${Math.round(weatherData.temperature)}°F` : ''
+                            const humidity = weatherData.humidity ? `${Math.round(weatherData.humidity * 100)}%` : ''
+                            const windSpeed = weatherData.windSpeed ? `${weatherData.windSpeed} mph` : ''
+                            const windDir = weatherData.windDirection || ''
+                            const precipChance = weatherData.precipitationChance ? 
+                              `${Math.round(weatherData.precipitationChance * 100)}%` : ''
+                            
+                            // Weather condition to icon mapping
+                            let WeatherIcon = Cloud // default
+                            let iconColor = 'text-gray-500'
+                            
+                            if (condition.includes('rain') || condition.includes('shower')) {
+                              WeatherIcon = CloudRain
+                              iconColor = 'text-blue-500'
+                            } else if (condition.includes('drizzle')) {
+                              WeatherIcon = CloudDrizzle  
+                              iconColor = 'text-blue-400'
+                            } else if (condition.includes('snow') || condition.includes('blizzard')) {
+                              WeatherIcon = CloudSnow
+                              iconColor = 'text-blue-200'
+                            } else if (condition.includes('thunder') || condition.includes('storm')) {
+                              WeatherIcon = Zap
+                              iconColor = 'text-yellow-500'
+                            } else if (condition.includes('fog') || condition.includes('mist')) {
+                              WeatherIcon = CloudFog
+                              iconColor = 'text-gray-400'
+                            } else if (condition.includes('wind')) {
+                              WeatherIcon = Wind
+                              iconColor = 'text-gray-600'
+                            } else if (condition.includes('cloud')) {
+                              WeatherIcon = Cloud
+                              iconColor = 'text-gray-500'
+                            } else if (condition.includes('clear') || condition.includes('sun')) {
+                              WeatherIcon = Sun
+                              iconColor = 'text-yellow-500'
+                            }
+                            
+                            return (
+                              <Tippy
+                                content={
+                                  <div className="text-center max-w-xs">
+                                    <div className="font-semibold text-white capitalize mb-1">
+                                      {condition}
+                                    </div>
+                                    <div className="text-sm text-gray-200 mb-2">
+                                      {game.venue}
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                      {temp && (
+                                        <div className="flex items-center space-x-1">
+                                          <Thermometer className="w-3 h-3 text-orange-400" />
+                                          <div>
+                                            <span className="text-blue-300">Temperature:</span><br />
+                                            <span className="font-medium">{temp}</span>
+                                          </div>
+                                        </div>
+                                      )}
+                                      {precipChance && (
+                                        <div className="flex items-center space-x-1">
+                                          <Droplets className="w-3 h-3 text-blue-400" />
+                                          <div>
+                                            <span className="text-blue-300">Rain Chance:</span><br />
+                                            <span className="font-medium">{precipChance}</span>
+                                          </div>
+                                        </div>
+                                      )}
+                                      {windSpeed && (
+                                        <div className="flex items-center space-x-1">
+                                          <Wind className="w-3 h-3 text-gray-400" />
+                                          <div>
+                                            <span className="text-blue-300">Wind:</span><br />
+                                            <span className="font-medium">{windSpeed} {windDir}</span>
+                                          </div>
+                                        </div>
+                                      )}
+                                      {humidity && (
+                                        <div className="flex items-center space-x-1">
+                                          <Eye className="w-3 h-3 text-teal-400" />
+                                          <div>
+                                            <span className="text-blue-300">Humidity:</span><br />
+                                            <span className="font-medium">{humidity}</span>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                    {weatherData.source && (
+                                      <div className="text-xs text-gray-400 mt-2">
+                                        Source: {weatherData.source}
+                                      </div>
+                                    )}
+                                  </div>
+                                }
+                                theme="dark"
+                                arrow={true}
+                                maxWidth={300}
+                              >
+                                <WeatherIcon className={`w-6 h-6 cursor-help hover:scale-110 transition-all ${iconColor}`} />
+                              </Tippy>
+                            )
+                          }
+
+                          // Default outdoor weather (no data available)
                           return (
-                            <span
-                              className="text-2xl"
-                              title="Outdoor - Weather TBD"
+                            <Tippy
+                              content={
+                                <div className="text-center">
+                                  <div className="font-semibold">Outdoor Stadium</div>
+                                  <div className="text-sm text-gray-300">{game.venue}</div>
+                                  <div className="text-xs text-gray-400 mt-1">
+                                    Weather data not available<br />
+                                    (Game too far in advance for forecast)
+                                  </div>
+                                </div>
+                              }
+                              theme="dark"
+                              arrow={true}
                             >
-                              🌤️
-                            </span>
+                              <Cloud className="w-6 h-6 text-gray-500 cursor-help hover:text-gray-400 transition-colors" />
+                            </Tippy>
                           )
                         }
 
                         return (
-                          <tr
-                            key={game.id}
-                            className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                          >
+                          <React.Fragment key={game.id}>
+                            <tr
+                              className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                            >
                             <td className="py-4 px-4">
                               <div className="flex items-center space-x-3">
                                 <div>
@@ -892,7 +1083,54 @@ export default function PoolDetailPage() {
                                 </div>
                               )}
                             </td>
+                            <td className="py-4 px-4 text-center">
+                              <button
+                                onClick={() =>
+                                  setExpandedGameId(
+                                    expandedGameId === game.id ? null : game.id
+                                  )
+                                }
+                                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                              >
+                                {expandedGameId === game.id ? 'Hide' : 'Show'}
+                              </button>
+                            </td>
                           </tr>
+                          {/* Expanded GameProjection Row */}
+                          {expandedGameId === game.id && rec && (
+                            <tr key={`${game.id}-expanded`}>
+                              <td
+                                colSpan={8}
+                                className="py-0 px-4 bg-gray-50 dark:bg-gray-800/50"
+                              >
+                                <div className="py-4">
+                                  {(() => {
+                                    const projection = transformRecommendationToModelOutput(game, rec)
+                                    if (!projection) return null
+                                    
+                                    return (
+                                      <GameProjection
+                                        projection={projection}
+                                        gameDetails={{
+                                          homeTeam: {
+                                            name: game.homeTeam.name,
+                                            nflAbbr: game.homeTeam.nflAbbr,
+                                          },
+                                          awayTeam: {
+                                            name: game.awayTeam.name,
+                                            nflAbbr: game.awayTeam.nflAbbr,
+                                          },
+                                          kickoffTime: new Date(game.kickoff),
+                                          venue: game.venue,
+                                        }}
+                                      />
+                                    )
+                                  })()}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                          </React.Fragment>
                         )
                       })}
                     </tbody>

@@ -6,14 +6,17 @@ export interface ModelWeights {
   id: string
   name: string
   weights: {
-    marketProbWeight: number // 0.40 default
-    eloWeight: number // 0.25 default
-    lineValueWeight: number // 0.25 default - NEW: arbitrage factor
+    marketProbWeight: number // 0.35 default
+    eloWeight: number // 0.22 default
+    lineValueWeight: number // 0.22 default - arbitrage factor
     homeAdvWeight: number // 0.05 default
     restWeight: number // 0.02 default
-    divisionalWeight: number // 0.02 default - NEW: divisional rivalry factor
-    weatherPenaltyWeight: number // 0.02 default
-    injuryPenaltyWeight: number // 0.01 default
+    divisionalWeight: number // 0.07 default - divisional rivalry factor
+    revengeGameWeight: number // 0.05 default - revenge game motivation factor
+    recentFormWeight: number // 0.025 default - NEW: recent form factor
+    playoffImplicationsWeight: number // 0.015 default - NEW: playoff implications factor
+    weatherPenaltyWeight: number // 0.015 default
+    injuryPenaltyWeight: number // 0.005 default
     kElo: number // 24 default
     windThresholdMph: number // 15 default
     precipProbThreshold: number // 0.30 default
@@ -51,10 +54,21 @@ export interface GameFactors {
   homeAdvantage: number
   restAdvantage: number // Positive favors home, negative favors away
   divisionalFactor: number // Rivalry and divisional game adjustments
+  revengeGameFactor: number // Motivation from previous season matchups
+  recentFormFactor: number // Recent performance advantage (positive = home team favored)
+  playoffImplicationsFactor: number // Playoff motivation difference (positive = home team more motivated)
 
   // Environmental penalties
   weatherPenalty: number
   injuryPenalty: number
+
+  // News analysis tie-breaking (for close games)
+  newsAnalysis?: {
+    confidence: number
+    recommendedTeam?: 'HOME' | 'AWAY'
+    summary: string
+    adjustment: number // Points added/subtracted from confidence
+  }
 
   // Final calculations
   rawConfidence: number

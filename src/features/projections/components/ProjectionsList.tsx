@@ -312,6 +312,13 @@ function generateMockGames(): GameWithProjection[] {
               description: 'Impact of key player injuries',
             },
           ],
+          // Add mock news analysis for games within close confidence range
+          newsAnalysis: confidence >= 50 && confidence <= 60 ? {
+            confidence: Math.floor(15 + Math.random() * 25), // 15-40% confidence
+            recommendedTeam: Math.random() > 0.5 ? 'HOME' : 'AWAY',
+            summary: `Key factors: ${homeTeam.name} quarterback listed as questionable with ankle injury; Recent roster move impacts team depth; Weather conditions favor running game`,
+            adjustment: (Math.random() - 0.5) * 4 // -2 to +2 point adjustment
+          } : undefined,
         },
         calculatedAt: new Date(),
         modelVersion: '1.0.0',

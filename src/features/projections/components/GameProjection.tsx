@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Tippy from '@tippyjs/react'
+import 'tippy.js/dist/tippy.css'
 import type { ModelOutput, FactorContribution } from '@/lib/models/types'
 
 interface GameProjectionProps {
@@ -20,6 +22,9 @@ export function GameProjection({
   className = '',
 }: GameProjectionProps) {
   const [showDetails, setShowDetails] = useState(false)
+  
+  // Debug logging for news analysis
+  console.log('[GameProjection] projection.factors.newsAnalysis:', projection.factors.newsAnalysis)
 
   const confidenceLevel = getConfidenceLevel(projection.confidence)
   const isHomeRecommended = projection.recommendedPick === 'HOME'
@@ -76,12 +81,70 @@ export function GameProjection({
                 : gameDetails.awayTeam.nflAbbr}
             </div>
 
-            <div
-              className={`px-2 py-1 rounded text-xs font-medium ${
-                confidenceLevel.color
-              }`}
-            >
-              {confidenceLevel.label}
+            <div className="flex items-center space-x-2">
+              <div
+                className={`px-2 py-1 rounded text-xs font-medium ${
+                  confidenceLevel.color
+                }`}
+              >
+                {confidenceLevel.label}
+              </div>
+
+              {/* News Analysis Badge */}
+              {projection.factors.newsAnalysis && (
+                <Tippy
+                  content={
+                    <div className="text-sm">
+                      <div className="font-medium mb-1">
+                        News Analysis Active
+                      </div>
+                      <div className="text-gray-200 mb-2">
+                        {projection.factors.newsAnalysis.summary}
+                      </div>
+                      {projection.factors.newsAnalysis.recommendedTeam && (
+                        <div className="text-xs">
+                          <span className="font-medium">Recommended:</span>{' '}
+                          {projection.factors.newsAnalysis.recommendedTeam ===
+                          'HOME'
+                            ? gameDetails.homeTeam.nflAbbr
+                            : gameDetails.awayTeam.nflAbbr}{' '}
+                          ({projection.factors.newsAnalysis.confidence}%
+                          confidence)
+                        </div>
+                      )}
+                    </div>
+                  }
+                  placement="top"
+                  theme="dark"
+                  interactive={true}
+                  maxWidth={300}
+                >
+                  <div
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      projection.factors.newsAnalysis.recommendedTeam
+                        ? projection.factors.newsAnalysis.recommendedTeam ===
+                          'HOME'
+                          ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                          : 'bg-green-100 text-green-700 border border-green-200'
+                        : 'bg-gray-100 text-gray-600 border border-gray-200'
+                    } cursor-help`}
+                  >
+                    <svg
+                      className="w-3 h-3 mr-1"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    News
+                  </div>
+                </Tippy>
+              )}
             </div>
           </div>
 
@@ -175,7 +238,11 @@ interface FactorBarProps {
 }
 
 function FactorBar({ factor }: FactorBarProps) {
-  const impact = factor.contribution * factor.weight
+  const weight = factor.weight ?? 0
+  const contribution = factor.contribution ?? 0
+  const value = factor.value ?? 0
+  
+  const impact = contribution * weight
   const isPositive = impact > 0
   const barWidth = Math.min(Math.abs(impact) * 200, 100) // Scale for display
 
@@ -192,9 +259,9 @@ function FactorBar({ factor }: FactorBarProps) {
       </div>
 
       <div className="flex items-center space-x-2 text-xs text-gray-600">
-        <span>Value: {factor.value.toFixed(3)}</span>
+        <span>Value: {value.toFixed(3)}</span>
         <span>×</span>
-        <span>Weight: {factor.weight.toFixed(2)}</span>
+        <span>Weight: {weight.toFixed(2)}</span>
       </div>
 
       <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">

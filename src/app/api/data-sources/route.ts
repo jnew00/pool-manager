@@ -18,15 +18,54 @@ const weatherProvider = new OpenWeatherProvider({
 const mockOddsProvider = new MockOddsProvider()
 const mockWeatherProvider = new MockWeatherProvider()
 
-// Register providers (use mock if no API keys)
-dataProviderRegistry.registerOddsProvider(
-  process.env.OPENWEATHER_API_KEY ? espnProvider : mockOddsProvider,
-  true
-)
+// Register providers (use ESPN for odds always, use real weather if API key available)
+dataProviderRegistry.registerOddsProvider(espnProvider, true)
 dataProviderRegistry.registerWeatherProvider(
   process.env.OPENWEATHER_API_KEY ? weatherProvider : mockWeatherProvider,
   true
 )
+
+// Stadium name mapping for better weather data
+const STADIUM_NAMES: Record<string, string> = {
+  'ARI': 'State Farm Stadium',
+  'ATL': 'Mercedes-Benz Stadium', 
+  'BAL': 'M&T Bank Stadium',
+  'BUF': 'Highmark Stadium',
+  'CAR': 'Bank of America Stadium',
+  'CHI': 'Soldier Field',
+  'CIN': 'Paycor Stadium',
+  'CLE': 'FirstEnergy Stadium',
+  'DAL': 'AT&T Stadium',
+  'DEN': 'Empower Field at Mile High',
+  'DET': 'Ford Field',
+  'GB': 'Lambeau Field',
+  'HOU': 'NRG Stadium',
+  'IND': 'Lucas Oil Stadium',
+  'JAX': 'TIAA Bank Field',
+  'KC': 'GEHA Field at Arrowhead Stadium',
+  'LV': 'Allegiant Stadium',
+  'LVR': 'Allegiant Stadium',
+  'LAC': 'SoFi Stadium',
+  'LAR': 'SoFi Stadium', 
+  'MIA': 'Hard Rock Stadium',
+  'MIN': 'U.S. Bank Stadium',
+  'NE': 'Gillette Stadium',
+  'NO': 'Caesars Superdome',
+  'NYG': 'MetLife Stadium',
+  'NYJ': 'MetLife Stadium',
+  'PHI': 'Lincoln Financial Field',
+  'PIT': 'Acrisure Stadium',
+  'SEA': 'Lumen Field',
+  'SF': 'Levi\'s Stadium',
+  'TB': 'Raymond James Stadium',
+  'TEN': 'Nissan Stadium',
+  'WAS': 'FedExField',
+  'WSH': 'FedExField'
+}
+
+function getStadiumName(teamAbbr: string): string {
+  return STADIUM_NAMES[teamAbbr] || `${teamAbbr} Stadium`
+}
 
 /**
  * GET /api/data-sources - Get available providers and health status
@@ -91,7 +130,88 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    if (games.length === 0) {
+    // If no games found in database, try to fetch and create them from ESPN
+    if (games.length === 0 && season && week) {
+      console.log(`[Data Sources] No games found in DB for season ${season} week ${week}, fetching from ESPN...`)
+      
+      try {
+        const allOddsResponse = await dataProviderRegistry.getAllCurrentOdds('ESPN', season, week)
+        
+        if (allOddsResponse.success && allOddsResponse.data && allOddsResponse.data.length > 0) {
+          console.log(`[Data Sources] ESPN returned ${allOddsResponse.data.length} games, creating teams and games...`)
+          
+          const createdGames = []
+          
+          for (const espnGame of allOddsResponse.data) {
+            // Create or find teams
+            const homeTeam = await prisma.team.upsert({
+              where: { nflAbbr: espnGame.homeTeam },
+              update: {},
+              create: {
+                nflAbbr: espnGame.homeTeam,
+                name: espnGame.homeTeam // ESPN doesn't provide full names, use abbreviation
+              }
+            })
+            
+            const awayTeam = await prisma.team.upsert({
+              where: { nflAbbr: espnGame.awayTeam },
+              update: {},
+              create: {
+                nflAbbr: espnGame.awayTeam,
+                name: espnGame.awayTeam // ESPN doesn't provide full names, use abbreviation
+              }
+            })
+            
+            // Create game
+            const game = await prisma.game.create({
+              data: {
+                season,
+                week,
+                kickoff: espnGame.kickoff,
+                homeTeamId: homeTeam.id,
+                awayTeamId: awayTeam.id,
+                status: 'SCHEDULED',
+                venue: this.getStadiumName(espnGame.homeTeam)
+              },
+              include: {
+                homeTeam: true,
+                awayTeam: true,
+              }
+            })
+            
+            createdGames.push(game)
+            
+            // Create odds line immediately
+            await prisma.line.create({
+              data: {
+                gameId: game.id,
+                source: espnGame.source,
+                spread: espnGame.spread,
+                total: espnGame.total,
+                moneylineHome: espnGame.moneylineHome,
+                moneylineAway: espnGame.moneylineAway,
+                capturedAt: espnGame.capturedAt
+              }
+            })
+          }
+          
+          console.log(`[Data Sources] Created ${createdGames.length} games and ${createdGames.length} lines from ESPN`)
+          
+          return NextResponse.json({
+            success: true,
+            data: {
+              gamesFetched: createdGames.length,
+              oddsCreated: createdGames.length,
+              weatherUpdated: 0,
+              message: `Created ${createdGames.length} games from ESPN for season ${season} week ${week}`,
+              timestamp: new Date()
+            }
+          })
+        }
+      } catch (error) {
+        console.error('[Data Sources] Error fetching from ESPN:', error)
+      }
+      
       return NextResponse.json({
         success: true,
         data: {
@@ -118,7 +238,7 @@ export async function POST(request: NextRequest) {
           try {
             // Get all current odds from ESPN and match by teams
             const allOddsResponse =
-              await dataProviderRegistry.getAllCurrentOdds()
+              await dataProviderRegistry.getAllCurrentOdds('ESPN', season, week)
 
             if (allOddsResponse.success && allOddsResponse.data) {
               console.log(

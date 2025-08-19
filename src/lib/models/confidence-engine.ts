@@ -7,6 +7,10 @@ import type {
 } from './types'
 import { EloSystem } from './elo-system'
 import { areTeamsDivisionRivals, getRivalryIntensity, RIVALRY_FACTORS } from './nfl-divisions'
+import { analyzeRevengeGame, type RevengeGameResult } from './revenge-game'
+import { NewsAnalysisService, type NewsAnalysisResult } from './news-analysis'
+import { RecentFormAnalyzer, type FormComparisonResult } from './recent-form'
+import { PlayoffImplicationsAnalyzer, type PlayoffImplicationsResult } from './playoff-implications'
 import { prisma } from '@/lib/prisma'
 
 /**
@@ -66,16 +70,38 @@ export class ConfidenceEngine {
       input.awayTeamId
     )
 
-    // 7. Weather penalty
+    // 7. Revenge game motivation
+    const revengeGameFactor = await this.calculateRevengeGameFactor(
+      input.homeTeamId,
+      input.awayTeamId,
+      input.kickoffTime
+    )
+
+    // 8. Recent form factor
+    const recentFormFactor = await this.calculateRecentFormFactor(
+      input.homeTeamId,
+      input.awayTeamId,
+      input.kickoffTime,
+      input.kickoffTime.getFullYear()
+    )
+
+    // 9. Playoff implications factor
+    const playoffImplicationsFactor = await this.calculatePlayoffImplicationsFactor(
+      input.homeTeamId,
+      input.awayTeamId,
+      input.kickoffTime
+    )
+
+    // 10. Weather penalty
     const weatherPenalty = this.calculateWeatherPenalty(
       input.weatherData,
       weights
     )
 
-    // 8. Injury penalty
+    // 11. Injury penalty
     const injuryPenalty = this.calculateInjuryPenalty(input.injuryData, weights)
 
-    // 9. Weighted combination
+    // 12. Weighted combination
     const rawConfidence = this.combineFactors(
       {
         marketProb,
@@ -84,6 +110,9 @@ export class ConfidenceEngine {
         homeAdvantage,
         restAdvantage,
         divisionalFactor,
+        revengeGameFactor,
+        recentFormFactor,
+        playoffImplicationsFactor,
         weatherPenalty,
         injuryPenalty,
       },
@@ -94,8 +123,8 @@ export class ConfidenceEngine {
       `[Confidence Engine] Raw calculation: marketProb=${marketProb}, eloProb=${eloProb}, homeAdv=${homeAdvantage}, rawConfidence=${rawConfidence}`
     )
 
-    // 8. Scale to 0-100 and determine pick
-    const adjustedConfidence =
+    // 8. Scale to 0-100 and determine initial pick
+    let adjustedConfidence =
       isNaN(rawConfidence) || !isFinite(rawConfidence)
         ? (() => {
             console.log(
@@ -104,10 +133,78 @@ export class ConfidenceEngine {
             return 50.0
           })()
         : Math.max(0, Math.min(100, rawConfidence * 100))
-    const recommendedPick: 'HOME' | 'AWAY' =
+    let recommendedPick: 'HOME' | 'AWAY' =
       rawConfidence > 0.5 ? 'HOME' : 'AWAY'
 
-    // 10. Factor breakdown for UI
+    // 9. News Analysis Tie-Breaking (for close games)
+    let newsAnalysis: NewsAnalysisResult | null = null
+    let newsAdjustment = 0
+    const originalConfidence = adjustedConfidence
+    const confidenceDifference = Math.abs(adjustedConfidence - 50)
+    
+    if (confidenceDifference <= 10) { // Only for games within 10 points of 50%
+      console.log(`[Confidence Engine] Close game detected (${adjustedConfidence}%), applying news analysis tie-breaker`)
+      
+      try {
+        const [homeTeam, awayTeam] = await Promise.all([
+          prisma.team.findUnique({ where: { id: input.homeTeamId }, select: { name: true } }),
+          prisma.team.findUnique({ where: { id: input.awayTeamId }, select: { name: true } })
+        ])
+
+        console.log(`[Confidence Engine] Teams found: Home=${homeTeam?.name}, Away=${awayTeam?.name}`)
+
+        if (homeTeam && awayTeam) {
+          console.log(`[Confidence Engine] Creating NewsAnalysisService and analyzing game`)
+          const newsService = new NewsAnalysisService({
+            useMockData: process.env.USE_MOCK_NEWS_DATA === 'true',
+            confidenceRangeMin: Number(process.env.NEWS_ANALYSIS_MIN_RANGE) || 0,
+            confidenceRangeMax: Number(process.env.NEWS_ANALYSIS_MAX_RANGE) || 10
+          })
+          newsAnalysis = await newsService.analyzeGame({
+            gameId: input.gameId,
+            homeTeamId: input.homeTeamId,
+            awayTeamId: input.awayTeamId,
+            homeTeamName: homeTeam.name,
+            awayTeamName: awayTeam.name,
+            kickoffTime: input.kickoffTime,
+            venue: input.venue,
+            confidenceDifference,
+            currentHomeConfidence: adjustedConfidence,
+            currentAwayConfidence: 100 - adjustedConfidence
+          })
+
+          console.log(`[Confidence Engine] News analysis result:`, {
+            analysisConfidence: newsAnalysis?.analysisConfidence,
+            recommendedTeam: newsAnalysis?.recommendedTeam,
+            keyFactors: newsAnalysis?.keyFactors?.length,
+            summary: newsAnalysis?.summary
+          })
+
+          // Apply news analysis adjustment if it has a recommendation
+          if (newsAnalysis.recommendedTeam && newsAnalysis.analysisConfidence > 0) {
+            const maxAdjustment = (newsAnalysis.analysisConfidence / 100) * 5 // Max 5 point adjustment
+            
+            if (newsAnalysis.recommendedTeam === 'HOME') {
+              newsAdjustment = maxAdjustment
+              adjustedConfidence = Math.min(100, adjustedConfidence + newsAdjustment)
+              if (adjustedConfidence > 50) recommendedPick = 'HOME'
+            } else {
+              newsAdjustment = -maxAdjustment
+              adjustedConfidence = Math.max(0, adjustedConfidence + newsAdjustment)
+              if (adjustedConfidence < 50) recommendedPick = 'AWAY'
+            }
+
+            console.log(
+              `[Confidence Engine] News analysis applied: ${newsAnalysis.recommendedTeam} (${newsAdjustment > 0 ? '+' : ''}${newsAdjustment.toFixed(1)} pts), new confidence: ${adjustedConfidence.toFixed(1)}%`
+            )
+          }
+        }
+      } catch (error) {
+        console.warn('[Confidence Engine] News analysis failed:', error)
+      }
+    }
+
+    // 12. Factor breakdown for UI
     const factorBreakdown = this.createFactorBreakdown(
       {
         marketProb,
@@ -116,12 +213,25 @@ export class ConfidenceEngine {
         homeAdvantage,
         restAdvantage,
         divisionalFactor,
+        revengeGameFactor,
+        recentFormFactor,
+        playoffImplicationsFactor,
         weatherPenalty,
         injuryPenalty,
         rawConfidence,
       },
       weights
     )
+
+    // Show UI badge whenever news analysis was performed, regardless of confidence
+    const finalNewsAnalysis = newsAnalysis ? {
+      confidence: newsAnalysis.analysisConfidence,
+      recommendedTeam: newsAnalysis.recommendedTeam,
+      summary: newsAnalysis.summary,
+      adjustment: newsAdjustment
+    } : undefined
+
+    console.log(`[Confidence Engine] Final newsAnalysis for UI:`, finalNewsAnalysis)
 
     return {
       gameId: input.gameId,
@@ -135,8 +245,12 @@ export class ConfidenceEngine {
       homeAdvantage,
       restAdvantage,
       divisionalFactor,
+      revengeGameFactor,
+      recentFormFactor,
+      playoffImplicationsFactor,
       weatherPenalty,
       injuryPenalty,
+      newsAnalysis: finalNewsAnalysis,
       rawConfidence,
       adjustedConfidence,
       recommendedPick,
@@ -333,6 +447,149 @@ export class ConfidenceEngine {
   }
 
   /**
+   * Calculate revenge game motivation factor
+   */
+  private async calculateRevengeGameFactor(
+    homeTeamId: string,
+    awayTeamId: string,
+    gameDate: Date
+  ): Promise<number> {
+    try {
+      const revengeAnalysis = await analyzeRevengeGame(
+        homeTeamId,
+        awayTeamId,
+        gameDate,
+        gameDate.getFullYear()
+      )
+
+      if (!revengeAnalysis.isRevengeGame) {
+        return 0
+      }
+
+      // Apply revenge motivation to the motivated team
+      // Positive value favors home team, negative favors away team
+      let revengeAdjustment = 0
+
+      if (revengeAnalysis.revengeTeamId === homeTeamId) {
+        // Home team seeking revenge - positive adjustment
+        revengeAdjustment = revengeAnalysis.revengeMotivation
+      } else if (revengeAnalysis.revengeTeamId === awayTeamId) {
+        // Away team seeking revenge - negative adjustment (favors away)
+        revengeAdjustment = -revengeAnalysis.revengeMotivation
+      }
+
+      console.log(
+        `[Revenge Game] Motivation: ${revengeAdjustment} points for team ${revengeAnalysis.revengeTeamId}`
+      )
+
+      return revengeAdjustment
+
+    } catch (error) {
+      console.error('Error calculating revenge game factor:', error)
+      return 0
+    }
+  }
+
+  /**
+   * Calculate recent form factor based on last 4 games
+   */
+  private async calculateRecentFormFactor(
+    homeTeamId: string,
+    awayTeamId: string,
+    gameDate: Date,
+    season: number
+  ): Promise<number> {
+    try {
+      const formAnalyzer = new RecentFormAnalyzer()
+      const formComparison = await formAnalyzer.calculateFormComparison(
+        homeTeamId,
+        awayTeamId,
+        gameDate,
+        season,
+        4 // Analyze last 4 games
+      )
+
+      // Convert form advantage to point spread adjustment
+      // Form advantage is the difference in form scores (-100 to +100 each)
+      // We'll convert this to a smaller point adjustment (max ~3 points)
+      const formAdvantage = formComparison.formAdvantage
+      const maxFormAdjustment = 3.0 // Maximum points from recent form
+      
+      // Scale form advantage (-200 to +200) to point adjustment (-3 to +3)
+      const formAdjustment = Math.max(
+        -maxFormAdjustment,
+        Math.min(maxFormAdjustment, (formAdvantage / 200) * maxFormAdjustment * 2)
+      )
+
+      console.log(
+        `[Recent Form] Home: ${formComparison.homeTeamForm.formScore.toFixed(1)} (${formComparison.homeTeamForm.recentTrend}), Away: ${formComparison.awayTeamForm.formScore.toFixed(1)} (${formComparison.awayTeamForm.recentTrend}), Adjustment: ${formAdjustment.toFixed(1)} points`
+      )
+
+      return formAdjustment
+
+    } catch (error) {
+      console.error('Error calculating recent form factor:', error)
+      return 0
+    }
+  }
+
+  /**
+   * Calculate playoff implications factor
+   */
+  private async calculatePlayoffImplicationsFactor(
+    homeTeamId: string,
+    awayTeamId: string,
+    gameDate: Date
+  ): Promise<number> {
+    try {
+      const analyzer = new PlayoffImplicationsAnalyzer()
+      const season = gameDate.getFullYear()
+      const week = this.getWeekFromDate(gameDate, season)
+      
+      const playoffAnalysis = await analyzer.analyzePlayoffImplications(
+        homeTeamId,
+        awayTeamId,
+        season,
+        week
+      )
+
+      // Convert motivation difference to point spread adjustment
+      const motivationFactor = analyzer.calculateMotivationFactor(
+        playoffAnalysis.homeMotivation,
+        playoffAnalysis.awayMotivation
+      )
+
+      console.log(
+        `[Playoff Implications] Home motivation: ${(playoffAnalysis.homeMotivation * 100).toFixed(1)}%, Away motivation: ${(playoffAnalysis.awayMotivation * 100).toFixed(1)}%, Factor: ${motivationFactor.toFixed(2)} points`
+      )
+
+      return motivationFactor
+
+    } catch (error) {
+      console.error('Error calculating playoff implications factor:', error)
+      return 0
+    }
+  }
+
+  /**
+   * Estimate NFL week from game date
+   */
+  private getWeekFromDate(gameDate: Date, season: number): number {
+    // NFL season typically starts first Thursday after Labor Day (first Monday in September)
+    const seasonStart = new Date(season, 8, 1) // September 1st as baseline
+    
+    // Find first Thursday of September
+    while (seasonStart.getDay() !== 4) { // 4 = Thursday
+      seasonStart.setDate(seasonStart.getDate() + 1)
+    }
+    
+    const diffTime = gameDate.getTime() - seasonStart.getTime()
+    const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7))
+    
+    return Math.max(1, Math.min(18, diffWeeks + 1))
+  }
+
+  /**
    * Calculate weather penalty
    */
   private calculateWeatherPenalty(
@@ -401,6 +658,9 @@ export class ConfidenceEngine {
       homeAdvantage: number
       restAdvantage: number
       divisionalFactor: number
+      revengeGameFactor: number
+      recentFormFactor: number
+      playoffImplicationsFactor: number
       weatherPenalty: number
       injuryPenalty: number
     },
@@ -410,23 +670,29 @@ export class ConfidenceEngine {
     const homeAdvProb = this.pointsToProb(factors.homeAdvantage)
     const restAdvProb = this.pointsToProb(factors.restAdvantage)
     const divisionalProb = this.pointsToProb(factors.divisionalFactor)
+    const revengeGameProb = this.pointsToProb(factors.revengeGameFactor)
+    const recentFormProb = this.pointsToProb(factors.recentFormFactor)
+    const playoffImplicationsProb = this.pointsToProb(factors.playoffImplicationsFactor)
     const weatherPenaltyProb = this.pointsToProb(-factors.weatherPenalty)
     const injuryPenaltyProb = this.pointsToProb(-factors.injuryPenalty)
     const lineValueProb = this.pointsToProb(factors.lineValue)
 
     console.log(`[Confidence Engine] Weights:`, weights)
     console.log(
-      `[Confidence Engine] Probability conversions: homeAdv=${homeAdvProb}, rest=${restAdvProb}, divisional=${divisionalProb} (${factors.divisionalFactor} pts), lineValue=${lineValueProb} (${factors.lineValue} pts)`
+      `[Confidence Engine] Probability conversions: homeAdv=${homeAdvProb}, rest=${restAdvProb}, divisional=${divisionalProb} (${factors.divisionalFactor} pts), revenge=${revengeGameProb} (${factors.revengeGameFactor} pts), recentForm=${recentFormProb} (${factors.recentFormFactor} pts), lineValue=${lineValueProb} (${factors.lineValue} pts)`
     )
 
-    const marketWeight = weights.marketProbWeight || 0.4
-    const eloWeight = weights.eloWeight || 0.25
-    const lineValueWeight = weights.lineValueWeight || 0.25
-    const homeAdvWeight = weights.homeAdvWeight || 0.05
+    const marketWeight = weights.marketProbWeight || 0.335
+    const eloWeight = weights.eloWeight || 0.215
+    const lineValueWeight = weights.lineValueWeight || 0.215
+    const homeAdvWeight = weights.homeAdvWeight || 0.050
     const restWeight = weights.restWeight || 0.02
-    const divisionalWeight = weights.divisionalWeight || 0.02
-    const weatherWeight = weights.weatherPenaltyWeight || 0.02
-    const injuryWeight = weights.injuryPenaltyWeight || 0.01
+    const divisionalWeight = weights.divisionalWeight || 0.065
+    const revengeGameWeight = weights.revengeGameWeight || 0.05
+    const recentFormWeight = weights.recentFormWeight || 0.025
+    const playoffImplicationsWeight = weights.playoffImplicationsWeight || 0.015
+    const weatherWeight = weights.weatherPenaltyWeight || 0.005
+    const injuryWeight = weights.injuryPenaltyWeight || 0.005
 
     // Weighted combination
     const weightedProb =
@@ -436,6 +702,9 @@ export class ConfidenceEngine {
       homeAdvProb * homeAdvWeight +
       restAdvProb * restWeight +
       divisionalProb * divisionalWeight +
+      revengeGameProb * revengeGameWeight +
+      recentFormProb * recentFormWeight +
+      playoffImplicationsProb * playoffImplicationsWeight +
       weatherPenaltyProb * weatherWeight +
       injuryPenaltyProb * injuryWeight
 
@@ -447,6 +716,9 @@ export class ConfidenceEngine {
       homeAdvWeight +
       restWeight +
       divisionalWeight +
+      revengeGameWeight +
+      recentFormWeight +
+      playoffImplicationsWeight +
       weatherWeight +
       injuryWeight
 
@@ -476,75 +748,107 @@ export class ConfidenceEngine {
       homeAdvantage: number
       restAdvantage: number
       divisionalFactor: number
+      revengeGameFactor: number
+      recentFormFactor: number
+      playoffImplicationsFactor: number
       weatherPenalty: number
       injuryPenalty: number
       rawConfidence: number
     },
     weights: ModelInput['weights']
   ): FactorContribution[] {
+    // Handle both camelCase and snake_case property names
+    const getWeight = (camelCase: string, snakeCase: string) => {
+      return (weights as any)[camelCase] ?? (weights as any)[snakeCase] ?? 0
+    }
+
     return [
       {
         factor: 'Market Probability',
         value: factors.marketProb,
-        weight: weights.marketProbWeight,
-        contribution: factors.marketProb * weights.marketProbWeight,
+        weight: getWeight('marketProbWeight', 'market_prob_weight'),
+        contribution: factors.marketProb * getWeight('marketProbWeight', 'market_prob_weight'),
         description: 'Implied probability from betting lines',
       },
       {
         factor: 'Elo Rating',
         value: factors.eloProb,
-        weight: weights.eloWeight,
-        contribution: factors.eloProb * weights.eloWeight,
+        weight: getWeight('eloWeight', 'elo_weight'),
+        contribution: factors.eloProb * getWeight('eloWeight', 'elo_weight'),
         description: 'Team strength based on historical performance',
       },
       {
         factor: 'Line Value',
         value: factors.lineValue,
-        weight: weights.lineValueWeight,
+        weight: getWeight('lineValueWeight', 'line_value_weight'),
         contribution:
-          this.pointsToProb(factors.lineValue) * weights.lineValueWeight,
+          this.pointsToProb(factors.lineValue) * getWeight('lineValueWeight', 'line_value_weight'),
         description: 'Arbitrage value vs current Vegas lines',
       },
       {
         factor: 'Home Advantage',
         value: factors.homeAdvantage,
-        weight: weights.homeAdvWeight,
+        weight: getWeight('homeAdvWeight', 'home_adv_weight'),
         contribution:
-          this.pointsToProb(factors.homeAdvantage) * weights.homeAdvWeight,
+          this.pointsToProb(factors.homeAdvantage) * getWeight('homeAdvWeight', 'home_adv_weight'),
         description: 'Home field advantage and venue factors',
       },
       {
         factor: 'Rest Advantage',
         value: factors.restAdvantage,
-        weight: weights.restWeight,
+        weight: getWeight('restWeight', 'rest_weight'),
         contribution:
-          this.pointsToProb(factors.restAdvantage) * weights.restWeight,
+          this.pointsToProb(factors.restAdvantage) * getWeight('restWeight', 'rest_weight'),
         description: 'Advantage from extra days of rest',
       },
       {
         factor: 'Divisional Rivalry',
         value: factors.divisionalFactor,
-        weight: weights.divisionalWeight,
+        weight: getWeight('divisionalWeight', 'divisional_weight'),
         contribution:
-          this.pointsToProb(factors.divisionalFactor) * weights.divisionalWeight,
+          this.pointsToProb(factors.divisionalFactor) * getWeight('divisionalWeight', 'divisional_weight'),
         description: 'Division game and rivalry factors',
+      },
+      {
+        factor: 'Revenge Game',
+        value: factors.revengeGameFactor,
+        weight: getWeight('revengeGameWeight', 'revenge_game_weight'),
+        contribution:
+          this.pointsToProb(factors.revengeGameFactor) * getWeight('revengeGameWeight', 'revenge_game_weight'),
+        description: 'Motivation from previous season matchups',
+      },
+      {
+        factor: 'Recent Form',
+        value: factors.recentFormFactor,
+        weight: getWeight('recentFormWeight', 'recent_form_weight'),
+        contribution:
+          this.pointsToProb(factors.recentFormFactor) * getWeight('recentFormWeight', 'recent_form_weight'),
+        description: 'Team performance in last 4 games',
+      },
+      {
+        factor: 'Playoff Implications',
+        value: factors.playoffImplicationsFactor,
+        weight: getWeight('playoffImplicationsWeight', 'playoff_implications_weight'),
+        contribution:
+          this.pointsToProb(factors.playoffImplicationsFactor) * getWeight('playoffImplicationsWeight', 'playoff_implications_weight'),
+        description: 'Motivation from playoff positioning and pressure',
       },
       {
         factor: 'Weather Impact',
         value: -factors.weatherPenalty,
-        weight: weights.weatherPenaltyWeight,
+        weight: getWeight('weatherPenaltyWeight', 'weather_penalty_weight'),
         contribution:
           this.pointsToProb(-factors.weatherPenalty) *
-          weights.weatherPenaltyWeight,
+          getWeight('weatherPenaltyWeight', 'weather_penalty_weight'),
         description: 'Weather conditions affecting gameplay',
       },
       {
         factor: 'Injury Impact',
         value: -factors.injuryPenalty,
-        weight: weights.injuryPenaltyWeight,
+        weight: getWeight('injuryPenaltyWeight', 'injury_penalty_weight'),
         contribution:
           this.pointsToProb(-factors.injuryPenalty) *
-          weights.injuryPenaltyWeight,
+          getWeight('injuryPenaltyWeight', 'injury_penalty_weight'),
         description: 'Impact of key player injuries',
       },
     ]
@@ -555,14 +859,17 @@ export class ConfidenceEngine {
  * Default model weights from project requirements
  */
 export const defaultModelWeights: ModelWeights['weights'] = {
-  marketProbWeight: 0.37, // Reduced to make room for divisional factor
-  eloWeight: 0.23, // Reduced to make room for divisional factor
-  lineValueWeight: 0.23, // Reduced to make room for divisional factor
-  homeAdvWeight: 0.05, // Kept same
-  restWeight: 0.02, // Kept same
-  divisionalWeight: 0.08, // NEW: Divisional rivalry factor (higher weight due to NFL unpredictability)
-  weatherPenaltyWeight: 0.015, // Slightly reduced
-  injuryPenaltyWeight: 0.005, // Slightly reduced
+  marketProbWeight: 0.335, // Market probability weight
+  eloWeight: 0.215, // Elo rating weight
+  lineValueWeight: 0.215, // Line value weight
+  homeAdvWeight: 0.050, // Reduced from 0.055 to make room for playoff implications
+  restWeight: 0.02, // Rest advantage weight
+  divisionalWeight: 0.065, // Divisional rivalry weight
+  revengeGameWeight: 0.05, // Revenge game motivation factor
+  recentFormWeight: 0.025, // Recent form factor (team performance last 4 games)
+  playoffImplicationsWeight: 0.015, // Playoff implications factor (motivation from playoff positioning)
+  weatherPenaltyWeight: 0.005, // Reduced from 0.010 to make weights sum to 1.0
+  injuryPenaltyWeight: 0.005, // Injury penalty weight
   kElo: 24,
   windThresholdMph: 15,
   precipProbThreshold: 0.3,
