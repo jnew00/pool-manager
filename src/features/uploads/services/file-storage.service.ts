@@ -20,11 +20,11 @@ export interface ParsedData {
 export class FileStorageService {
   private readonly uploadsDir = path.join(process.cwd(), 'uploads')
   private readonly maxFileSize = 10 * 1024 * 1024 // 10MB
-  
+
   private readonly allowedTypes = {
     CSV: ['text/csv', 'application/csv', 'text/plain'],
     IMAGE: ['image/png', 'image/jpeg', 'image/jpg'],
-    PDF: ['application/pdf']
+    PDF: ['application/pdf'],
   }
 
   private async ensureUploadsDir(): Promise<void> {
@@ -38,13 +38,17 @@ export class FileStorageService {
   private validateFile(file: File, kind: UploadKind): void {
     // Check file size
     if (file.size > this.maxFileSize) {
-      throw new Error(`File too large. Maximum size is ${this.maxFileSize / (1024 * 1024)}MB`)
+      throw new Error(
+        `File too large. Maximum size is ${this.maxFileSize / (1024 * 1024)}MB`
+      )
     }
 
     // Check file type
     const allowedMimeTypes = this.allowedTypes[kind]
     if (!allowedMimeTypes.includes(file.type)) {
-      throw new Error(`Invalid file type. Expected: ${allowedMimeTypes.join(', ')}`)
+      throw new Error(
+        `Invalid file type. Expected: ${allowedMimeTypes.join(', ')}`
+      )
     }
   }
 
@@ -88,8 +92,8 @@ export class FileStorageService {
         size: file.size,
         mimeType: file.type,
         path: filePath,
-        kind
-      }
+        kind,
+      },
     })
 
     return upload
@@ -97,7 +101,7 @@ export class FileStorageService {
 
   async getFile(uploadId: string): Promise<Buffer> {
     const upload = await prisma.upload.findUnique({
-      where: { id: uploadId }
+      where: { id: uploadId },
     })
 
     if (!upload) {
@@ -110,7 +114,7 @@ export class FileStorageService {
 
   async deleteFile(uploadId: string): Promise<boolean> {
     const upload = await prisma.upload.findUnique({
-      where: { id: uploadId }
+      where: { id: uploadId },
     })
 
     if (!upload) {
@@ -126,18 +130,21 @@ export class FileStorageService {
 
     // Delete database record
     await prisma.upload.delete({
-      where: { id: uploadId }
+      where: { id: uploadId },
     })
 
     return true
   }
 
-  async updateParsedData(uploadId: string, parsedData: ParsedData): Promise<Upload> {
+  async updateParsedData(
+    uploadId: string,
+    parsedData: ParsedData
+  ): Promise<Upload> {
     const upload = await prisma.upload.update({
       where: { id: uploadId },
       data: {
-        parsed: parsedData as any
-      }
+        parsed: parsedData as any,
+      },
     })
 
     return upload
@@ -146,7 +153,7 @@ export class FileStorageService {
   async getUploadsByKind(kind: UploadKind): Promise<Upload[]> {
     const uploads = await prisma.upload.findMany({
       where: { kind },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
     return uploads
@@ -159,9 +166,9 @@ export class FileStorageService {
     const oldUploads = await prisma.upload.findMany({
       where: {
         createdAt: {
-          lt: cutoffDate
-        }
-      }
+          lt: cutoffDate,
+        },
+      },
     })
 
     let deletedCount = 0
@@ -174,7 +181,7 @@ export class FileStorageService {
       }
 
       await prisma.upload.delete({
-        where: { id: upload.id }
+        where: { id: upload.id },
       })
 
       deletedCount++

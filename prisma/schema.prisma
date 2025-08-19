@@ -47,8 +47,25 @@ model Team {
   homeGames Game[] @relation("HomeTeam")
   awayGames Game[] @relation("AwayTeam")
   picks     Pick[]
+  eloRating TeamRating?
 
   @@map("teams")
+}
+
+model TeamRating {
+  id          String   @id @default(cuid())
+  teamId      String   @unique
+  rating      Float    @default(1500)
+  gamesPlayed Int      @default(0)
+  season      Int      @default(2025)
+  lastUpdated DateTime @default(now())
+
+  // Relations
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("team_ratings")
+  @@index([season])
+  @@index([rating])
 }
 
 model Game {
@@ -145,6 +162,7 @@ model Pick {
   team         Team    @relation(fields: [teamId], references: [id])
   sourceUpload Upload? @relation(fields: [sourceUploadId], references: [id])
   grade        Grade?
+  gradeOverrides GradeOverride[]
 
   @@unique([entryId, gameId])
   @@index([gameId])
@@ -210,4 +228,21 @@ model ModelWeights {
   createdAt DateTime @default(now())
 
   @@map("model_weights")
+}
+
+model GradeOverride {
+  id               String      @id @default(cuid())
+  pickId           String
+  originalOutcome  PickOutcome
+  originalPoints   Decimal
+  newOutcome       PickOutcome
+  newPoints        Decimal
+  reason           String
+  overriddenAt     DateTime    @default(now())
+  overriddenBy     String?
+
+  // Relations
+  pick Pick @relation(fields: [pickId], references: [id])
+
+  @@map("grade_overrides")
 }

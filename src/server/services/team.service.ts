@@ -129,7 +129,7 @@ export class TeamService extends BaseService {
 
   async deleteTeam(id: string): Promise<boolean> {
     this.validateRequired(id, 'Team ID')
-    
+
     try {
       await prisma.team.delete({
         where: { id },

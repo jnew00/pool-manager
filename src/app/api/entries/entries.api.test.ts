@@ -6,7 +6,11 @@ import { GET as getEntries, POST as postEntry } from './route'
 import { GET as getEntry, DELETE as deleteEntry } from './[id]/route'
 
 // Helper to create mock NextRequest
-function createRequest(method: string, body?: any, queryParams?: string): Request {
+function createRequest(
+  method: string,
+  body?: any,
+  queryParams?: string
+): Request {
   const url = new URL(`http://localhost:3000/api/entries${queryParams || ''}`)
   return new Request(url, {
     method,
@@ -20,7 +24,7 @@ describe('Entries API', () => {
 
   beforeEach(async () => {
     await DatabaseTestUtils.cleanupTestData()
-    
+
     // Create test pool for entries
     const pool = await DatabaseTestUtils.createTestPool({
       name: 'Test Entry Pool',
@@ -72,7 +76,7 @@ describe('Entries API', () => {
       // Create test entries with different seasons to avoid unique constraint
       await DatabaseTestUtils.createTestEntry(poolId, { season: 2024 })
       await DatabaseTestUtils.createTestEntry(poolId, { season: 2023 })
-      
+
       // Create another pool and entry to ensure filtering works
       const otherPool = await DatabaseTestUtils.createTestPool({
         name: 'Other Pool',
@@ -88,7 +92,7 @@ describe('Entries API', () => {
       expect(data.success).toBe(true)
       expect(Array.isArray(data.data)).toBe(true)
       expect(data.data!.length).toBe(2)
-      expect(data.data!.every(entry => entry.poolId === poolId)).toBe(true)
+      expect(data.data!.every((entry) => entry.poolId === poolId)).toBe(true)
     })
 
     it('should return empty array when no poolId specified', async () => {
@@ -126,7 +130,9 @@ describe('Entries API', () => {
 
     it('should return 404 for non-existent entry', async () => {
       const request = createRequest('GET')
-      const response = await getEntry(request, { params: { id: 'non-existent-id' } })
+      const response = await getEntry(request, {
+        params: { id: 'non-existent-id' },
+      })
       const data: ApiResponse = await response.json()
 
       expect(response.status).toBe(404)
@@ -152,7 +158,9 @@ describe('Entries API', () => {
 
     it('should return 404 when deleting non-existent entry', async () => {
       const request = createRequest('DELETE')
-      const response = await deleteEntry(request, { params: { id: 'non-existent-id' } })
+      const response = await deleteEntry(request, {
+        params: { id: 'non-existent-id' },
+      })
       const data: ApiResponse = await response.json()
 
       expect(response.status).toBe(404)

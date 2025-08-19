@@ -14,14 +14,15 @@ const entryService = new EntryService()
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const methodError = validateMethod(request, ['GET'])
   if (methodError) return methodError
 
   try {
-    const entry = await entryService.getEntryById(params.id)
-    
+    const { id } = await params
+    const entry = await entryService.getEntryById(id)
+
     if (!entry) {
       throw new NotFoundError('Entry not found')
     }
@@ -44,7 +45,7 @@ export async function DELETE(
 
   try {
     const success = await entryService.deleteEntry(params.id)
-    
+
     if (!success) {
       throw new NotFoundError('Entry not found')
     }

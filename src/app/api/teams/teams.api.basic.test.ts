@@ -3,7 +3,11 @@ import { DatabaseTestUtils } from '@/lib/test-utils/database'
 import type { ApiResponse } from '@/lib/api/response'
 import type { Team } from '@/lib/types/database'
 import { GET as getTeams, POST as postTeam } from './route'
-import { GET as getTeam, PUT as putTeam, DELETE as deleteTeam } from './[id]/route'
+import {
+  GET as getTeam,
+  PUT as putTeam,
+  DELETE as deleteTeam,
+} from './[id]/route'
 
 // Helper to create mock NextRequest
 function createRequest(method: string, body?: any): Request {
@@ -111,7 +115,9 @@ describe('Teams API - Basic Tests', () => {
 
     it('should return 404 for non-existent team', async () => {
       const request = createRequest('GET')
-      const response = await getTeam(request, { params: { id: 'non-existent-id' } })
+      const response = await getTeam(request, {
+        params: { id: 'non-existent-id' },
+      })
       const data: ApiResponse = await response.json()
 
       expect(response.status).toBe(404)
@@ -160,7 +166,9 @@ describe('Teams API - Basic Tests', () => {
 
     it('should return 404 for non-existent team', async () => {
       const request = createRequest('DELETE')
-      const response = await deleteTeam(request, { params: { id: 'non-existent-id' } })
+      const response = await deleteTeam(request, {
+        params: { id: 'non-existent-id' },
+      })
       const data: ApiResponse = await response.json()
 
       expect(response.status).toBe(404)

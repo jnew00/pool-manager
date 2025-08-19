@@ -67,7 +67,12 @@ export function handleServiceError(error: unknown): NextResponse<ApiResponse> {
   console.error('Service error:', error)
 
   if (error instanceof ValidationError) {
-    return createErrorResponse(error.message, 400, 'VALIDATION_ERROR', error.field)
+    return createErrorResponse(
+      error.message,
+      400,
+      'VALIDATION_ERROR',
+      error.field
+    )
   }
 
   if (error instanceof NotFoundError) {
@@ -88,7 +93,8 @@ export function handleServiceError(error: unknown): NextResponse<ApiResponse> {
   }
 
   // Generic error fallback
-  const message = error instanceof Error ? error.message : 'Internal server error'
+  const message =
+    error instanceof Error ? error.message : 'Internal server error'
   return createErrorResponse(message, 500, 'INTERNAL_ERROR')
 }
 
@@ -124,9 +130,11 @@ export async function parseRequestBody<T>(request: Request): Promise<T> {
 /**
  * Extract query parameters with type safety
  */
-export function extractQueryParams(url: URL): Record<string, string | string[]> {
+export function extractQueryParams(
+  url: URL
+): Record<string, string | string[]> {
   const params: Record<string, string | string[]> = {}
-  
+
   url.searchParams.forEach((value, key) => {
     if (params[key]) {
       // Convert to array if multiple values
@@ -139,7 +147,7 @@ export function extractQueryParams(url: URL): Record<string, string | string[]> 
       params[key] = value
     }
   })
-  
+
   return params
 }
 
@@ -151,7 +159,8 @@ export function validateRequiredFields(
   requiredFields: string[]
 ): void {
   const missingFields = requiredFields.filter(
-    (field) => data[field] === undefined || data[field] === null || data[field] === ''
+    (field) =>
+      data[field] === undefined || data[field] === null || data[field] === ''
   )
 
   if (missingFields.length > 0) {
@@ -179,7 +188,10 @@ export function parsePaginationParams(
   const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const limit = Math.min(
     maxLimit,
-    Math.max(1, parseInt(searchParams.get('limit') || defaultLimit.toString(), 10))
+    Math.max(
+      1,
+      parseInt(searchParams.get('limit') || defaultLimit.toString(), 10)
+    )
   )
   const offset = (page - 1) * limit
 

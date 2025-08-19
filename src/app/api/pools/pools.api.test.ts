@@ -3,10 +3,18 @@ import { DatabaseTestUtils } from '@/lib/test-utils/database'
 import type { ApiResponse } from '@/lib/api/response'
 import type { Pool, PoolType } from '@/lib/types/database'
 import { GET as getPools, POST as postPool } from './route'
-import { GET as getPool, PUT as putPool, DELETE as deletePool } from './[id]/route'
+import {
+  GET as getPool,
+  PUT as putPool,
+  DELETE as deletePool,
+} from './[id]/route'
 
 // Helper to create mock NextRequest
-function createRequest(method: string, body?: any, queryParams?: string): Request {
+function createRequest(
+  method: string,
+  body?: any,
+  queryParams?: string
+): Request {
   const url = new URL(`http://localhost:3000/api/pools${queryParams || ''}`)
   return new Request(url, {
     method,
@@ -128,7 +136,9 @@ describe('Pools API', () => {
 
     it('should return 404 for non-existent pool', async () => {
       const request = createRequest('GET')
-      const response = await getPool(request, { params: { id: 'non-existent-id' } })
+      const response = await getPool(request, {
+        params: { id: 'non-existent-id' },
+      })
       const data: ApiResponse = await response.json()
 
       expect(response.status).toBe(404)
@@ -180,7 +190,9 @@ describe('Pools API', () => {
 
     it('should return 404 when deleting non-existent pool', async () => {
       const request = createRequest('DELETE')
-      const response = await deletePool(request, { params: { id: 'non-existent-id' } })
+      const response = await deletePool(request, {
+        params: { id: 'non-existent-id' },
+      })
       const data: ApiResponse = await response.json()
 
       expect(response.status).toBe(404)

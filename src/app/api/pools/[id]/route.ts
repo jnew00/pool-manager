@@ -15,14 +15,15 @@ const poolService = new PoolService()
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const methodError = validateMethod(request, ['GET'])
   if (methodError) return methodError
 
   try {
-    const pool = await poolService.getPoolById(params.id)
-    
+    const { id } = await params
+    const pool = await poolService.getPoolById(id)
+
     if (!pool) {
       throw new NotFoundError('Pool not found')
     }
@@ -38,12 +39,13 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const methodError = validateMethod(request, ['PUT'])
   if (methodError) return methodError
 
   try {
+    const { id } = await params
     const body = await parseRequestBody<{
       name?: string
       buyIn?: number
@@ -52,7 +54,7 @@ export async function PUT(
       description?: string
     }>(request)
 
-    const pool = await poolService.updatePool(params.id, body)
+    const pool = await poolService.updatePool(id, body)
     return createSuccessResponse(pool)
   } catch (error) {
     return handleServiceError(error)
@@ -64,14 +66,15 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const methodError = validateMethod(request, ['DELETE'])
   if (methodError) return methodError
 
   try {
-    const success = await poolService.deletePool(params.id)
-    
+    const { id } = await params
+    const success = await poolService.deletePool(id)
+
     if (!success) {
       throw new NotFoundError('Pool not found')
     }

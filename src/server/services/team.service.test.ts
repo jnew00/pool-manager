@@ -111,9 +111,7 @@ describe('TeamService', () => {
       const teams = await teamService.getAllTeams()
 
       expect(teams.length).toBeGreaterThanOrEqual(2)
-      const testTeams = teams.filter((t) =>
-        ['TST', 'DEV'].includes(t.nflAbbr)
-      )
+      const testTeams = teams.filter((t) => ['TST', 'DEV'].includes(t.nflAbbr))
       expect(testTeams).toHaveLength(2)
     })
   })

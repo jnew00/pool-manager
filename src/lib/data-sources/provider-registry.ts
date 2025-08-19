@@ -1,12 +1,12 @@
-import type { 
-  OddsProvider, 
-  WeatherProvider, 
+import type {
+  OddsProvider,
+  WeatherProvider,
   InjuryProvider,
   OddsData,
   WeatherData,
   InjuryData,
   ApiResponse,
-  GameDataSnapshot
+  GameDataSnapshot,
 } from './types'
 
 /**
@@ -27,7 +27,7 @@ export class ProviderRegistry {
    */
   registerOddsProvider(provider: OddsProvider, setAsDefault = false): void {
     this.oddsProviders.set(provider.name, provider)
-    
+
     if (setAsDefault || this.defaultOddsProvider === null) {
       this.defaultOddsProvider = provider.name
     }
@@ -36,9 +36,12 @@ export class ProviderRegistry {
   /**
    * Register a weather provider
    */
-  registerWeatherProvider(provider: WeatherProvider, setAsDefault = false): void {
+  registerWeatherProvider(
+    provider: WeatherProvider,
+    setAsDefault = false
+  ): void {
     this.weatherProviders.set(provider.name, provider)
-    
+
     if (setAsDefault || this.defaultWeatherProvider === null) {
       this.defaultWeatherProvider = provider.name
     }
@@ -49,7 +52,7 @@ export class ProviderRegistry {
    */
   registerInjuryProvider(provider: InjuryProvider, setAsDefault = false): void {
     this.injuryProviders.set(provider.name, provider)
-    
+
     if (setAsDefault || this.defaultInjuryProvider === null) {
       this.defaultInjuryProvider = provider.name
     }
@@ -58,7 +61,10 @@ export class ProviderRegistry {
   /**
    * Get odds data from default or specified provider
    */
-  async getOddsForGame(gameId: string, providerName?: string): Promise<ApiResponse<OddsData>> {
+  async getOddsForGame(
+    gameId: string,
+    providerName?: string
+  ): Promise<ApiResponse<OddsData>> {
     const provider = this.getOddsProvider(providerName)
     if (!provider) {
       return {
@@ -68,8 +74,8 @@ export class ProviderRegistry {
           endpoint: '/odds',
           message: 'No odds provider available',
           timestamp: new Date(),
-          retryable: false
-        }
+          retryable: false,
+        },
       }
     }
 
@@ -79,7 +85,10 @@ export class ProviderRegistry {
   /**
    * Get odds data for multiple games
    */
-  async getOddsForGames(gameIds: string[], providerName?: string): Promise<ApiResponse<OddsData[]>> {
+  async getOddsForGames(
+    gameIds: string[],
+    providerName?: string
+  ): Promise<ApiResponse<OddsData[]>> {
     const provider = this.getOddsProvider(providerName)
     if (!provider) {
       return {
@@ -89,8 +98,8 @@ export class ProviderRegistry {
           endpoint: '/odds',
           message: 'No odds provider available',
           timestamp: new Date(),
-          retryable: false
-        }
+          retryable: false,
+        },
       }
     }
 
@@ -98,11 +107,35 @@ export class ProviderRegistry {
   }
 
   /**
+   * Get all current odds from the provider (for team-based matching)
+   */
+  async getAllCurrentOdds(
+    providerName?: string
+  ): Promise<ApiResponse<OddsData[]>> {
+    const provider = this.getOddsProvider(providerName)
+    if (!provider) {
+      return {
+        success: false,
+        error: {
+          provider: providerName || 'default',
+          endpoint: '/odds/all',
+          message: 'No odds provider available',
+          timestamp: new Date(),
+          retryable: false,
+        },
+      }
+    }
+
+    // Use the getOddsForGames method with empty array to get all current games
+    return provider.getOddsForGames([])
+  }
+
+  /**
    * Get weather data for a game
    */
   async getWeatherForGame(
-    gameId: string, 
-    venue: string, 
+    gameId: string,
+    venue: string,
     kickoffTime: Date,
     providerName?: string
   ): Promise<ApiResponse<WeatherData>> {
@@ -115,8 +148,8 @@ export class ProviderRegistry {
           endpoint: '/weather',
           message: 'No weather provider available',
           timestamp: new Date(),
-          retryable: false
-        }
+          retryable: false,
+        },
       }
     }
 
@@ -126,7 +159,10 @@ export class ProviderRegistry {
   /**
    * Get injury data for a team
    */
-  async getInjuriesForTeam(teamId: string, providerName?: string): Promise<ApiResponse<InjuryData[]>> {
+  async getInjuriesForTeam(
+    teamId: string,
+    providerName?: string
+  ): Promise<ApiResponse<InjuryData[]>> {
     const provider = this.getInjuryProvider(providerName)
     if (!provider) {
       return {
@@ -136,8 +172,8 @@ export class ProviderRegistry {
           endpoint: '/injuries',
           message: 'No injury provider available',
           timestamp: new Date(),
-          retryable: false
-        }
+          retryable: false,
+        },
       }
     }
 
@@ -158,7 +194,7 @@ export class ProviderRegistry {
       gameId,
       odds: [],
       injuries: [],
-      capturedAt: new Date()
+      capturedAt: new Date(),
     }
 
     // Get odds data
@@ -168,7 +204,11 @@ export class ProviderRegistry {
     }
 
     // Get weather data
-    const weatherResponse = await this.getWeatherForGame(gameId, venue, kickoffTime)
+    const weatherResponse = await this.getWeatherForGame(
+      gameId,
+      venue,
+      kickoffTime
+    )
     if (weatherResponse.success && weatherResponse.data) {
       snapshot.weather = weatherResponse.data
     }
@@ -176,7 +216,7 @@ export class ProviderRegistry {
     // Get injury data for both teams
     const [homeInjuries, awayInjuries] = await Promise.all([
       this.getInjuriesForTeam(homeTeamId),
-      this.getInjuriesForTeam(awayTeamId)
+      this.getInjuriesForTeam(awayTeamId),
     ])
 
     if (homeInjuries.success && homeInjuries.data) {
@@ -205,7 +245,7 @@ export class ProviderRegistry {
       }
     }
 
-    // Check weather providers  
+    // Check weather providers
     for (const [name, provider] of this.weatherProviders) {
       try {
         results[`weather:${name}`] = await provider.healthCheck()
@@ -237,7 +277,7 @@ export class ProviderRegistry {
     return {
       odds: Array.from(this.oddsProviders.keys()),
       weather: Array.from(this.weatherProviders.keys()),
-      injury: Array.from(this.injuryProviders.keys())
+      injury: Array.from(this.injuryProviders.keys()),
     }
   }
 

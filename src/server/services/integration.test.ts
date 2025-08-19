@@ -224,7 +224,7 @@ describe('Service Integration Tests', () => {
         isActive: true,
       })
 
-      // Create entries for both seasons  
+      // Create entries for both seasons
       const entry2024 = await entryService.createEntry({
         poolId: pool2024.id,
         season: 2024,
@@ -265,16 +265,19 @@ describe('Service Integration Tests', () => {
       })
 
       // Verify teams are used in games
-      const gameTeamIds = weekData.games.flatMap((g) => [g.homeTeamId, g.awayTeamId])
+      const gameTeamIds = weekData.games.flatMap((g) => [
+        g.homeTeamId,
+        g.awayTeamId,
+      ])
       const teamIds = weekData.teams.map((t) => t.id)
-      
+
       gameTeamIds.forEach((id) => {
         expect(teamIds).toContain(id)
       })
 
       // Cleanup should remove all test data
       await DatabaseTestUtils.cleanupTestData()
-      
+
       const finalCounts = await DatabaseTestUtils.getRecordCounts()
       expect(finalCounts.games).toBe(0)
       // Note: NFL teams from seed data may remain

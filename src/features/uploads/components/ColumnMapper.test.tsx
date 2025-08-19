@@ -21,7 +21,7 @@ describe('ColumnMapper', () => {
 
   it('should render target fields and dropdowns', () => {
     render(
-      <ColumnMapper 
+      <ColumnMapper
         csvHeaders={csvHeaders}
         targetFields={targetFields}
         onMappingChange={mockOnMappingChange}
@@ -39,7 +39,7 @@ describe('ColumnMapper', () => {
 
   it('should show CSV headers in dropdowns', () => {
     render(
-      <ColumnMapper 
+      <ColumnMapper
         csvHeaders={csvHeaders}
         targetFields={targetFields}
         onMappingChange={mockOnMappingChange}
@@ -48,7 +48,7 @@ describe('ColumnMapper', () => {
 
     // Check that dropdowns contain options for CSV headers
     const firstSelect = screen.getAllByRole('combobox')[0]
-    
+
     // Check options are present (they should be in DOM even if not visible)
     expect(firstSelect).toContainHTML('<option value="Date">Date</option>')
     expect(firstSelect).toContainHTML('<option value="Away">Away</option>')
@@ -57,7 +57,7 @@ describe('ColumnMapper', () => {
 
   it('should call onMappingChange when mapping is updated', () => {
     render(
-      <ColumnMapper 
+      <ColumnMapper
         csvHeaders={csvHeaders}
         targetFields={targetFields}
         onMappingChange={mockOnMappingChange}
@@ -69,7 +69,7 @@ describe('ColumnMapper', () => {
     fireEvent.change(dateSelect, { target: { value: 'Date' } })
 
     expect(mockOnMappingChange).toHaveBeenCalledWith({
-      date: 'Date'
+      date: 'Date',
     })
   })
 
@@ -77,11 +77,11 @@ describe('ColumnMapper', () => {
     const initialMapping: ColumnMapping = {
       date: 'Date',
       away_team: 'Away',
-      home_team: 'Home'
+      home_team: 'Home',
     }
 
     render(
-      <ColumnMapper 
+      <ColumnMapper
         csvHeaders={csvHeaders}
         targetFields={targetFields}
         onMappingChange={mockOnMappingChange}
@@ -98,7 +98,7 @@ describe('ColumnMapper', () => {
 
   it('should auto-detect mappings when enabled', () => {
     render(
-      <ColumnMapper 
+      <ColumnMapper
         csvHeaders={csvHeaders}
         targetFields={targetFields}
         onMappingChange={mockOnMappingChange}
@@ -110,14 +110,14 @@ describe('ColumnMapper', () => {
     expect(mockOnMappingChange).toHaveBeenCalledWith(
       expect.objectContaining({
         date: 'Date',
-        total: 'Total'
+        total: 'Total',
       })
     )
   })
 
   it('should show validation status for required fields', () => {
     render(
-      <ColumnMapper 
+      <ColumnMapper
         csvHeaders={csvHeaders}
         targetFields={targetFields}
         onMappingChange={mockOnMappingChange}
@@ -128,7 +128,7 @@ describe('ColumnMapper', () => {
     const dateSelect = screen.getByLabelText(/Date/)
     const awayTeamSelect = screen.getByLabelText(/Away Team/)
     const homeTeamSelect = screen.getByLabelText(/Home Team/)
-    
+
     expect(dateSelect).toHaveClass('border-red-300')
     expect(awayTeamSelect).toHaveClass('border-red-300')
     expect(homeTeamSelect).toHaveClass('border-red-300')
@@ -137,11 +137,11 @@ describe('ColumnMapper', () => {
   it('should reset mapping when reset button is clicked', () => {
     const initialMapping: ColumnMapping = {
       date: 'Date',
-      away_team: 'Away'
+      away_team: 'Away',
     }
 
     render(
-      <ColumnMapper 
+      <ColumnMapper
         csvHeaders={csvHeaders}
         targetFields={targetFields}
         onMappingChange={mockOnMappingChange}

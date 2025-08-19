@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { Welcome } from './Welcome'
+import { describe, it, expect } from 'vitest'
 
 describe('Welcome Component', () => {
   it('should render welcome message', () => {
@@ -10,13 +11,13 @@ describe('Welcome Component', () => {
   it('should render description', () => {
     render(<Welcome />)
     expect(
-      screen.getByText('Your NFL pool management system')
+      screen.getByText('Your premium NFL pool management system')
     ).toBeInTheDocument()
   })
 
   it('should accept custom className', () => {
-    render(<Welcome className="custom-class" />)
-    const welcomeDiv = screen.getByText('Welcome to PoolManager').parentElement
+    const { container } = render(<Welcome className="custom-class" />)
+    const welcomeDiv = container.firstChild
     expect(welcomeDiv).toHaveClass('custom-class')
   })
 })

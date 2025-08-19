@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { UploadValidator, type ValidationResult, type GameData } from './upload-validator'
+import {
+  UploadValidator,
+  type ValidationResult,
+  type GameData,
+} from './upload-validator'
 
 describe('UploadValidator', () => {
   const validator = new UploadValidator()
@@ -14,11 +18,11 @@ describe('UploadValidator', () => {
         away_team: 'BUF',
         home_team: 'LAR',
         spread: '-2.5',
-        total: '47.5'
+        total: '47.5',
       }
 
       const result = validator.validateGameData(gameData)
-      
+
       expect(result.valid).toBe(true)
       expect(result.errors).toHaveLength(0)
     })
@@ -32,11 +36,11 @@ describe('UploadValidator', () => {
         away_team: 'INVALID',
         home_team: 'LAR',
         spread: '-2.5',
-        total: '47.5'
+        total: '47.5',
       }
 
       const result = validator.validateGameData(gameData)
-      
+
       expect(result.valid).toBe(false)
       expect(result.errors).toContain('Invalid away team: INVALID')
     })
@@ -50,11 +54,11 @@ describe('UploadValidator', () => {
         away_team: 'BUF',
         home_team: 'LAR',
         spread: '-2.5',
-        total: '47.5'
+        total: '47.5',
       }
 
       const result = validator.validateGameData(gameData)
-      
+
       expect(result.valid).toBe(false)
       expect(result.errors).toContain('Season must be between 2000 and 2050')
     })
@@ -68,11 +72,11 @@ describe('UploadValidator', () => {
         away_team: 'BUF',
         home_team: 'LAR',
         spread: '-2.5',
-        total: '47.5'
+        total: '47.5',
       }
 
       const result = validator.validateGameData(gameData)
-      
+
       expect(result.valid).toBe(false)
       expect(result.errors).toContain('Week must be between 1 and 22')
     })
@@ -86,13 +90,15 @@ describe('UploadValidator', () => {
         away_team: 'BUF',
         home_team: 'LAR',
         spread: '-2.5',
-        total: '47.5'
+        total: '47.5',
       }
 
       const result = validator.validateGameData(gameData)
-      
+
       expect(result.valid).toBe(false)
-      expect(result.errors).toContain('Invalid date format. Expected YYYY-MM-DD')
+      expect(result.errors).toContain(
+        'Invalid date format. Expected YYYY-MM-DD'
+      )
     })
 
     it('should validate time format', () => {
@@ -104,13 +110,15 @@ describe('UploadValidator', () => {
         away_team: 'BUF',
         home_team: 'LAR',
         spread: '-2.5',
-        total: '47.5'
+        total: '47.5',
       }
 
       const result = validator.validateGameData(gameData)
-      
+
       expect(result.valid).toBe(false)
-      expect(result.errors).toContain('Invalid time format. Expected HH:MM (24-hour)')
+      expect(result.errors).toContain(
+        'Invalid time format. Expected HH:MM (24-hour)'
+      )
     })
 
     it('should validate spread is numeric', () => {
@@ -122,11 +130,11 @@ describe('UploadValidator', () => {
         away_team: 'BUF',
         home_team: 'LAR',
         spread: 'Pick', // Not numeric
-        total: '47.5'
+        total: '47.5',
       }
 
       const result = validator.validateGameData(gameData)
-      
+
       expect(result.valid).toBe(false)
       expect(result.errors).toContain('Spread must be a number')
     })
@@ -140,11 +148,11 @@ describe('UploadValidator', () => {
         away_team: 'BUF',
         home_team: 'LAR',
         spread: '',
-        total: ''
+        total: '',
       }
 
       const result = validator.validateGameData(gameData)
-      
+
       expect(result.valid).toBe(true)
       expect(result.errors).toHaveLength(0)
     })
@@ -158,11 +166,11 @@ describe('UploadValidator', () => {
         away_team: 'BUF',
         home_team: 'BUF', // Same team
         spread: '-2.5',
-        total: '47.5'
+        total: '47.5',
       }
 
       const result = validator.validateGameData(gameData)
-      
+
       expect(result.valid).toBe(false)
       expect(result.errors).toContain('Home and away teams cannot be the same')
     })
@@ -179,7 +187,7 @@ describe('UploadValidator', () => {
           away_team: 'BUF',
           home_team: 'LAR',
           spread: '-2.5',
-          total: '47.5'
+          total: '47.5',
         },
         {
           season: 2024,
@@ -189,12 +197,12 @@ describe('UploadValidator', () => {
           away_team: 'INVALID',
           home_team: 'NE',
           spread: '3',
-          total: '42'
-        }
+          total: '42',
+        },
       ]
 
       const results = validator.validateBatch(games)
-      
+
       expect(results).toHaveLength(2)
       expect(results[0].valid).toBe(true)
       expect(results[1].valid).toBe(false)
@@ -211,7 +219,7 @@ describe('UploadValidator', () => {
           away_team: 'BUF',
           home_team: 'LAR',
           spread: '-2.5',
-          total: '47.5'
+          total: '47.5',
         },
         {
           season: 2024,
@@ -221,13 +229,15 @@ describe('UploadValidator', () => {
           away_team: 'BUF',
           home_team: 'LAR', // Duplicate
           spread: '-3',
-          total: '48'
-        }
+          total: '48',
+        },
       ]
 
       const results = validator.validateBatch(games)
-      
-      expect(results[1].warnings).toContain('Duplicate game: BUF @ LAR on 2024-09-08')
+
+      expect(results[1].warnings).toContain(
+        'Duplicate game: BUF @ LAR on 2024-09-08'
+      )
     })
   })
 
@@ -236,11 +246,11 @@ describe('UploadValidator', () => {
       const results: ValidationResult[] = [
         { valid: true, errors: [], warnings: [] },
         { valid: false, errors: ['Error 1'], warnings: [] },
-        { valid: true, errors: [], warnings: ['Warning 1'] }
+        { valid: true, errors: [], warnings: ['Warning 1'] },
       ]
 
       const summary = validator.getSummary(results)
-      
+
       expect(summary.total).toBe(3)
       expect(summary.valid).toBe(2)
       expect(summary.invalid).toBe(1)

@@ -1,4 +1,8 @@
-import { DatabaseError, NotFoundError, ConflictError } from '@/lib/types/database'
+import {
+  DatabaseError,
+  NotFoundError,
+  ConflictError,
+} from '@/lib/types/database'
 
 /**
  * Base service class with common error handling utilities
@@ -17,11 +21,7 @@ export abstract class BaseService {
       case 'P2003':
         throw new DatabaseError('Foreign key constraint failed')
       default:
-        throw new DatabaseError(
-          'Database operation failed',
-          error.code,
-          error
-        )
+        throw new DatabaseError('Database operation failed', error.code, error)
     }
   }
 

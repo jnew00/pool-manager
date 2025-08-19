@@ -6,7 +6,11 @@ import { GET as getGames, POST as postGame } from './route'
 import { GET as getGame, PUT as putGame } from './[id]/route'
 
 // Helper to create mock NextRequest
-function createRequest(method: string, body?: any, queryParams?: string): Request {
+function createRequest(
+  method: string,
+  body?: any,
+  queryParams?: string
+): Request {
   const url = new URL(`http://localhost:3000/api/games${queryParams || ''}`)
   return new Request(url, {
     method,
@@ -21,7 +25,7 @@ describe('Games API', () => {
 
   beforeEach(async () => {
     await DatabaseTestUtils.cleanupTestData()
-    
+
     // Create test teams for games
     const homeTeam = await DatabaseTestUtils.createTestTeam({
       nflAbbr: 'TST',
@@ -31,7 +35,7 @@ describe('Games API', () => {
       nflAbbr: 'DEV',
       name: 'Test Away Team',
     })
-    
+
     homeTeamId = homeTeam.id
     awayTeamId = awayTeam.id
   })
@@ -111,10 +115,14 @@ describe('Games API', () => {
 
   describe('GET /api/games/[id]', () => {
     it('should return a game by ID', async () => {
-      const game = await DatabaseTestUtils.createTestGame(homeTeamId, awayTeamId, {
-        season: 2024,
-        week: 1,
-      })
+      const game = await DatabaseTestUtils.createTestGame(
+        homeTeamId,
+        awayTeamId,
+        {
+          season: 2024,
+          week: 1,
+        }
+      )
 
       const request = createRequest('GET')
       const response = await getGame(request, { params: { id: game.id } })
@@ -127,7 +135,9 @@ describe('Games API', () => {
 
     it('should return 404 for non-existent game', async () => {
       const request = createRequest('GET')
-      const response = await getGame(request, { params: { id: 'non-existent-id' } })
+      const response = await getGame(request, {
+        params: { id: 'non-existent-id' },
+      })
       const data: ApiResponse = await response.json()
 
       expect(response.status).toBe(404)
@@ -138,11 +148,15 @@ describe('Games API', () => {
 
   describe('PUT /api/games/[id]', () => {
     it('should update game status', async () => {
-      const game = await DatabaseTestUtils.createTestGame(homeTeamId, awayTeamId, {
-        season: 2024,
-        week: 1,
-        status: 'SCHEDULED',
-      })
+      const game = await DatabaseTestUtils.createTestGame(
+        homeTeamId,
+        awayTeamId,
+        {
+          season: 2024,
+          week: 1,
+          status: 'SCHEDULED',
+        }
+      )
 
       const updateData = {
         status: 'IN_PROGRESS',

@@ -10,3 +10,4 @@ out/
 
 # TypeScript build info
 *.tsbuildinfo
+.session_backup_*

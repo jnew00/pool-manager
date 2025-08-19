@@ -15,14 +15,15 @@ const teamService = new TeamService()
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const methodError = validateMethod(request, ['GET'])
   if (methodError) return methodError
 
   try {
-    const team = await teamService.getTeamById(params.id)
-    
+    const { id } = await params
+    const team = await teamService.getTeamById(id)
+
     if (!team) {
       throw new NotFoundError('Team not found')
     }
@@ -38,7 +39,7 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const methodError = validateMethod(request, ['PUT'])
   if (methodError) return methodError
@@ -48,7 +49,8 @@ export async function PUT(
       name?: string
     }>(request)
 
-    const team = await teamService.updateTeam(params.id, body)
+    const { id } = await params
+    const team = await teamService.updateTeam(id, body)
     return createSuccessResponse(team)
   } catch (error) {
     return handleServiceError(error)
@@ -60,14 +62,15 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const methodError = validateMethod(request, ['DELETE'])
   if (methodError) return methodError
 
   try {
-    const success = await teamService.deleteTeam(params.id)
-    
+    const { id } = await params
+    const success = await teamService.deleteTeam(id)
+
     if (!success) {
       throw new NotFoundError('Team not found')
     }

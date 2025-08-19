@@ -1,0 +1,10 @@
+{
+  "session_id": "cd0024b6-c555-4fac-8151-a653a166439d",
+  "transcript_path": "/Users/Jason/.claude/projects/-Users-Jason-Documents-Development-PoolManager/cd0024b6-c555-4fac-8151-a653a166439d.jsonl",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Write",
+  "tool_input": {
+    "file_path": "/Users/Jason/Documents/Development/PoolManager/src/app/page.test.tsx",
+    "content": "import { render, screen } from '@testing-library/react'\nimport Home from './page'\nimport { describe, it, expect } from 'vitest'\n\ndescribe('Home Page - Modern UI', () => {\n  it('should render navigation header with logo', () => {\n    render(<Home />)\n    \n    // Should have a header with navigation\n    expect(screen.getByRole('banner')).toBeInTheDocument()\n    expect(screen.getByText('PoolManager')).toBeInTheDocument()\n  })\n\n  it('should render primary action buttons', () => {\n    render(<Home />)\n    \n    // Should have clickable action buttons\n    expect(screen.getByRole('link', { name: /upload data/i })).toBeInTheDocument()\n    expect(screen.getByRole('link', { name: /manage pools/i })).toBeInTheDocument()\n  })\n})"
+  }
+}

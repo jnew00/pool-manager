@@ -1,5 +1,10 @@
 import { BaseDataProvider } from '../base-provider'
-import type { WeatherProvider, WeatherData, ApiResponse, ProviderConfig } from '../types'
+import type {
+  WeatherProvider,
+  WeatherData,
+  ApiResponse,
+  ProviderConfig,
+} from '../types'
 
 interface OpenWeatherResponse {
   coord: {
@@ -100,7 +105,7 @@ const NFL_VENUES = {
   'Arrowhead Stadium': { lat: 39.0489, lon: -94.4839, isDome: false }, // Kansas City Chiefs
   'Allegiant Stadium': { lat: 36.0909, lon: -115.1833, isDome: true }, // Las Vegas Raiders
   'SoFi Stadium': { lat: 33.9535, lon: -118.3392, isDome: true }, // LA Chargers/Rams
-  'Hard Rock Stadium': { lat: 25.9580, lon: -80.2389, isDome: false }, // Miami Dolphins
+  'Hard Rock Stadium': { lat: 25.958, lon: -80.2389, isDome: false }, // Miami Dolphins
   'U.S. Bank Stadium': { lat: 44.9738, lon: -93.2581, isDome: true }, // Minnesota Vikings
   'Gillette Stadium': { lat: 42.0909, lon: -71.2643, isDome: false }, // New England Patriots
   'Caesars Superdome': { lat: 29.9511, lon: -90.0812, isDome: true }, // New Orleans Saints
@@ -108,22 +113,25 @@ const NFL_VENUES = {
   'Lincoln Financial Field': { lat: 39.9008, lon: -75.1675, isDome: false }, // Philadelphia Eagles
   'Heinz Field': { lat: 40.4469, lon: -80.0158, isDome: false }, // Pittsburgh Steelers
   'Lumen Field': { lat: 47.5952, lon: -122.3316, isDome: false }, // Seattle Seahawks
-  'Levi\'s Stadium': { lat: 37.4032, lon: -121.9700, isDome: false }, // San Francisco 49ers
+  "Levi's Stadium": { lat: 37.4032, lon: -121.97, isDome: false }, // San Francisco 49ers
   'Raymond James Stadium': { lat: 27.9759, lon: -82.5033, isDome: false }, // Tampa Bay Buccaneers
   'Nissan Stadium': { lat: 36.1665, lon: -86.7714, isDome: false }, // Tennessee Titans
-  'FedExField': { lat: 38.9076, lon: -76.8645, isDome: false }, // Washington Commanders
+  FedExField: { lat: 38.9076, lon: -76.8645, isDome: false }, // Washington Commanders
   'State Farm Stadium': { lat: 33.5276, lon: -112.2626, isDome: true }, // Arizona Cardinals
-  'M&T Bank Stadium': { lat: 39.2780, lon: -76.6227, isDome: false }, // Baltimore Ravens
-  'Highmark Stadium': { lat: 42.7738, lon: -78.7870, isDome: false }, // Buffalo Bills
+  'M&T Bank Stadium': { lat: 39.278, lon: -76.6227, isDome: false }, // Baltimore Ravens
+  'Highmark Stadium': { lat: 42.7738, lon: -78.787, isDome: false }, // Buffalo Bills
   'Paul Brown Stadium': { lat: 39.0955, lon: -84.5116, isDome: false }, // Cincinnati Bengals
   'FirstEnergy Stadium': { lat: 41.5061, lon: -81.6995, isDome: false }, // Cleveland Browns
-  'Ford Field': { lat: 42.3400, lon: -83.0456, isDome: true }, // Detroit Lions
+  'Ford Field': { lat: 42.34, lon: -83.0456, isDome: true }, // Detroit Lions
 } as const
 
 /**
  * OpenWeatherMap weather provider - free tier with 1000 calls/day
  */
-export class OpenWeatherProvider extends BaseDataProvider implements WeatherProvider {
+export class OpenWeatherProvider
+  extends BaseDataProvider
+  implements WeatherProvider
+{
   constructor(config: Partial<ProviderConfig> = {}) {
     const defaultConfig: ProviderConfig = {
       name: 'OpenWeatherMap',
@@ -132,20 +140,26 @@ export class OpenWeatherProvider extends BaseDataProvider implements WeatherProv
       timeout: 10000,
       retries: 2,
       rateLimitPerMinute: 60, // Conservative estimate
-      ...config
+      ...config,
     }
 
     super('OpenWeatherMap', defaultConfig)
 
     if (!this.config.apiKey) {
-      console.warn('OpenWeatherMap API key not provided. Weather data will not be available.')
+      console.warn(
+        'OpenWeatherMap API key not provided. Weather data will not be available.'
+      )
     }
   }
 
   /**
    * Get weather for a specific game
    */
-  async getWeatherForGame(gameId: string, venue: string, kickoffTime: Date): Promise<ApiResponse<WeatherData>> {
+  async getWeatherForGame(
+    gameId: string,
+    venue: string,
+    kickoffTime: Date
+  ): Promise<ApiResponse<WeatherData>> {
     const venueInfo = this.getVenueInfo(venue)
     if (!venueInfo) {
       return {
@@ -155,18 +169,28 @@ export class OpenWeatherProvider extends BaseDataProvider implements WeatherProv
           endpoint: '/weather',
           message: `Unknown venue: ${venue}`,
           timestamp: new Date(),
-          retryable: false
-        }
+          retryable: false,
+        },
       }
     }
 
-    return this.getWeatherForVenue(venue, venueInfo.lat, venueInfo.lon, kickoffTime)
+    return this.getWeatherForVenue(
+      venue,
+      venueInfo.lat,
+      venueInfo.lon,
+      kickoffTime
+    )
   }
 
   /**
    * Get weather for venue coordinates at specific time
    */
-  async getWeatherForVenue(venue: string, lat: number, lon: number, time: Date): Promise<ApiResponse<WeatherData>> {
+  async getWeatherForVenue(
+    venue: string,
+    lat: number,
+    lon: number,
+    time: Date
+  ): Promise<ApiResponse<WeatherData>> {
     if (!this.config.apiKey) {
       return {
         success: false,
@@ -175,8 +199,8 @@ export class OpenWeatherProvider extends BaseDataProvider implements WeatherProv
           endpoint: '/weather',
           message: 'API key not configured',
           timestamp: new Date(),
-          retryable: false
-        }
+          retryable: false,
+        },
       }
     }
 
@@ -198,7 +222,7 @@ export class OpenWeatherProvider extends BaseDataProvider implements WeatherProv
       // For games more than 5 days out, return generic data
       return {
         success: true,
-        data: this.createDefaultWeatherData(venue, lat, lon)
+        data: this.createDefaultWeatherData(venue, lat, lon),
       }
     })
   }
@@ -206,15 +230,21 @@ export class OpenWeatherProvider extends BaseDataProvider implements WeatherProv
   /**
    * Get current weather conditions
    */
-  private async getCurrentWeather(venue: string, lat: number, lon: number): Promise<ApiResponse<WeatherData>> {
+  private async getCurrentWeather(
+    venue: string,
+    lat: number,
+    lon: number
+  ): Promise<ApiResponse<WeatherData>> {
     const params = new URLSearchParams({
       lat: lat.toString(),
       lon: lon.toString(),
       appid: this.config.apiKey!,
-      units: 'imperial' // Fahrenheit
+      units: 'imperial', // Fahrenheit
     })
 
-    const response = await this.makeRequest<OpenWeatherResponse>(`/weather?${params}`)
+    const response = await this.makeRequest<OpenWeatherResponse>(
+      `/weather?${params}`
+    )
 
     if (!response.success || !response.data) {
       return response as ApiResponse<WeatherData>
@@ -238,25 +268,32 @@ export class OpenWeatherProvider extends BaseDataProvider implements WeatherProv
         conditions: data.weather[0]?.description || 'unknown',
         isDome: venueInfo?.isDome || false,
         capturedAt: new Date(),
-        source: this.name
+        source: this.name,
       },
       rateLimitRemaining: response.rateLimitRemaining,
-      rateLimitReset: response.rateLimitReset
+      rateLimitReset: response.rateLimitReset,
     }
   }
 
   /**
    * Get forecast weather for future games
    */
-  private async getForecastWeather(venue: string, lat: number, lon: number, targetTime: Date): Promise<ApiResponse<WeatherData>> {
+  private async getForecastWeather(
+    venue: string,
+    lat: number,
+    lon: number,
+    targetTime: Date
+  ): Promise<ApiResponse<WeatherData>> {
     const params = new URLSearchParams({
       lat: lat.toString(),
       lon: lon.toString(),
       appid: this.config.apiKey!,
-      units: 'imperial'
+      units: 'imperial',
     })
 
-    const response = await this.makeRequest<ForecastResponse>(`/forecast?${params}`)
+    const response = await this.makeRequest<ForecastResponse>(
+      `/forecast?${params}`
+    )
 
     if (!response.success || !response.data) {
       return response as ApiResponse<WeatherData>
@@ -292,19 +329,23 @@ export class OpenWeatherProvider extends BaseDataProvider implements WeatherProv
         conditions: closestForecast.weather[0]?.description || 'unknown',
         isDome: venueInfo?.isDome || false,
         capturedAt: new Date(),
-        source: this.name
+        source: this.name,
       },
       rateLimitRemaining: response.rateLimitRemaining,
-      rateLimitReset: response.rateLimitReset
+      rateLimitReset: response.rateLimitReset,
     }
   }
 
   /**
    * Create default weather data for games too far in future
    */
-  private createDefaultWeatherData(venue: string, lat: number, lon: number): WeatherData {
+  private createDefaultWeatherData(
+    venue: string,
+    lat: number,
+    lon: number
+  ): WeatherData {
     const venueInfo = this.getVenueInfo(venue)
-    
+
     return {
       gameId: '',
       venue,
@@ -318,14 +359,16 @@ export class OpenWeatherProvider extends BaseDataProvider implements WeatherProv
       conditions: 'Forecast unavailable',
       isDome: venueInfo?.isDome || false,
       capturedAt: new Date(),
-      source: this.name
+      source: this.name,
     }
   }
 
   /**
    * Get venue information by name
    */
-  private getVenueInfo(venue: string): { lat: number; lon: number; isDome: boolean } | null {
+  private getVenueInfo(
+    venue: string
+  ): { lat: number; lon: number; isDome: boolean } | null {
     return NFL_VENUES[venue as keyof typeof NFL_VENUES] || null
   }
 
@@ -333,7 +376,24 @@ export class OpenWeatherProvider extends BaseDataProvider implements WeatherProv
    * Convert wind degree to direction
    */
   private getWindDirection(degrees: number): string {
-    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+    const directions = [
+      'N',
+      'NNE',
+      'NE',
+      'ENE',
+      'E',
+      'ESE',
+      'SE',
+      'SSE',
+      'S',
+      'SSW',
+      'SW',
+      'WSW',
+      'W',
+      'WNW',
+      'NW',
+      'NNW',
+    ]
     const index = Math.round(degrees / 22.5) % 16
     return directions[index]
   }
@@ -377,7 +437,7 @@ export class OpenWeatherProvider extends BaseDataProvider implements WeatherProv
         lat: '39.7439', // Denver coordinates for test
         lon: '-104.9426',
         appid: this.config.apiKey,
-        units: 'imperial'
+        units: 'imperial',
       })
 
       const response = await this.makeRequest(`/weather?${params}`)

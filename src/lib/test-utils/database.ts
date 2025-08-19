@@ -1,5 +1,13 @@
 import { prisma } from '@/lib/prisma'
-import type { Team, Game, Pool, Entry, Pick, PoolType, GameStatus } from '@/lib/types/database'
+import type {
+  Team,
+  Game,
+  Pool,
+  Entry,
+  Pick,
+  PoolType,
+  GameStatus,
+} from '@/lib/types/database'
 
 /**
  * Database test utilities for consistent test data creation and cleanup
@@ -10,9 +18,11 @@ export class DatabaseTestUtils {
    */
   static async cleanupTestData(): Promise<void> {
     // Delete in reverse dependency order, being careful to only delete test data
+    await prisma.gradeOverride.deleteMany({})
+    await prisma.grade.deleteMany({})
     await prisma.pick.deleteMany({})
     await prisma.entry.deleteMany({})
-    
+
     // Only delete test pools (those with Test in the name or specific test pools)
     await prisma.pool.deleteMany({
       where: {
@@ -21,9 +31,10 @@ export class DatabaseTestUtils {
         },
       },
     })
-    
+
+    await prisma.result.deleteMany({})
     await prisma.game.deleteMany({})
-    
+
     // Only delete test mapping profiles (those with Test in the name)
     await prisma.mappingProfile.deleteMany({
       where: {
@@ -32,7 +43,7 @@ export class DatabaseTestUtils {
         },
       },
     })
-    
+
     // Only delete test teams (those with test abbreviations that won't conflict with NFL teams)
     await prisma.team.deleteMany({
       where: {
@@ -40,6 +51,11 @@ export class DatabaseTestUtils {
           {
             nflAbbr: {
               startsWith: 'TST', // All test teams
+            },
+          },
+          {
+            nflAbbr: {
+              startsWith: 'T', // Additional test teams
             },
           },
           {
@@ -62,7 +78,7 @@ export class DatabaseTestUtils {
       nflAbbr: 'TST',
       name: 'Test Team',
     }
-    
+
     return await prisma.team.create({
       data: { ...defaultData, ...overrides },
     })
@@ -130,10 +146,10 @@ export class DatabaseTestUtils {
   /**
    * Create a test entry
    */
-  static async createTestEntry(
-    poolId: string,
-    overrides: Partial<{ season: number }> = {}
-  ): Promise<Entry> {
+  static async createTestEntry(data: {
+    poolId: string
+    season?: number
+  }): Promise<Entry> {
     const defaultData = {
       season: 2024,
     }
@@ -141,8 +157,7 @@ export class DatabaseTestUtils {
     return await prisma.entry.create({
       data: {
         ...defaultData,
-        ...overrides,
-        poolId,
+        ...data,
       },
     })
   }
@@ -201,7 +216,7 @@ export class DatabaseTestUtils {
     const game = await this.createTestGame(homeTeam.id, awayTeam.id)
 
     // Create entry
-    const entry = await this.createTestEntry(pool.id)
+    const entry = await this.createTestEntry({ poolId: pool.id })
 
     // Create pick
     const pick = await this.createTestPick(entry.id, game.id, homeTeam.id, {
@@ -279,7 +294,10 @@ export class DatabaseTestUtils {
   /**
    * Create test data for specific week scenarios
    */
-  static async createWeekScenario(week: number, teamCount: number = 2): Promise<{
+  static async createWeekScenario(
+    week: number,
+    teamCount: number = 2
+  ): Promise<{
     teams: Team[]
     games: Game[]
   }> {
@@ -306,5 +324,67 @@ export class DatabaseTestUtils {
     }
 
     return { teams, games }
+  }
+
+  /**
+   * Create multiple test teams
+   */
+  static async createTestTeams(count: number): Promise<Team[]> {
+    const teams: Team[] = []
+    const timestamp = Date.now().toString().slice(-6)
+
+    for (let i = 0; i < count; i++) {
+      const team = await this.createTestTeam({
+        nflAbbr: `T${timestamp.slice(-2)}${i}`,
+        name: `Test Team ${i + 1}`,
+      })
+      teams.push(team)
+    }
+
+    return teams
+  }
+
+  /**
+   * Create multiple test games from teams
+   */
+  static async createTestGames(
+    teams: Team[],
+    gameCount: number,
+    season: number = 2024,
+    week: number = 1
+  ): Promise<Game[]> {
+    const games: Game[] = []
+
+    for (let i = 0; i < gameCount && i * 2 + 1 < teams.length; i++) {
+      const game = await this.createTestGame(
+        teams[i * 2].id,
+        teams[i * 2 + 1].id,
+        {
+          season,
+          week,
+          kickoff: new Date(`2024-09-${10 + week}T${13 + i}:00:00Z`),
+        }
+      )
+      games.push(game)
+    }
+
+    return games
+  }
+
+  /**
+   * Create a test grade for a pick
+   */
+  static async createTestGrade(
+    pickId: string,
+    outcome: 'WIN' | 'LOSS' | 'PUSH' | 'VOID',
+    points: number
+  ) {
+    return await prisma.grade.create({
+      data: {
+        pickId,
+        outcome,
+        points,
+      },
+    })
   }
 }

@@ -31,8 +31,8 @@ export class CsvParser {
     }
 
     const delimiter = this.detectDelimiter(csvContent)
-    const lines = csvContent.split('\n').filter(line => line.trim())
-    
+    const lines = csvContent.split('\n').filter((line) => line.trim())
+
     if (lines.length === 0) {
       throw new Error('Empty CSV content')
     }
@@ -57,7 +57,8 @@ export class CsvParser {
       // Map each field according to the mapping
       for (const [targetField, sourceHeader] of Object.entries(mapping)) {
         const sourceIndex = headerIndexMap[sourceHeader]
-        row[targetField] = sourceIndex !== undefined ? (values[sourceIndex] || '') : ''
+        row[targetField] =
+          sourceIndex !== undefined ? values[sourceIndex] || '' : ''
       }
 
       rows.push(row)
@@ -72,16 +73,16 @@ export class CsvParser {
   detectDelimiter(csvContent: string): string {
     const delimiters = [',', ';', '\t']
     const lines = csvContent.split('\n').slice(0, 2) // Check first two lines
-    
+
     let bestDelimiter = ','
     let maxCount = 0
 
     for (const delimiter of delimiters) {
       let count = 0
       for (const line of lines) {
-        count += (line.split(delimiter).length - 1)
+        count += line.split(delimiter).length - 1
       }
-      
+
       if (count > maxCount) {
         maxCount = count
         bestDelimiter = delimiter

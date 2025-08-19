@@ -22,7 +22,7 @@ export function ColumnMapper({
   onMappingChange,
   initialMapping = {},
   autoDetect = false,
-  className
+  className,
 }: ColumnMapperProps) {
   const [mapping, setMapping] = useState<ColumnMapping>(initialMapping)
 
@@ -30,19 +30,20 @@ export function ColumnMapper({
   useEffect(() => {
     if (autoDetect && Object.keys(initialMapping).length === 0) {
       const detectedMapping: ColumnMapping = {}
-      
-      targetFields.forEach(field => {
+
+      targetFields.forEach((field) => {
         // Look for exact matches (case-insensitive)
-        const match = csvHeaders.find(header => 
-          header.toLowerCase() === field.key.toLowerCase() ||
-          header.toLowerCase() === field.label.toLowerCase()
+        const match = csvHeaders.find(
+          (header) =>
+            header.toLowerCase() === field.key.toLowerCase() ||
+            header.toLowerCase() === field.label.toLowerCase()
         )
-        
+
         if (match) {
           detectedMapping[field.key] = match
         }
       })
-      
+
       if (Object.keys(detectedMapping).length > 0) {
         setMapping(detectedMapping)
         onMappingChange(detectedMapping)
@@ -53,14 +54,14 @@ export function ColumnMapper({
   const handleMappingChange = (fieldKey: string, csvHeader: string) => {
     const newMapping = {
       ...mapping,
-      [fieldKey]: csvHeader
+      [fieldKey]: csvHeader,
     }
-    
+
     // Remove empty mappings
     if (!csvHeader) {
       delete newMapping[fieldKey]
     }
-    
+
     setMapping(newMapping)
     onMappingChange(newMapping)
   }
@@ -73,8 +74,8 @@ export function ColumnMapper({
   const isFieldMapped = (fieldKey: string) => !!mapping[fieldKey]
   const isValidMapping = () => {
     return targetFields
-      .filter(field => field.required)
-      .every(field => isFieldMapped(field.key))
+      .filter((field) => field.required)
+      .every((field) => isFieldMapped(field.key))
   }
 
   return (
@@ -91,34 +92,39 @@ export function ColumnMapper({
         </div>
 
         <div className="space-y-3">
-          {targetFields.map(field => (
+          {targetFields.map((field) => (
             <div key={field.key} className="flex items-center space-x-3">
               <div className="w-1/3">
-                <label 
+                <label
                   htmlFor={`select-${field.key}`}
                   className="block text-sm font-medium text-gray-700"
                 >
                   {field.label}
-                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                  {field.required && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
                 </label>
               </div>
-              
+
               <div className="w-2/3">
                 <select
                   id={`select-${field.key}`}
                   value={mapping[field.key] || ''}
-                  onChange={(e) => handleMappingChange(field.key, e.target.value)}
+                  onChange={(e) =>
+                    handleMappingChange(field.key, e.target.value)
+                  }
                   className={`
                     w-full p-2 border rounded-md
-                    ${field.required && !isFieldMapped(field.key) 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-300'
+                    ${
+                      field.required && !isFieldMapped(field.key)
+                        ? 'border-red-300 bg-red-50'
+                        : 'border-gray-300'
                     }
                   `}
                   role="combobox"
                 >
                   <option value="">-- Select Column --</option>
-                  {csvHeaders.map(header => (
+                  {csvHeaders.map((header) => (
                     <option key={header} value={header}>
                       {header}
                     </option>
@@ -132,10 +138,14 @@ export function ColumnMapper({
         <div className="pt-4 border-t">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              {targetFields.filter(f => f.required && isFieldMapped(f.key)).length} of{' '}
-              {targetFields.filter(f => f.required).length} required fields mapped
+              {
+                targetFields.filter((f) => f.required && isFieldMapped(f.key))
+                  .length
+              }{' '}
+              of {targetFields.filter((f) => f.required).length} required fields
+              mapped
             </div>
-            
+
             {isValidMapping() ? (
               <div className="text-sm text-green-600 font-medium">
                 ✓ Ready to import

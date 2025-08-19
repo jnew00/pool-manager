@@ -15,14 +15,15 @@ const pickService = new PickService()
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const methodError = validateMethod(request, ['GET'])
   if (methodError) return methodError
 
   try {
-    const pick = await pickService.getPickById(params.id)
-    
+    const { id } = await params
+    const pick = await pickService.getPickById(id)
+
     if (!pick) {
       throw new NotFoundError('Pick not found')
     }
@@ -38,18 +39,19 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const methodError = validateMethod(request, ['PUT'])
   if (methodError) return methodError
 
   try {
+    const { id } = await params
     const body = await parseRequestBody<{
       teamId?: string
       confidence?: number
     }>(request)
 
-    const pick = await pickService.updatePick(params.id, body)
+    const pick = await pickService.updatePick(id, body)
     return createSuccessResponse(pick)
   } catch (error) {
     return handleServiceError(error)
@@ -61,14 +63,15 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const methodError = validateMethod(request, ['DELETE'])
   if (methodError) return methodError
 
   try {
-    const success = await pickService.deletePick(params.id)
-    
+    const { id } = await params
+    const success = await pickService.deletePick(id)
+
     if (!success) {
       throw new NotFoundError('Pick not found')
     }

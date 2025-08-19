@@ -6,7 +6,11 @@ interface FileUploadProps {
   className?: string
 }
 
-export function FileUpload({ onUpload, maxSize = 10 * 1024 * 1024, className }: FileUploadProps) {
+export function FileUpload({
+  onUpload,
+  maxSize = 10 * 1024 * 1024,
+  className,
+}: FileUploadProps) {
   const [error, setError] = useState<string | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
 
@@ -19,7 +23,7 @@ export function FileUpload({ onUpload, maxSize = 10 * 1024 * 1024, className }: 
     // Check file type
     const allowedTypes = ['.csv', '.png', '.jpg', '.jpeg', '.pdf']
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
-    
+
     if (!allowedTypes.includes(fileExtension)) {
       return 'Unsupported file type'
     }
@@ -27,27 +31,33 @@ export function FileUpload({ onUpload, maxSize = 10 * 1024 * 1024, className }: 
     return null
   }
 
-  const handleFiles = useCallback((files: FileList | File[]) => {
-    setError(null)
-    const fileArray = Array.from(files)
-    
-    // Validate all files
-    for (const file of fileArray) {
-      const error = validateFile(file)
-      if (error) {
-        setError(error)
-        return
+  const handleFiles = useCallback(
+    (files: FileList | File[]) => {
+      setError(null)
+      const fileArray = Array.from(files)
+
+      // Validate all files
+      for (const file of fileArray) {
+        const error = validateFile(file)
+        if (error) {
+          setError(error)
+          return
+        }
       }
-    }
 
-    onUpload(fileArray)
-  }, [onUpload, maxSize])
+      onUpload(fileArray)
+    },
+    [onUpload, maxSize]
+  )
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-    handleFiles(e.dataTransfer.files)
-  }, [handleFiles])
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      setIsDragOver(false)
+      handleFiles(e.dataTransfer.files)
+    },
+    [handleFiles]
+  )
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -59,11 +69,14 @@ export function FileUpload({ onUpload, maxSize = 10 * 1024 * 1024, className }: 
     setIsDragOver(false)
   }, [])
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      handleFiles(e.target.files)
-    }
-  }, [handleFiles])
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+        handleFiles(e.target.files)
+      }
+    },
+    [handleFiles]
+  )
 
   return (
     <div className={className}>
@@ -98,11 +111,7 @@ export function FileUpload({ onUpload, maxSize = 10 * 1024 * 1024, className }: 
         role="button"
       />
 
-      {error && (
-        <div className="mt-2 text-red-600 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <div className="mt-2 text-red-600 text-sm">{error}</div>}
     </div>
   )
 }

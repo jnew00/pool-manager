@@ -41,6 +41,9 @@ const SAMPLE_POOLS = [
   {
     name: 'Main ATS Pool',
     type: 'ATS' as const,
+    season: 2025,
+    buyIn: 50,
+    maxEntries: 3,
     rules: {
       pushHandling: 'refund',
       lockDeadline: 'kickoff',
@@ -49,6 +52,9 @@ const SAMPLE_POOLS = [
   {
     name: 'Straight Up Pool',
     type: 'SU' as const,
+    season: 2025,
+    buyIn: 25,
+    maxEntries: 2,
     rules: {
       pushHandling: 'refund',
       lockDeadline: 'kickoff',
@@ -57,6 +63,9 @@ const SAMPLE_POOLS = [
   {
     name: 'Points Plus Challenge',
     type: 'POINTS_PLUS' as const,
+    season: 2025,
+    buyIn: 100,
+    maxEntries: 1,
     rules: {
       minGames: 4,
       requireEqualFavUnderdogs: true,
@@ -67,6 +76,9 @@ const SAMPLE_POOLS = [
   {
     name: 'Survivor Pool',
     type: 'SURVIVOR' as const,
+    season: 2025,
+    buyIn: 20,
+    maxEntries: 1,
     rules: {
       noRepeats: true,
       eliminationOnLoss: true,

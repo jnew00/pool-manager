@@ -1,5 +1,10 @@
 import { BaseDataProvider } from '../base-provider'
-import type { OddsProvider, OddsData, ApiResponse, ProviderConfig } from '../types'
+import type {
+  OddsProvider,
+  OddsData,
+  ApiResponse,
+  ProviderConfig,
+} from '../types'
 
 interface EspnGame {
   id: string
@@ -49,7 +54,7 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
       timeout: 10000,
       retries: 2,
       rateLimitPerMinute: 60,
-      ...config
+      ...config,
     }
 
     super('ESPN', defaultConfig)
@@ -63,14 +68,21 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
       const allOdds: OddsData[] = []
 
       // ESPN API doesn't support batch requests, so we'll get all games for the current week
-      const response = await this.makeRequest<EspnApiResponse>('/scoreboard')
-      
+      // Use seasontype=2 for regular season, week=1 for Week 1
+      const response = await this.makeRequest<EspnApiResponse>(
+        '/scoreboard?seasontype=2&week=1'
+      )
+
       if (!response.success || !response.data) {
         return response as ApiResponse<OddsData[]>
       }
 
-      const games = response.data.events.filter(game => gameIds.includes(game.id))
-      
+      // If gameIds is empty, return all games; otherwise filter
+      const games =
+        gameIds.length === 0
+          ? response.data.events
+          : response.data.events.filter((game) => gameIds.includes(game.id))
+
       for (const game of games) {
         const oddsData = this.parseGameOdds(game)
         if (oddsData) {
@@ -82,7 +94,7 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
         success: true,
         data: allOdds,
         rateLimitRemaining: response.rateLimitRemaining,
-        rateLimitReset: response.rateLimitReset
+        rateLimitReset: response.rateLimitReset,
       }
     })
   }
@@ -93,8 +105,10 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
   async getOddsForGame(gameId: string): Promise<ApiResponse<OddsData>> {
     return this.withRetry(async () => {
       // Try to get specific game first
-      const gameResponse = await this.makeRequest<{ events: EspnGame[] }>(`/scoreboard/${gameId}`)
-      
+      const gameResponse = await this.makeRequest<{ events: EspnGame[] }>(
+        `/scoreboard/${gameId}`
+      )
+
       if (gameResponse.success && gameResponse.data?.events?.[0]) {
         const oddsData = this.parseGameOdds(gameResponse.data.events[0])
         if (oddsData) {
@@ -102,19 +116,21 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
             success: true,
             data: oddsData,
             rateLimitRemaining: gameResponse.rateLimitRemaining,
-            rateLimitReset: gameResponse.rateLimitReset
+            rateLimitReset: gameResponse.rateLimitReset,
           }
         }
       }
 
       // Fall back to searching in current scoreboard
-      const scoreboardResponse = await this.makeRequest<EspnApiResponse>('/scoreboard')
-      
+      const scoreboardResponse = await this.makeRequest<EspnApiResponse>(
+        '/scoreboard?seasontype=2&week=1'
+      )
+
       if (!scoreboardResponse.success || !scoreboardResponse.data) {
         return scoreboardResponse as ApiResponse<OddsData>
       }
 
-      const game = scoreboardResponse.data.events.find(g => g.id === gameId)
+      const game = scoreboardResponse.data.events.find((g) => g.id === gameId)
       if (!game) {
         return {
           success: false,
@@ -123,8 +139,8 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
             endpoint: '/scoreboard',
             message: `Game ${gameId} not found`,
             timestamp: new Date(),
-            retryable: false
-          }
+            retryable: false,
+          },
         }
       }
 
@@ -137,8 +153,8 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
             endpoint: '/scoreboard',
             message: `No odds data available for game ${gameId}`,
             timestamp: new Date(),
-            retryable: true
-          }
+            retryable: true,
+          },
         }
       }
 
@@ -146,7 +162,7 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
         success: true,
         data: oddsData,
         rateLimitRemaining: scoreboardResponse.rateLimitRemaining,
-        rateLimitReset: scoreboardResponse.rateLimitReset
+        rateLimitReset: scoreboardResponse.rateLimitReset,
       }
     })
   }
@@ -157,13 +173,13 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
   async getAvailableBookmakers(): Promise<ApiResponse<string[]>> {
     return this.withRetry(async () => {
       const response = await this.makeRequest<EspnApiResponse>('/scoreboard')
-      
+
       if (!response.success || !response.data) {
         return response as ApiResponse<string[]>
       }
 
       const bookmakers = new Set<string>()
-      
+
       for (const game of response.data.events) {
         const competition = game.competitions[0]
         if (competition.odds) {
@@ -179,7 +195,7 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
         success: true,
         data: Array.from(bookmakers),
         rateLimitRemaining: response.rateLimitRemaining,
-        rateLimitReset: response.rateLimitReset
+        rateLimitReset: response.rateLimitReset,
       }
     })
   }
@@ -189,31 +205,41 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
    */
   private parseGameOdds(game: EspnGame): OddsData | null {
     const competition = game.competitions[0]
-    if (!competition.odds || competition.odds.length === 0) {
-      return null
-    }
 
-    const homeTeam = competition.competitors.find(c => c.homeAway === 'home')
-    const awayTeam = competition.competitors.find(c => c.homeAway === 'away')
+    const homeTeam = competition.competitors.find((c) => c.homeAway === 'home')
+    const awayTeam = competition.competitors.find((c) => c.homeAway === 'away')
 
     if (!homeTeam || !awayTeam) {
       return null
     }
 
-    // Use the first odds entry (ESPN usually provides multiple books)
-    const odds = competition.odds[0]
-
-    return {
+    // Create basic game data even without odds for schedule information
+    const gameData: OddsData = {
       gameId: game.id,
       source: this.name,
-      spread: odds.spread,
-      total: odds.overUnder,
-      moneylineHome: odds.homeTeamOdds?.moneyLine,
-      moneylineAway: odds.awayTeamOdds?.moneyLine,
+      spread: undefined,
+      total: undefined,
+      moneylineHome: undefined,
+      moneylineAway: undefined,
       capturedAt: new Date(),
-      bookmaker: odds.provider?.name || 'ESPN',
-      isOpening: false // ESPN typically shows current lines, not opening
+      bookmaker: 'ESPN',
+      isOpening: false,
+      homeTeam: homeTeam.team.abbreviation,
+      awayTeam: awayTeam.team.abbreviation,
+      kickoff: new Date(game.date),
     }
+
+    // Add odds data if available
+    if (competition.odds && competition.odds.length > 0) {
+      const odds = competition.odds[0]
+      gameData.spread = odds.spread
+      gameData.total = odds.overUnder
+      gameData.moneylineHome = odds.homeTeamOdds?.moneyLine
+      gameData.moneylineAway = odds.awayTeamOdds?.moneyLine
+      gameData.bookmaker = odds.provider?.name || 'ESPN'
+    }
+
+    return gameData
   }
 
   /**
@@ -231,15 +257,18 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
   /**
    * ESPN doesn't expose rate limit headers, so we'll estimate
    */
-  async getRateLimitStatus(): Promise<{ remaining: number; resetAt: Date } | null> {
+  async getRateLimitStatus(): Promise<{
+    remaining: number
+    resetAt: Date
+  } | null> {
     // ESPN is generally generous with their public API
     // Estimate based on our configured limit
     const resetAt = new Date()
     resetAt.setMinutes(resetAt.getMinutes() + 1)
-    
+
     return {
       remaining: this.config.rateLimitPerMinute || 60,
-      resetAt
+      resetAt,
     }
   }
 }

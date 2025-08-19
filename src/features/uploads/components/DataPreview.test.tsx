@@ -15,7 +15,7 @@ describe('DataPreview', () => {
     away_team: 'BUF',
     home_team: 'LAR',
     spread: '-2.5',
-    total: '47.5'
+    total: '47.5',
   }
 
   const invalidGameData: GameData = {
@@ -26,16 +26,20 @@ describe('DataPreview', () => {
     away_team: 'INVALID',
     home_team: 'LAR',
     spread: 'not-a-number',
-    total: '47.5'
+    total: '47.5',
   }
 
   const validationResults: ValidationResult[] = [
     { valid: true, errors: [], warnings: [] },
-    { 
-      valid: false, 
-      errors: ['Invalid date format. Expected YYYY-MM-DD', 'Invalid away team: INVALID', 'Spread must be a number'], 
-      warnings: [] 
-    }
+    {
+      valid: false,
+      errors: [
+        'Invalid date format. Expected YYYY-MM-DD',
+        'Invalid away team: INVALID',
+        'Spread must be a number',
+      ],
+      warnings: [],
+    },
   ]
 
   beforeEach(() => {
@@ -173,11 +177,13 @@ describe('DataPreview', () => {
   })
 
   it('should show pagination for large datasets', () => {
-    const manyGames = Array(25).fill(validGameData).map((game, index) => ({
-      ...game,
-      away_team: `T${index.toString().padStart(2, '0')}`,
-      home_team: 'LAR'
-    }))
+    const manyGames = Array(25)
+      .fill(validGameData)
+      .map((game, index) => ({
+        ...game,
+        away_team: `T${index.toString().padStart(2, '0')}`,
+        home_team: 'LAR',
+      }))
     const manyResults = Array(25).fill(validationResults[0])
 
     render(

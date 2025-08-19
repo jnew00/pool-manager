@@ -6,19 +6,35 @@ describe('CsvParser', () => {
 
   describe('parseHeaders', () => {
     it('should extract headers from CSV content', () => {
-      const csvContent = 'Date,Time,Away,Home,Spread,Total\n2024-09-08,13:00,BUF,LAR,-2.5,47.5'
-      
+      const csvContent =
+        'Date,Time,Away,Home,Spread,Total\n2024-09-08,13:00,BUF,LAR,-2.5,47.5'
+
       const headers = parser.parseHeaders(csvContent)
-      
-      expect(headers).toEqual(['Date', 'Time', 'Away', 'Home', 'Spread', 'Total'])
+
+      expect(headers).toEqual([
+        'Date',
+        'Time',
+        'Away',
+        'Home',
+        'Spread',
+        'Total',
+      ])
     })
 
     it('should handle headers with spaces and special characters', () => {
-      const csvContent = 'Game Date, Game Time, Away Team, Home Team, Point Spread, O/U Total\ndata'
-      
+      const csvContent =
+        'Game Date, Game Time, Away Team, Home Team, Point Spread, O/U Total\ndata'
+
       const headers = parser.parseHeaders(csvContent)
-      
-      expect(headers).toEqual(['Game Date', ' Game Time', ' Away Team', ' Home Team', ' Point Spread', ' O/U Total'])
+
+      expect(headers).toEqual([
+        'Game Date',
+        ' Game Time',
+        ' Away Team',
+        ' Home Team',
+        ' Point Spread',
+        ' O/U Total',
+      ])
     })
 
     it('should throw error for empty CSV', () => {
@@ -38,7 +54,7 @@ describe('CsvParser', () => {
         away_team: 'Away',
         home_team: 'Home',
         spread: 'Spread',
-        total: 'Total'
+        total: 'Total',
       }
 
       const result = parser.parseWithMapping(csvContent, mapping)
@@ -50,7 +66,7 @@ describe('CsvParser', () => {
         away_team: 'BUF',
         home_team: 'LAR',
         spread: '-2.5',
-        total: '47.5'
+        total: '47.5',
       })
       expect(result[1]).toEqual({
         date: '2024-09-08',
@@ -58,7 +74,7 @@ describe('CsvParser', () => {
         away_team: 'MIA',
         home_team: 'NE',
         spread: '3',
-        total: '42'
+        total: '42',
       })
     })
 
@@ -71,7 +87,7 @@ describe('CsvParser', () => {
         away_team: 'Away',
         home_team: 'Home',
         spread: 'Spread', // Missing column
-        total: 'Total'    // Missing column
+        total: 'Total', // Missing column
       }
 
       const result = parser.parseWithMapping(csvContent, mapping)
@@ -81,7 +97,7 @@ describe('CsvParser', () => {
         away_team: 'BUF',
         home_team: 'LAR',
         spread: '',
-        total: ''
+        total: '',
       })
     })
 
@@ -94,7 +110,7 @@ describe('CsvParser', () => {
       const mapping: ColumnMapping = {
         date: 'Date',
         away_team: 'Away',
-        home_team: 'Home'
+        home_team: 'Home',
       }
 
       const result = parser.parseWithMapping(csvContent, mapping)
@@ -108,40 +124,42 @@ describe('CsvParser', () => {
       const csvContent = 'Col1,Col2\nval1,val2'
       const mapping: ColumnMapping = {}
 
-      expect(() => parser.parseWithMapping(csvContent, mapping)).toThrow('No column mappings provided')
+      expect(() => parser.parseWithMapping(csvContent, mapping)).toThrow(
+        'No column mappings provided'
+      )
     })
   })
 
   describe('detectDelimiter', () => {
     it('should detect comma delimiter', () => {
       const csvContent = 'col1,col2,col3\nval1,val2,val3'
-      
+
       const delimiter = parser.detectDelimiter(csvContent)
-      
+
       expect(delimiter).toBe(',')
     })
 
     it('should detect semicolon delimiter', () => {
       const csvContent = 'col1;col2;col3\nval1;val2;val3'
-      
+
       const delimiter = parser.detectDelimiter(csvContent)
-      
+
       expect(delimiter).toBe(';')
     })
 
     it('should detect tab delimiter', () => {
       const csvContent = 'col1\tcol2\tcol3\nval1\tval2\tval3'
-      
+
       const delimiter = parser.detectDelimiter(csvContent)
-      
+
       expect(delimiter).toBe('\t')
     })
 
     it('should default to comma if uncertain', () => {
       const csvContent = 'single_column\nvalue'
-      
+
       const delimiter = parser.detectDelimiter(csvContent)
-      
+
       expect(delimiter).toBe(',')
     })
   })

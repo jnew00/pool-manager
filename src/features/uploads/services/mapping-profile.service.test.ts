@@ -5,8 +5,9 @@ import type { ColumnMapping } from '../lib/csv-parser'
 
 describe('MappingProfileService', () => {
   const service = new MappingProfileService()
-  
-  const getUniqueName = (baseName: string) => `Test ${baseName} ${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+  const getUniqueName = (baseName: string) =>
+    `Test ${baseName} ${Date.now()}-${Math.random().toString(36).slice(2)}`
 
   beforeEach(async () => {
     await DatabaseTestUtils.cleanupTestData()
@@ -26,8 +27,8 @@ describe('MappingProfileService', () => {
           away_team: 'Away',
           home_team: 'Home',
           spread: 'Spread',
-          total: 'Total'
-        } as ColumnMapping
+          total: 'Total',
+        } as ColumnMapping,
       }
 
       const profile = await service.createProfile(profileData)
@@ -42,30 +43,36 @@ describe('MappingProfileService', () => {
       const profileName = getUniqueName('Duplicate Profile')
       const profileData = {
         name: profileName,
-        columnMap: { date: 'Date' } as ColumnMapping
+        columnMap: { date: 'Date' } as ColumnMapping,
       }
 
       await service.createProfile(profileData)
 
-      await expect(service.createProfile(profileData)).rejects.toThrow('Profile name already exists')
+      await expect(service.createProfile(profileData)).rejects.toThrow(
+        'Profile name already exists'
+      )
     })
 
     it('should validate required fields', async () => {
       const invalidData = {
         name: '',
-        columnMap: {} as ColumnMapping
+        columnMap: {} as ColumnMapping,
       }
 
-      await expect(service.createProfile(invalidData)).rejects.toThrow('Profile name is required')
+      await expect(service.createProfile(invalidData)).rejects.toThrow(
+        'Profile name is required'
+      )
     })
 
     it('should validate column mapping is not empty', async () => {
       const invalidData = {
         name: 'Valid Name',
-        columnMap: {} as ColumnMapping
+        columnMap: {} as ColumnMapping,
       }
 
-      await expect(service.createProfile(invalidData)).rejects.toThrow('Column mapping cannot be empty')
+      await expect(service.createProfile(invalidData)).rejects.toThrow(
+        'Column mapping cannot be empty'
+      )
     })
   })
 
@@ -73,7 +80,7 @@ describe('MappingProfileService', () => {
     it('should return profile by ID', async () => {
       const profileData = {
         name: 'Test Profile',
-        columnMap: { date: 'Date', away_team: 'Away' } as ColumnMapping
+        columnMap: { date: 'Date', away_team: 'Away' } as ColumnMapping,
       }
 
       const created = await service.createProfile(profileData)
@@ -95,16 +102,16 @@ describe('MappingProfileService', () => {
     it('should return all profiles ordered by name', async () => {
       await service.createProfile({
         name: 'Z Test Profile',
-        columnMap: { date: 'Date' } as ColumnMapping
+        columnMap: { date: 'Date' } as ColumnMapping,
       })
-      
+
       await service.createProfile({
         name: 'A Test Profile',
-        columnMap: { away_team: 'Away' } as ColumnMapping
+        columnMap: { away_team: 'Away' } as ColumnMapping,
       })
 
       const profiles = await service.getAllProfiles()
-      const testProfiles = profiles.filter(p => p.name.includes('Test'))
+      const testProfiles = profiles.filter((p) => p.name.includes('Test'))
 
       expect(testProfiles).toHaveLength(2)
       expect(testProfiles[0].name).toBe('A Test Profile')
@@ -123,15 +130,15 @@ describe('MappingProfileService', () => {
       const originalName = getUniqueName('Original Name')
       const profileData = {
         name: originalName,
-        columnMap: { date: 'Date' } as ColumnMapping
+        columnMap: { date: 'Date' } as ColumnMapping,
       }
 
       const created = await service.createProfile(profileData)
-      
+
       const updatedName = getUniqueName('Updated Name')
       const updateData = {
         name: updatedName,
-        columnMap: { date: 'Date', away_team: 'Away' } as ColumnMapping
+        columnMap: { date: 'Date', away_team: 'Away' } as ColumnMapping,
       }
 
       const updated = await service.updateProfile(created.id, updateData)
@@ -143,29 +150,33 @@ describe('MappingProfileService', () => {
     it('should throw error when updating non-existent profile', async () => {
       const updateData = {
         name: 'Test',
-        columnMap: { date: 'Date' } as ColumnMapping
+        columnMap: { date: 'Date' } as ColumnMapping,
       }
 
-      await expect(service.updateProfile('non-existent', updateData)).rejects.toThrow('Profile not found')
+      await expect(
+        service.updateProfile('non-existent', updateData)
+      ).rejects.toThrow('Profile not found')
     })
 
     it('should prevent duplicate names when updating', async () => {
       const existingName = getUniqueName('Existing Profile')
       await service.createProfile({
         name: existingName,
-        columnMap: { date: 'Date' } as ColumnMapping
+        columnMap: { date: 'Date' } as ColumnMapping,
       })
 
       const profile2Name = getUniqueName('Profile 2')
       const profile2 = await service.createProfile({
         name: profile2Name,
-        columnMap: { away_team: 'Away' } as ColumnMapping
+        columnMap: { away_team: 'Away' } as ColumnMapping,
       })
 
-      await expect(service.updateProfile(profile2.id, {
-        name: existingName,
-        columnMap: { date: 'Date' } as ColumnMapping
-      })).rejects.toThrow('Profile name already exists')
+      await expect(
+        service.updateProfile(profile2.id, {
+          name: existingName,
+          columnMap: { date: 'Date' } as ColumnMapping,
+        })
+      ).rejects.toThrow('Profile name already exists')
     })
   })
 
@@ -173,7 +184,7 @@ describe('MappingProfileService', () => {
     it('should delete profile by ID', async () => {
       const profile = await service.createProfile({
         name: 'To Delete',
-        columnMap: { date: 'Date' } as ColumnMapping
+        columnMap: { date: 'Date' } as ColumnMapping,
       })
 
       const result = await service.deleteProfile(profile.id)
@@ -194,7 +205,7 @@ describe('MappingProfileService', () => {
       const profileName = getUniqueName('ESPN Standard')
       await service.createProfile({
         name: profileName,
-        columnMap: { date: 'Date' } as ColumnMapping
+        columnMap: { date: 'Date' } as ColumnMapping,
       })
 
       const found = await service.findByName(profileName)
@@ -213,26 +224,30 @@ describe('MappingProfileService', () => {
       const uniqueId = Math.random().toString(36).slice(2)
       const espnName = `Test ESPN Lines CSV ${uniqueId}`
       const yahooName = `Test Yahoo Sports CSV ${uniqueId}`
-      
+
       await service.createProfile({
         name: espnName,
-        columnMap: { date: 'Date' } as ColumnMapping
+        columnMap: { date: 'Date' } as ColumnMapping,
       })
-      
+
       await service.createProfile({
         name: yahooName,
-        columnMap: { away_team: 'Away' } as ColumnMapping
+        columnMap: { away_team: 'Away' } as ColumnMapping,
       })
 
       const results = await service.searchProfiles(uniqueId)
       expect(results).toHaveLength(2)
-      
+
       const espnResults = await service.searchProfiles('ESPN')
-      expect(espnResults.filter(r => r.name.includes(uniqueId))).toHaveLength(1)
+      expect(espnResults.filter((r) => r.name.includes(uniqueId))).toHaveLength(
+        1
+      )
     })
 
     it('should return empty array when no matches found', async () => {
-      const results = await service.searchProfiles('NonExistentUniqueString12345')
+      const results = await service.searchProfiles(
+        'NonExistentUniqueString12345'
+      )
       expect(results).toHaveLength(0)
     })
   })

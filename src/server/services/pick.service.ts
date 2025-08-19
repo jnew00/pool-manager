@@ -52,7 +52,10 @@ export class PickService extends BaseService {
     this.validateRequired(data.confidence, 'Confidence')
 
     if (data.confidence < 0 || data.confidence > 100) {
-      throw new ValidationError('Confidence must be between 0 and 100', 'confidence')
+      throw new ValidationError(
+        'Confidence must be between 0 and 100',
+        'confidence'
+      )
     }
   }
 
@@ -106,8 +109,32 @@ export class PickService extends BaseService {
   }
 
   private validateUpdateData(data: UpdatePickData): void {
-    if (data.confidence !== undefined && (data.confidence < 0 || data.confidence > 100)) {
-      throw new ValidationError('Confidence must be between 0 and 100', 'confidence')
+    if (
+      data.confidence !== undefined &&
+      (data.confidence < 0 || data.confidence > 100)
+    ) {
+      throw new ValidationError(
+        'Confidence must be between 0 and 100',
+        'confidence'
+      )
+    }
+  }
+
+  async getEntry(
+    entryId: string
+  ): Promise<{ id: string; poolId: string } | null> {
+    this.validateRequired(entryId, 'Entry ID')
+
+    try {
+      return await prisma.entry.findUnique({
+        where: { id: entryId },
+        select: {
+          id: true,
+          poolId: true,
+        },
+      })
+    } catch (error: any) {
+      throw this.handlePrismaError(error)
     }
   }
 

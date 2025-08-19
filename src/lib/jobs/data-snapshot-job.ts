@@ -35,7 +35,7 @@ export class DataSnapshotJob {
     this.startPreweekJob()
     this.startOddsUpdateJob()
     this.startWeatherUpdateJob()
-    
+
     console.log('Data snapshot jobs started')
   }
 
@@ -55,36 +55,46 @@ export class DataSnapshotJob {
    * Thursday 06:00 ET - Snapshot lines for upcoming week
    */
   private startPreweekJob(): void {
-    const task = cron.schedule(this.config.preweekSchedule, async () => {
-      console.log('Running preweek line snapshot job...')
-      await this.captureWeeklyLineSnapshots()
-    }, {
-      scheduled: false,
-      timezone: 'America/New_York'
-    })
+    const task = cron.schedule(
+      this.config.preweekSchedule,
+      async () => {
+        console.log('Running preweek line snapshot job...')
+        await this.captureWeeklyLineSnapshots()
+      },
+      {
+        scheduled: false,
+        timezone: 'America/New_York',
+      }
+    )
 
     this.scheduledTasks.set('preweek-lines', task)
     task.start()
-    console.log(`Preweek line snapshot job scheduled: ${this.config.preweekSchedule}`)
+    console.log(
+      `Preweek line snapshot job scheduled: ${this.config.preweekSchedule}`
+    )
   }
 
   /**
    * Sunday every 15 minutes - Update odds during games
    */
   private startOddsUpdateJob(): void {
-    const task = cron.schedule(this.config.weeklySchedule, async () => {
-      const now = new Date()
-      const dayOfWeek = now.getDay() // 0 = Sunday
-      
-      // Only run on Sundays and Mondays (for late games)
-      if (dayOfWeek === 0 || dayOfWeek === 1) {
-        console.log('Running odds update job...')
-        await this.updateGameOdds()
+    const task = cron.schedule(
+      this.config.weeklySchedule,
+      async () => {
+        const now = new Date()
+        const dayOfWeek = now.getDay() // 0 = Sunday
+
+        // Only run on Sundays and Mondays (for late games)
+        if (dayOfWeek === 0 || dayOfWeek === 1) {
+          console.log('Running odds update job...')
+          await this.updateGameOdds()
+        }
+      },
+      {
+        scheduled: false,
+        timezone: 'America/New_York',
       }
-    }, {
-      scheduled: false,
-      timezone: 'America/New_York'
-    })
+    )
 
     this.scheduledTasks.set('odds-updates', task)
     task.start()
@@ -95,12 +105,16 @@ export class DataSnapshotJob {
    * Every 6 hours - Update weather forecasts
    */
   private startWeatherUpdateJob(): void {
-    const task = cron.schedule(this.config.weatherSchedule, async () => {
-      console.log('Running weather update job...')
-      await this.updateWeatherForecasts()
-    }, {
-      scheduled: false
-    })
+    const task = cron.schedule(
+      this.config.weatherSchedule,
+      async () => {
+        console.log('Running weather update job...')
+        await this.updateWeatherForecasts()
+      },
+      {
+        scheduled: false,
+      }
+    )
 
     this.scheduledTasks.set('weather-updates', task)
     task.start()
@@ -117,7 +131,7 @@ export class DataSnapshotJob {
     }
 
     this.isRunning = true
-    
+
     try {
       // Get upcoming games for the current week
       const upcomingGames = await this.getUpcomingGames()
@@ -139,7 +153,10 @@ export class DataSnapshotJob {
           // Rate limiting - wait between requests
           await this.sleep(1000)
         } catch (error) {
-          console.error(`Failed to capture snapshot for game ${game.id}:`, error)
+          console.error(
+            `Failed to capture snapshot for game ${game.id}:`,
+            error
+          )
         }
       }
     } catch (error) {
@@ -159,8 +176,10 @@ export class DataSnapshotJob {
 
       for (const game of activeGames) {
         try {
-          const oddsResponse = await dataProviderRegistry.getOddsForGame(game.id)
-          
+          const oddsResponse = await dataProviderRegistry.getOddsForGame(
+            game.id
+          )
+
           if (oddsResponse.success && oddsResponse.data) {
             await this.saveOddsUpdate(game.id, oddsResponse.data)
           }
@@ -216,12 +235,12 @@ export class DataSnapshotJob {
       where: {
         kickoff: {
           gte: now,
-          lte: nextWeek
-        }
+          lte: nextWeek,
+        },
       },
       orderBy: {
-        kickoff: 'asc'
-      }
+        kickoff: 'asc',
+      },
     })
   }
 
@@ -237,9 +256,9 @@ export class DataSnapshotJob {
       where: {
         kickoff: {
           gte: fourHoursAgo,
-          lte: twoHoursFromNow
-        }
-      }
+          lte: twoHoursFromNow,
+        },
+      },
     })
   }
 
@@ -254,22 +273,25 @@ export class DataSnapshotJob {
       where: {
         kickoff: {
           gte: now,
-          lte: nextWeek
+          lte: nextWeek,
         },
         // Filter out dome stadiums - this would need venue data
         venue: {
           not: {
-            contains: 'dome'
-          }
-        }
-      }
+            contains: 'dome',
+          },
+        },
+      },
     })
   }
 
   /**
    * Save line snapshot to database
    */
-  private async saveLineSnapshot(gameId: string, snapshot: GameDataSnapshot): Promise<void> {
+  private async saveLineSnapshot(
+    gameId: string,
+    snapshot: GameDataSnapshot
+  ): Promise<void> {
     for (const odds of snapshot.odds) {
       await prisma.line.create({
         data: {
@@ -280,8 +302,8 @@ export class DataSnapshotJob {
           moneylineHome: odds.moneylineHome,
           moneylineAway: odds.moneylineAway,
           capturedAt: odds.capturedAt,
-          isUserProvided: false
-        }
+          isUserProvided: false,
+        },
       })
     }
   }
@@ -299,8 +321,8 @@ export class DataSnapshotJob {
         moneylineHome: odds.moneylineHome,
         moneylineAway: odds.moneylineAway,
         capturedAt: odds.capturedAt,
-        isUserProvided: false
-      }
+        isUserProvided: false,
+      },
     })
   }
 
@@ -312,7 +334,7 @@ export class DataSnapshotJob {
     console.log(`Weather update for game ${gameId}:`, {
       temperature: weather.temperature,
       windSpeed: weather.windSpeed,
-      conditions: weather.conditions
+      conditions: weather.conditions,
     })
   }
 
@@ -320,7 +342,7 @@ export class DataSnapshotJob {
    * Simple sleep utility
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   /**
@@ -328,7 +350,7 @@ export class DataSnapshotJob {
    */
   getStatus(): Record<string, boolean> {
     const status: Record<string, boolean> = {}
-    
+
     for (const [name, task] of this.scheduledTasks) {
       status[name] = task.getStatus() === 'scheduled'
     }
@@ -361,7 +383,7 @@ export const defaultSnapshotConfig: SnapshotJobConfig = {
   schedule: '0 6 * * 4', // Default: Thursday 6 AM
   preweekSchedule: '0 6 * * 4', // Thursday 06:00 ET
   weeklySchedule: '*/15 * * * 0,1', // Every 15 minutes on Sunday/Monday
-  weatherSchedule: '0 */6 * * *' // Every 6 hours
+  weatherSchedule: '0 */6 * * *', // Every 6 hours
 }
 
 // Global instance

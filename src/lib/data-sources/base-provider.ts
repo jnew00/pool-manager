@@ -1,4 +1,9 @@
-import type { DataProvider, ProviderConfig, ApiResponse, DataSourceError } from './types'
+import type {
+  DataProvider,
+  ProviderConfig,
+  ApiResponse,
+  DataSourceError,
+} from './types'
 
 /**
  * Base class for all data providers with common functionality
@@ -27,7 +32,10 @@ export abstract class BaseDataProvider implements DataProvider {
   /**
    * Rate limit status - can be overridden
    */
-  async getRateLimitStatus(): Promise<{ remaining: number; resetAt: Date } | null> {
+  async getRateLimitStatus(): Promise<{
+    remaining: number
+    resetAt: Date
+  } | null> {
     // Default implementation returns null - override if provider supports rate limit headers
     return null
   }
@@ -43,7 +51,7 @@ export abstract class BaseDataProvider implements DataProvider {
   ): Promise<ApiResponse<T>> {
     const url = `${this.config.baseUrl}${endpoint}`
     const timeout = this.config.timeout || 10000
-    
+
     // Add API key if provided
     if (this.config.apiKey) {
       headers['Authorization'] = `Bearer ${this.config.apiKey}`
@@ -58,10 +66,10 @@ export abstract class BaseDataProvider implements DataProvider {
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': 'PoolManager/1.0',
-          ...headers
+          ...headers,
         },
         body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal
+        signal: controller.signal,
       })
 
       clearTimeout(timeoutId)
@@ -72,14 +80,14 @@ export abstract class BaseDataProvider implements DataProvider {
           endpoint,
           message: `HTTP ${response.status}: ${response.statusText}`,
           timestamp: new Date(),
-          retryable: response.status >= 500 || response.status === 429
+          retryable: response.status >= 500 || response.status === 429,
         }
 
         return {
           success: false,
           error,
           rateLimitRemaining: this.parseRateLimitHeader(response, 'remaining'),
-          rateLimitReset: this.parseRateLimitHeader(response, 'reset')
+          rateLimitReset: this.parseRateLimitHeader(response, 'reset'),
         }
       }
 
@@ -89,7 +97,7 @@ export abstract class BaseDataProvider implements DataProvider {
         success: true,
         data,
         rateLimitRemaining: this.parseRateLimitHeader(response, 'remaining'),
-        rateLimitReset: this.parseRateLimitHeader(response, 'reset')
+        rateLimitReset: this.parseRateLimitHeader(response, 'reset'),
       }
     } catch (error) {
       clearTimeout(timeoutId)
@@ -99,12 +107,12 @@ export abstract class BaseDataProvider implements DataProvider {
         endpoint,
         message: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date(),
-        retryable: true
+        retryable: true,
       }
 
       return {
         success: false,
-        error: dataSourceError
+        error: dataSourceError,
       }
     }
   }
@@ -112,16 +120,21 @@ export abstract class BaseDataProvider implements DataProvider {
   /**
    * Parse rate limit headers from response
    */
-  private parseRateLimitHeader(response: Response, type: 'remaining' | 'reset'): number | Date | undefined {
+  private parseRateLimitHeader(
+    response: Response,
+    type: 'remaining' | 'reset'
+  ): number | Date | undefined {
     if (type === 'remaining') {
-      const remaining = response.headers.get('X-RateLimit-Remaining') || 
-                       response.headers.get('X-Rate-Limit-Remaining')
+      const remaining =
+        response.headers.get('X-RateLimit-Remaining') ||
+        response.headers.get('X-Rate-Limit-Remaining')
       return remaining ? parseInt(remaining, 10) : undefined
     }
 
     if (type === 'reset') {
-      const reset = response.headers.get('X-RateLimit-Reset') || 
-                   response.headers.get('X-Rate-Limit-Reset')
+      const reset =
+        response.headers.get('X-RateLimit-Reset') ||
+        response.headers.get('X-Rate-Limit-Reset')
       return reset ? new Date(parseInt(reset, 10) * 1000) : undefined
     }
   }
@@ -146,13 +159,13 @@ export abstract class BaseDataProvider implements DataProvider {
 
       if (attempt < maxRetries) {
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000)
-        await new Promise(resolve => setTimeout(resolve, delay))
+        await new Promise((resolve) => setTimeout(resolve, delay))
       }
     }
 
     return {
       success: false,
-      error: lastError!
+      error: lastError!,
     }
   }
 }

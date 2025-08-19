@@ -63,7 +63,10 @@ export class MappingProfileService {
   /**
    * Update profile data
    */
-  async updateProfile(id: string, data: UpdateMappingProfileData): Promise<MappingProfile> {
+  async updateProfile(
+    id: string,
+    data: UpdateMappingProfileData
+  ): Promise<MappingProfile> {
     // Check if profile exists
     const existing = await this.getProfile(id)
     if (!existing) {

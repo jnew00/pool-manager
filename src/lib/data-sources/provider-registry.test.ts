@@ -17,21 +17,21 @@ describe('ProviderRegistry', () => {
   describe('provider registration', () => {
     it('should register odds provider', () => {
       registry.registerOddsProvider(mockOddsProvider)
-      
+
       const providers = registry.getAvailableProviders()
       expect(providers.odds).toContain('Mock Odds')
     })
 
     it('should register weather provider', () => {
       registry.registerWeatherProvider(mockWeatherProvider)
-      
+
       const providers = registry.getAvailableProviders()
       expect(providers.weather).toContain('Mock Weather')
     })
 
     it('should set first provider as default', () => {
       registry.registerOddsProvider(mockOddsProvider)
-      
+
       const providers = registry.getAvailableProviders()
       expect(providers.odds[0]).toBe('Mock Odds')
     })
@@ -40,10 +40,10 @@ describe('ProviderRegistry', () => {
       // Create providers with different names via config
       const provider1 = new MockOddsProvider({ name: 'Provider1' })
       const provider2 = new MockOddsProvider({ name: 'Provider2' })
-      
+
       registry.registerOddsProvider(provider1)
       registry.registerOddsProvider(provider2, true) // Set as default
-      
+
       const providers = registry.getAvailableProviders()
       expect(providers.odds).toContain(provider1.name)
       expect(providers.odds).toContain(provider2.name)
@@ -57,7 +57,7 @@ describe('ProviderRegistry', () => {
 
     it('should get odds for single game', async () => {
       const response = await registry.getOddsForGame('game1')
-      
+
       expect(response.success).toBe(true)
       expect(response.data).toBeDefined()
       expect(response.data?.gameId).toBe('game1')
@@ -65,7 +65,7 @@ describe('ProviderRegistry', () => {
 
     it('should get odds for multiple games', async () => {
       const response = await registry.getOddsForGames(['game1', 'game2'])
-      
+
       expect(response.success).toBe(true)
       expect(response.data).toBeDefined()
       expect(response.data?.length).toBe(2)
@@ -73,7 +73,7 @@ describe('ProviderRegistry', () => {
 
     it('should handle non-existent game', async () => {
       const response = await registry.getOddsForGame('nonexistent')
-      
+
       expect(response.success).toBe(false)
       expect(response.error).toBeDefined()
     })
@@ -81,7 +81,7 @@ describe('ProviderRegistry', () => {
     it('should return error when no provider registered', async () => {
       const emptyRegistry = new ProviderRegistry()
       const response = await emptyRegistry.getOddsForGame('game1')
-      
+
       expect(response.success).toBe(false)
       expect(response.error?.message).toContain('No odds provider available')
     })
@@ -96,12 +96,16 @@ describe('ProviderRegistry', () => {
       // Add specific weather data for this test
       mockWeatherProvider.addMockWeather('game1', {
         venue: 'Test Stadium',
-        temperature: 75
+        temperature: 75,
       })
-      
+
       const kickoffTime = new Date('2024-09-08T13:00:00Z')
-      const response = await registry.getWeatherForGame('game1', 'Test Stadium', kickoffTime)
-      
+      const response = await registry.getWeatherForGame(
+        'game1',
+        'Test Stadium',
+        kickoffTime
+      )
+
       expect(response.success).toBe(true)
       expect(response.data).toBeDefined()
       expect(response.data?.venue).toBe('Test Stadium')
@@ -110,8 +114,12 @@ describe('ProviderRegistry', () => {
     it('should return error when no weather provider registered', async () => {
       const emptyRegistry = new ProviderRegistry()
       const kickoffTime = new Date('2024-09-08T13:00:00Z')
-      const response = await emptyRegistry.getWeatherForGame('game1', 'Test Stadium', kickoffTime)
-      
+      const response = await emptyRegistry.getWeatherForGame(
+        'game1',
+        'Test Stadium',
+        kickoffTime
+      )
+
       expect(response.success).toBe(false)
       expect(response.error?.message).toContain('No weather provider available')
     })
@@ -132,7 +140,7 @@ describe('ProviderRegistry', () => {
         'team1',
         'team2'
       )
-      
+
       expect(snapshot.gameId).toBe('game1')
       expect(snapshot.odds).toBeDefined()
       expect(snapshot.weather).toBeDefined()
@@ -143,7 +151,7 @@ describe('ProviderRegistry', () => {
     it('should handle partial data gracefully', async () => {
       // Set odds provider to fail
       mockOddsProvider.setFailureMode(true)
-      
+
       const kickoffTime = new Date('2024-09-08T13:00:00Z')
       const snapshot = await registry.getGameDataSnapshot(
         'game1',
@@ -152,7 +160,7 @@ describe('ProviderRegistry', () => {
         'team1',
         'team2'
       )
-      
+
       expect(snapshot.gameId).toBe('game1')
       expect(snapshot.odds).toHaveLength(0) // Should be empty due to failure
       expect(snapshot.weather).toBeDefined() // Should still have weather
@@ -167,16 +175,16 @@ describe('ProviderRegistry', () => {
 
     it('should check health of all providers', async () => {
       const health = await registry.checkProviderHealth()
-      
+
       expect(health['odds:Mock Odds']).toBe(true)
       expect(health['weather:Mock Weather']).toBe(true)
     })
 
     it('should report unhealthy providers', async () => {
       mockOddsProvider.setFailureMode(true)
-      
+
       const health = await registry.checkProviderHealth()
-      
+
       expect(health['odds:Mock Odds']).toBe(false)
       expect(health['weather:Mock Weather']).toBe(true)
     })
@@ -186,28 +194,28 @@ describe('ProviderRegistry', () => {
     it('should use specified provider', async () => {
       const provider1 = new MockOddsProvider({ name: 'Provider1' })
       const provider2 = new MockOddsProvider({ name: 'Provider2' })
-      
+
       // Clear default data and add specific test data
       provider1.clearMockData()
       provider2.clearMockData()
       provider1.addMockGame('test', { spread: -3.5 })
       provider2.addMockGame('test', { spread: -7.0 })
-      
+
       registry.registerOddsProvider(provider1)
       registry.registerOddsProvider(provider2)
-      
+
       const response1 = await registry.getOddsForGame('test', provider1.name)
       const response2 = await registry.getOddsForGame('test', provider2.name)
-      
+
       expect(response1.data?.spread).toBe(-3.5)
       expect(response2.data?.spread).toBe(-7.0)
     })
 
     it('should fall back to default provider', async () => {
       registry.registerOddsProvider(mockOddsProvider)
-      
+
       const response = await registry.getOddsForGame('game1') // No provider specified
-      
+
       expect(response.success).toBe(true)
       expect(response.data?.source).toBe('Mock Odds')
     })

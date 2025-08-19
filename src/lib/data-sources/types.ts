@@ -12,6 +12,9 @@ export interface OddsData {
   capturedAt: Date
   bookmaker?: string
   isOpening?: boolean
+  homeTeam?: string // Team abbreviation for matching
+  awayTeam?: string // Team abbreviation for matching
+  kickoff?: Date // Game date/time from provider
 }
 
 export interface WeatherData {
@@ -73,7 +76,7 @@ export interface ApiResponse<T> {
 export interface DataProvider {
   readonly name: string
   readonly config: ProviderConfig
-  
+
   healthCheck(): Promise<boolean>
   getRateLimitStatus(): Promise<{
     remaining: number
@@ -94,8 +97,17 @@ export interface OddsProvider extends DataProvider {
  * Interface for weather data providers
  */
 export interface WeatherProvider extends DataProvider {
-  getWeatherForGame(gameId: string, venue: string, kickoffTime: Date): Promise<ApiResponse<WeatherData>>
-  getWeatherForVenue(venue: string, lat: number, lon: number, time: Date): Promise<ApiResponse<WeatherData>>
+  getWeatherForGame(
+    gameId: string,
+    venue: string,
+    kickoffTime: Date
+  ): Promise<ApiResponse<WeatherData>>
+  getWeatherForVenue(
+    venue: string,
+    lat: number,
+    lon: number,
+    time: Date
+  ): Promise<ApiResponse<WeatherData>>
 }
 
 /**
@@ -103,8 +115,13 @@ export interface WeatherProvider extends DataProvider {
  */
 export interface InjuryProvider extends DataProvider {
   getInjuriesForTeam(teamId: string): Promise<ApiResponse<InjuryData[]>>
-  getInjuriesForWeek(season: number, week: number): Promise<ApiResponse<InjuryData[]>>
-  getPlayerInjuryStatus(playerId: string): Promise<ApiResponse<InjuryData | null>>
+  getInjuriesForWeek(
+    season: number,
+    week: number
+  ): Promise<ApiResponse<InjuryData[]>>
+  getPlayerInjuryStatus(
+    playerId: string
+  ): Promise<ApiResponse<InjuryData | null>>
 }
 
 /**

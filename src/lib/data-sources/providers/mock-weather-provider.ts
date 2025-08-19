@@ -1,10 +1,18 @@
 import { BaseDataProvider } from '../base-provider'
-import type { WeatherProvider, WeatherData, ApiResponse, ProviderConfig } from '../types'
+import type {
+  WeatherProvider,
+  WeatherData,
+  ApiResponse,
+  ProviderConfig,
+} from '../types'
 
 /**
  * Mock weather provider for testing and development
  */
-export class MockWeatherProvider extends BaseDataProvider implements WeatherProvider {
+export class MockWeatherProvider
+  extends BaseDataProvider
+  implements WeatherProvider
+{
   private mockData: Map<string, WeatherData> = new Map()
   private shouldFail = false
   private failureMessage = 'Mock weather provider failure'
@@ -17,7 +25,7 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
       timeout: 100,
       retries: 1,
       rateLimitPerMinute: 1000,
-      ...config
+      ...config,
     }
 
     super(defaultConfig.name, defaultConfig)
@@ -27,13 +35,18 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
   /**
    * Get weather for a game
    */
-  async getWeatherForGame(gameId: string, venue: string, kickoffTime: Date): Promise<ApiResponse<WeatherData>> {
+  async getWeatherForGame(
+    gameId: string,
+    venue: string,
+    kickoffTime: Date
+  ): Promise<ApiResponse<WeatherData>> {
     if (this.shouldFail) {
       return this.createFailureResponse<WeatherData>()
     }
 
-    const weather = this.mockData.get(gameId) || this.createDefaultWeather(gameId, venue)
-    
+    const weather =
+      this.mockData.get(gameId) || this.createDefaultWeather(gameId, venue)
+
     // Update the venue to match the requested venue
     const updatedWeather = { ...weather, gameId, venue }
 
@@ -41,26 +54,33 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
       success: true,
       data: updatedWeather,
       rateLimitRemaining: 999,
-      rateLimitReset: new Date(Date.now() + 60000)
+      rateLimitReset: new Date(Date.now() + 60000),
     }
   }
 
   /**
    * Get weather for venue coordinates
    */
-  async getWeatherForVenue(venue: string, lat: number, lon: number, time: Date): Promise<ApiResponse<WeatherData>> {
+  async getWeatherForVenue(
+    venue: string,
+    lat: number,
+    lon: number,
+    time: Date
+  ): Promise<ApiResponse<WeatherData>> {
     if (this.shouldFail) {
       return this.createFailureResponse<WeatherData>()
     }
 
     const venueKey = `${venue}-${lat}-${lon}`
-    const weather = this.mockData.get(venueKey) || this.createDefaultWeather('', venue, lat, lon)
+    const weather =
+      this.mockData.get(venueKey) ||
+      this.createDefaultWeather('', venue, lat, lon)
 
     return {
       success: true,
       data: weather,
       rateLimitRemaining: 999,
-      rateLimitReset: new Date(Date.now() + 60000)
+      rateLimitReset: new Date(Date.now() + 60000),
     }
   }
 
@@ -77,7 +97,7 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
   async getRateLimitStatus(): Promise<{ remaining: number; resetAt: Date }> {
     return {
       remaining: 999,
-      resetAt: new Date(Date.now() + 60000)
+      resetAt: new Date(Date.now() + 60000),
     }
   }
 
@@ -99,11 +119,16 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
       isDome: false,
       capturedAt: new Date(),
       source: this.name,
-      ...weather
+      ...weather,
     })
   }
 
-  addMockWeatherForVenue(venue: string, lat: number, lon: number, weather: Partial<WeatherData>): void {
+  addMockWeatherForVenue(
+    venue: string,
+    lat: number,
+    lon: number,
+    weather: Partial<WeatherData>
+  ): void {
     const venueKey = `${venue}-${lat}-${lon}`
     this.mockData.set(venueKey, {
       gameId: '',
@@ -119,11 +144,14 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
       isDome: false,
       capturedAt: new Date(),
       source: this.name,
-      ...weather
+      ...weather,
     })
   }
 
-  setFailureMode(shouldFail: boolean, message = 'Mock weather provider failure'): void {
+  setFailureMode(
+    shouldFail: boolean,
+    message = 'Mock weather provider failure'
+  ): void {
     this.shouldFail = shouldFail
     this.failureMessage = message
   }
@@ -147,7 +175,7 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
       windDirection: 'SW',
       precipitationChance: 0.0,
       humidity: 0.4,
-      conditions: 'Clear skies'
+      conditions: 'Clear skies',
     })
   }
 
@@ -158,7 +186,7 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
       windDirection: 'NW',
       precipitationChance: 0.1,
       humidity: 0.5,
-      conditions: 'Windy'
+      conditions: 'Windy',
     })
   }
 
@@ -169,7 +197,7 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
       windDirection: 'E',
       precipitationChance: 0.8,
       humidity: 0.9,
-      conditions: 'Heavy rain'
+      conditions: 'Heavy rain',
     })
   }
 
@@ -180,7 +208,7 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
       windDirection: 'N',
       precipitationChance: 0.9,
       humidity: 0.8,
-      conditions: 'Snow'
+      conditions: 'Snow',
     })
   }
 
@@ -192,7 +220,7 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
       precipitationChance: 0.0,
       humidity: 0.4,
       conditions: 'Indoor climate controlled',
-      isDome: true
+      isDome: true,
     })
   }
 
@@ -208,7 +236,12 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
     this.createDomeWeather('game5')
   }
 
-  private createDefaultWeather(gameId: string, venue: string, lat = 40.0, lon = -80.0): WeatherData {
+  private createDefaultWeather(
+    gameId: string,
+    venue: string,
+    lat = 40.0,
+    lon = -80.0
+  ): WeatherData {
     return {
       gameId,
       venue,
@@ -220,9 +253,11 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
       precipitationChance: 0.2,
       humidity: 0.6,
       conditions: 'Partly cloudy',
-      isDome: venue.toLowerCase().includes('dome') || venue.toLowerCase().includes('stadium'),
+      isDome:
+        venue.toLowerCase().includes('dome') ||
+        venue.toLowerCase().includes('stadium'),
       capturedAt: new Date(),
-      source: this.name
+      source: this.name,
     }
   }
 
@@ -234,8 +269,8 @@ export class MockWeatherProvider extends BaseDataProvider implements WeatherProv
         endpoint: '/mock-weather',
         message: this.failureMessage,
         timestamp: new Date(),
-        retryable: true
-      }
+        retryable: true,
+      },
     }
   }
 }

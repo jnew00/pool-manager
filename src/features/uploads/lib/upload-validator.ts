@@ -26,10 +26,38 @@ export interface ValidationSummary {
 
 export class UploadValidator {
   private readonly NFL_TEAMS = [
-    'ARI', 'ATL', 'BAL', 'BUF', 'CAR', 'CHI', 'CIN', 'CLE', 'DAL', 'DEN',
-    'DET', 'GB', 'HOU', 'IND', 'JAX', 'KC', 'LVR', 'LAC', 'LAR', 'MIA',
-    'MIN', 'NE', 'NO', 'NYG', 'NYJ', 'PHI', 'PIT', 'SEA', 'SF', 'TB',
-    'TEN', 'WAS'
+    'ARI',
+    'ATL',
+    'BAL',
+    'BUF',
+    'CAR',
+    'CHI',
+    'CIN',
+    'CLE',
+    'DAL',
+    'DEN',
+    'DET',
+    'GB',
+    'HOU',
+    'IND',
+    'JAX',
+    'KC',
+    'LVR',
+    'LAC',
+    'LAR',
+    'MIA',
+    'MIN',
+    'NE',
+    'NO',
+    'NYG',
+    'NYJ',
+    'PHI',
+    'PIT',
+    'SEA',
+    'SF',
+    'TB',
+    'TEN',
+    'WAS',
   ]
 
   /**
@@ -100,7 +128,7 @@ export class UploadValidator {
     return {
       valid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     }
   }
 
@@ -118,7 +146,9 @@ export class UploadValidator {
       // Check for duplicates
       const gameKey = `${game.away_team}@${game.home_team}-${game.date}`
       if (gameKeys.has(gameKey)) {
-        result.warnings.push(`Duplicate game: ${game.away_team} @ ${game.home_team} on ${game.date}`)
+        result.warnings.push(
+          `Duplicate game: ${game.away_team} @ ${game.home_team} on ${game.date}`
+        )
       } else {
         gameKeys.add(gameKey)
       }
@@ -134,16 +164,16 @@ export class UploadValidator {
    */
   getSummary(results: ValidationResult[]): ValidationSummary {
     const total = results.length
-    const valid = results.filter(r => r.valid).length
+    const valid = results.filter((r) => r.valid).length
     const invalid = total - valid
-    const warnings = results.filter(r => r.warnings.length > 0).length
+    const warnings = results.filter((r) => r.warnings.length > 0).length
 
     const errorMessages = results
-      .flatMap(r => r.errors)
+      .flatMap((r) => r.errors)
       .filter((error, index, arr) => arr.indexOf(error) === index) // Unique errors
 
     const warningMessages = results
-      .flatMap(r => r.warnings)
+      .flatMap((r) => r.warnings)
       .filter((warning, index, arr) => arr.indexOf(warning) === index) // Unique warnings
 
     return {
@@ -152,7 +182,7 @@ export class UploadValidator {
       invalid,
       warnings,
       errorMessages,
-      warningMessages
+      warningMessages,
     }
   }
 }

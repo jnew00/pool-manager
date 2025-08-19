@@ -1,5 +1,10 @@
 import { BaseDataProvider } from '../base-provider'
-import type { OddsProvider, OddsData, ApiResponse, ProviderConfig } from '../types'
+import type {
+  OddsProvider,
+  OddsData,
+  ApiResponse,
+  ProviderConfig,
+} from '../types'
 
 /**
  * Mock odds provider for testing and development
@@ -17,7 +22,7 @@ export class MockOddsProvider extends BaseDataProvider implements OddsProvider {
       timeout: 100,
       retries: 1,
       rateLimitPerMinute: 1000,
-      ...config
+      ...config,
     }
 
     super(defaultConfig.name, defaultConfig)
@@ -33,10 +38,16 @@ export class MockOddsProvider extends BaseDataProvider implements OddsProvider {
     }
 
     const odds: OddsData[] = []
-    for (const gameId of gameIds) {
-      const gameOdds = this.mockData.get(gameId)
-      if (gameOdds) {
-        odds.push(gameOdds)
+
+    // If gameIds is empty, return all mock data
+    if (gameIds.length === 0) {
+      odds.push(...Array.from(this.mockData.values()))
+    } else {
+      for (const gameId of gameIds) {
+        const gameOdds = this.mockData.get(gameId)
+        if (gameOdds) {
+          odds.push(gameOdds)
+        }
       }
     }
 
@@ -44,7 +55,7 @@ export class MockOddsProvider extends BaseDataProvider implements OddsProvider {
       success: true,
       data: odds,
       rateLimitRemaining: 999,
-      rateLimitReset: new Date(Date.now() + 60000)
+      rateLimitReset: new Date(Date.now() + 60000),
     }
   }
 
@@ -65,8 +76,8 @@ export class MockOddsProvider extends BaseDataProvider implements OddsProvider {
           endpoint: '/odds',
           message: `Game ${gameId} not found`,
           timestamp: new Date(),
-          retryable: false
-        }
+          retryable: false,
+        },
       }
     }
 
@@ -74,7 +85,7 @@ export class MockOddsProvider extends BaseDataProvider implements OddsProvider {
       success: true,
       data: odds,
       rateLimitRemaining: 999,
-      rateLimitReset: new Date(Date.now() + 60000)
+      rateLimitReset: new Date(Date.now() + 60000),
     }
   }
 
@@ -90,7 +101,7 @@ export class MockOddsProvider extends BaseDataProvider implements OddsProvider {
       success: true,
       data: ['MockBook1', 'MockBook2', 'MockBook3'],
       rateLimitRemaining: 999,
-      rateLimitReset: new Date(Date.now() + 60000)
+      rateLimitReset: new Date(Date.now() + 60000),
     }
   }
 
@@ -107,7 +118,7 @@ export class MockOddsProvider extends BaseDataProvider implements OddsProvider {
   async getRateLimitStatus(): Promise<{ remaining: number; resetAt: Date }> {
     return {
       remaining: 999,
-      resetAt: new Date(Date.now() + 60000)
+      resetAt: new Date(Date.now() + 60000),
     }
   }
 
@@ -121,7 +132,7 @@ export class MockOddsProvider extends BaseDataProvider implements OddsProvider {
       capturedAt: new Date(),
       bookmaker: 'MockBook',
       isOpening: false,
-      ...odds
+      ...odds,
     })
   }
 
@@ -142,26 +153,32 @@ export class MockOddsProvider extends BaseDataProvider implements OddsProvider {
    * Private methods
    */
   private seedMockData(): void {
-    // Add some default mock games
+    // Add some default mock games with team info
     this.addMockGame('game1', {
       spread: -3.5,
       total: 47.5,
       moneylineHome: -175,
-      moneylineAway: +155
+      moneylineAway: +155,
+      homeTeam: 'KC',
+      awayTeam: 'BUF',
     })
 
     this.addMockGame('game2', {
       spread: 7.0,
       total: 52.0,
       moneylineHome: +275,
-      moneylineAway: -350
+      moneylineAway: -350,
+      homeTeam: 'NYJ',
+      awayTeam: 'NE',
     })
 
     this.addMockGame('game3', {
       spread: -0.5,
       total: 44.5,
       moneylineHome: -110,
-      moneylineAway: -110
+      moneylineAway: -110,
+      homeTeam: 'SF',
+      awayTeam: 'SEA',
     })
   }
 
@@ -173,8 +190,8 @@ export class MockOddsProvider extends BaseDataProvider implements OddsProvider {
         endpoint: '/mock',
         message: this.failureMessage,
         timestamp: new Date(),
-        retryable: true
-      }
+        retryable: true,
+      },
     }
   }
 }

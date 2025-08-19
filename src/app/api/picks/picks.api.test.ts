@@ -3,10 +3,18 @@ import { DatabaseTestUtils } from '@/lib/test-utils/database'
 import type { ApiResponse } from '@/lib/api/response'
 import type { Pick } from '@/lib/types/database'
 import { GET as getPicks, POST as postPick } from './route'
-import { GET as getPick, PUT as putPick, DELETE as deletePick } from './[id]/route'
+import {
+  GET as getPick,
+  PUT as putPick,
+  DELETE as deletePick,
+} from './[id]/route'
 
 // Helper to create mock NextRequest
-function createRequest(method: string, body?: any, queryParams?: string): Request {
+function createRequest(
+  method: string,
+  body?: any,
+  queryParams?: string
+): Request {
   const url = new URL(`http://localhost:3000/api/picks${queryParams || ''}`)
   return new Request(url, {
     method,
@@ -24,10 +32,10 @@ describe('Picks API', () => {
 
   beforeEach(async () => {
     await DatabaseTestUtils.cleanupTestData()
-    
+
     // Create test data chain: Teams -> Pool -> Game -> Entry
     // Use timestamp to make team abbreviations unique across tests
-    const timestamp = Date.now().toString().slice(-3)
+    const timestamp = Date.now().toString().slice(-6)
     homeTeamAbbr = `HM${timestamp}`
     const homeTeam = await DatabaseTestUtils.createTestTeam({
       nflAbbr: homeTeamAbbr,
@@ -37,21 +45,26 @@ describe('Picks API', () => {
       nflAbbr: `AW${timestamp}`,
       name: 'Away Team',
     })
-    
+
     const pool = await DatabaseTestUtils.createTestPool({
-      name: 'Test Pick Pool',
+      name: `Test Pick Pool ${timestamp}`,
       season: 2024,
     })
-    
-    const game = await DatabaseTestUtils.createTestGame(homeTeam.id, awayTeam.id, {
-      season: 2024,
-      week: 1,
-    })
-    
+
+    const game = await DatabaseTestUtils.createTestGame(
+      homeTeam.id,
+      awayTeam.id,
+      {
+        season: 2024,
+        week: 1,
+        kickoff: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+      }
+    )
+
     const entry = await DatabaseTestUtils.createTestEntry(pool.id, {
       season: 2024,
     })
-    
+
     homeTeamId = homeTeam.id
     awayTeamId = awayTeam.id
     gameId = game.id
@@ -105,14 +118,27 @@ describe('Picks API', () => {
   describe('GET /api/picks', () => {
     it('should return picks filtered by entry', async () => {
       // Create test picks
-      await DatabaseTestUtils.createTestPick(entryId, gameId, homeTeamId, { confidence: 85 })
-      
+      await DatabaseTestUtils.createTestPick(entryId, gameId, homeTeamId, {
+        confidence: 85,
+      })
+
       // Create another entry to test filtering
+      const timestamp2 = Date.now().toString().slice(-6)
       const anotherEntry = await DatabaseTestUtils.createTestEntry(
-        (await DatabaseTestUtils.createTestPool({ name: 'Other Pool', season: 2023 })).id,
+        (
+          await DatabaseTestUtils.createTestPool({
+            name: `Other Pool ${timestamp2}`,
+            season: 2023,
+          })
+        ).id,
         { season: 2023 }
       )
-      await DatabaseTestUtils.createTestPick(anotherEntry.id, gameId, awayTeamId, { confidence: 75 })
+      await DatabaseTestUtils.createTestPick(
+        anotherEntry.id,
+        gameId,
+        awayTeamId,
+        { confidence: 75 }
+      )
 
       const request = createRequest('GET', undefined, `?entryId=${entryId}`)
       const response = await getPicks(request)
@@ -126,7 +152,9 @@ describe('Picks API', () => {
     })
 
     it('should return empty array when no entryId specified', async () => {
-      await DatabaseTestUtils.createTestPick(entryId, gameId, homeTeamId, { confidence: 85 })
+      await DatabaseTestUtils.createTestPick(entryId, gameId, homeTeamId, {
+        confidence: 85,
+      })
 
       const request = createRequest('GET')
       const response = await getPicks(request)
@@ -141,9 +169,14 @@ describe('Picks API', () => {
 
   describe('GET /api/picks/[id]', () => {
     it('should return a pick by ID with relations', async () => {
-      const pick = await DatabaseTestUtils.createTestPick(entryId, gameId, homeTeamId, {
-        confidence: 90,
-      })
+      const pick = await DatabaseTestUtils.createTestPick(
+        entryId,
+        gameId,
+        homeTeamId,
+        {
+          confidence: 90,
+        }
+      )
 
       const request = createRequest('GET')
       const response = await getPick(request, { params: { id: pick.id } })
@@ -163,7 +196,9 @@ describe('Picks API', () => {
 
     it('should return 404 for non-existent pick', async () => {
       const request = createRequest('GET')
-      const response = await getPick(request, { params: { id: 'non-existent-id' } })
+      const response = await getPick(request, {
+        params: { id: 'non-existent-id' },
+      })
       const data: ApiResponse = await response.json()
 
       expect(response.status).toBe(404)
@@ -174,9 +209,14 @@ describe('Picks API', () => {
 
   describe('PUT /api/picks/[id]', () => {
     it('should update pick properties', async () => {
-      const pick = await DatabaseTestUtils.createTestPick(entryId, gameId, homeTeamId, {
-        confidence: 75,
-      })
+      const pick = await DatabaseTestUtils.createTestPick(
+        entryId,
+        gameId,
+        homeTeamId,
+        {
+          confidence: 75,
+        }
+      )
 
       const updateData = {
         teamId: awayTeamId,
@@ -196,9 +236,14 @@ describe('Picks API', () => {
 
   describe('DELETE /api/picks/[id]', () => {
     it('should delete a pick', async () => {
-      const pick = await DatabaseTestUtils.createTestPick(entryId, gameId, homeTeamId, {
-        confidence: 80,
-      })
+      const pick = await DatabaseTestUtils.createTestPick(
+        entryId,
+        gameId,
+        homeTeamId,
+        {
+          confidence: 80,
+        }
+      )
 
       const request = createRequest('DELETE')
       const response = await deletePick(request, { params: { id: pick.id } })
@@ -211,7 +256,9 @@ describe('Picks API', () => {
 
     it('should return 404 when deleting non-existent pick', async () => {
       const request = createRequest('DELETE')
-      const response = await deletePick(request, { params: { id: 'non-existent-id' } })
+      const response = await deletePick(request, {
+        params: { id: 'non-existent-id' },
+      })
       const data: ApiResponse = await response.json()
 
       expect(response.status).toBe(404)

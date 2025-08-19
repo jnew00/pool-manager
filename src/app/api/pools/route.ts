@@ -26,9 +26,10 @@ export async function GET(request: NextRequest) {
       return createSuccessResponse(pools)
     }
 
-    // For now, return empty array if no season specified
-    // In a real app, you might want to return all pools or current season pools
-    return createSuccessResponse([])
+    // If no season specified, return current year's pools
+    const currentYear = new Date().getFullYear()
+    const pools = await poolService.getPoolsBySeason(currentYear)
+    return createSuccessResponse(pools)
   } catch (error) {
     return handleServiceError(error)
   }
@@ -52,7 +53,14 @@ export async function POST(request: NextRequest) {
       description?: string
     }>(request)
 
-    validateRequiredFields(body, ['name', 'type', 'season', 'buyIn', 'maxEntries', 'isActive'])
+    validateRequiredFields(body, [
+      'name',
+      'type',
+      'season',
+      'buyIn',
+      'maxEntries',
+      'isActive',
+    ])
 
     const pool = await poolService.createPool({
       name: body.name,

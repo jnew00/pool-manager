@@ -11,26 +11,26 @@ const mockProfiles: MappingProfile[] = [
     name: 'ESPN Standard',
     columnMap: { date: 'Date', away_team: 'Away', home_team: 'Home' },
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   },
   {
-    id: '2', 
+    id: '2',
     name: 'Yahoo Sports',
     columnMap: { date: 'Game Date', away_team: 'Visitor', home_team: 'Home' },
     createdAt: new Date(),
-    updatedAt: new Date()
-  }
+    updatedAt: new Date(),
+  },
 ]
 
 const mockMappingProfileService = {
   getAllProfiles: vi.fn().mockResolvedValue(mockProfiles),
   createProfile: vi.fn(),
   deleteProfile: vi.fn().mockResolvedValue(true),
-  updateProfile: vi.fn()
+  updateProfile: vi.fn(),
 }
 
 vi.mock('../services/mapping-profile.service', () => ({
-  MappingProfileService: vi.fn(() => mockMappingProfileService)
+  MappingProfileService: vi.fn(() => mockMappingProfileService),
 }))
 
 describe('ProfileSelector', () => {
@@ -47,7 +47,7 @@ describe('ProfileSelector', () => {
 
   it('should render profile selector with load and save options', async () => {
     render(
-      <ProfileSelector 
+      <ProfileSelector
         onSelect={mockOnSelect}
         onSave={mockOnSave}
         currentMapping={{}}
@@ -64,7 +64,7 @@ describe('ProfileSelector', () => {
 
   it('should load and display available profiles', async () => {
     render(
-      <ProfileSelector 
+      <ProfileSelector
         onSelect={mockOnSelect}
         onSave={mockOnSave}
         currentMapping={{}}
@@ -81,7 +81,7 @@ describe('ProfileSelector', () => {
 
   it('should call onSelect when profile is selected', async () => {
     render(
-      <ProfileSelector 
+      <ProfileSelector
         onSelect={mockOnSelect}
         onSave={mockOnSave}
         currentMapping={{}}
@@ -102,11 +102,11 @@ describe('ProfileSelector', () => {
   it('should show save dialog when save button is clicked', async () => {
     const currentMapping: ColumnMapping = {
       date: 'Date',
-      away_team: 'Away'
+      away_team: 'Away',
     }
 
     render(
-      <ProfileSelector 
+      <ProfileSelector
         onSelect={mockOnSelect}
         onSave={mockOnSave}
         currentMapping={currentMapping}
@@ -123,7 +123,7 @@ describe('ProfileSelector', () => {
   it('should save new profile with provided name', async () => {
     const currentMapping: ColumnMapping = {
       date: 'Date',
-      away_team: 'Away'
+      away_team: 'Away',
     }
 
     const newProfile = {
@@ -131,13 +131,13 @@ describe('ProfileSelector', () => {
       name: 'My Custom Profile',
       columnMap: currentMapping,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     }
 
     mockMappingProfileService.createProfile.mockResolvedValue(newProfile)
 
     render(
-      <ProfileSelector 
+      <ProfileSelector
         onSelect={mockOnSelect}
         onSave={mockOnSave}
         currentMapping={currentMapping}
@@ -159,7 +159,7 @@ describe('ProfileSelector', () => {
     await waitFor(() => {
       expect(mockMappingProfileService.createProfile).toHaveBeenCalledWith({
         name: 'My Custom Profile',
-        columnMap: currentMapping
+        columnMap: currentMapping,
       })
     })
 
@@ -168,7 +168,7 @@ describe('ProfileSelector', () => {
 
   it('should show delete confirmation when delete button is clicked', async () => {
     render(
-      <ProfileSelector 
+      <ProfileSelector
         onSelect={mockOnSelect}
         onSave={mockOnSave}
         currentMapping={{}}
@@ -189,7 +189,7 @@ describe('ProfileSelector', () => {
 
   it('should delete profile when confirmed', async () => {
     render(
-      <ProfileSelector 
+      <ProfileSelector
         onSelect={mockOnSelect}
         onSave={mockOnSave}
         currentMapping={{}}
@@ -217,7 +217,7 @@ describe('ProfileSelector', () => {
     mockMappingProfileService.getAllProfiles.mockResolvedValue([])
 
     render(
-      <ProfileSelector 
+      <ProfileSelector
         onSelect={mockOnSelect}
         onSave={mockOnSave}
         currentMapping={{}}
@@ -231,7 +231,7 @@ describe('ProfileSelector', () => {
 
   it('should disable save button when current mapping is empty', () => {
     render(
-      <ProfileSelector 
+      <ProfileSelector
         onSelect={mockOnSelect}
         onSave={mockOnSave}
         currentMapping={{}}

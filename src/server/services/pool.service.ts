@@ -63,10 +63,7 @@ export class PoolService extends BaseService {
     }
 
     if (data.maxEntries < 1) {
-      throw new ValidationError(
-        'Max entries must be at least 1',
-        'maxEntries'
-      )
+      throw new ValidationError('Max entries must be at least 1', 'maxEntries')
     }
   }
 
@@ -110,10 +107,7 @@ export class PoolService extends BaseService {
     }
 
     if (data.maxEntries !== undefined && data.maxEntries < 1) {
-      throw new ValidationError(
-        'Max entries must be at least 1',
-        'maxEntries'
-      )
+      throw new ValidationError('Max entries must be at least 1', 'maxEntries')
     }
   }
 
