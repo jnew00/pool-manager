@@ -7,6 +7,7 @@
 ## Testing Philosophy
 
 ### TDD Workflow (Mandatory)
+
 Every feature follows strict Red-Green-Refactor cycle:
 
 1. **Red:** Write a failing test that describes the desired behavior
@@ -15,6 +16,7 @@ Every feature follows strict Red-Green-Refactor cycle:
 4. **Commit:** Small, focused commits after each cycle
 
 ### TDD Guard Integration
+
 - Continuous test runner monitoring file changes
 - Immediate feedback on test status
 - Custom reporter for clear pass/fail visibility
@@ -23,12 +25,14 @@ Every feature follows strict Red-Green-Refactor cycle:
 ## Test Stack
 
 ### Core Framework
+
 - **Vitest** - Fast unit test runner with TypeScript support
 - **@testing-library/react** - Component testing utilities
 - **happy-dom** - Lightweight DOM environment
 - **@testing-library/jest-dom** - DOM assertion matchers
 
 ### Additional Tools
+
 - **MSW (Mock Service Worker)** - API mocking for integration tests
 - **Prisma Client Mock** - Database operation mocking
 - **Supertest** - HTTP endpoint testing
@@ -37,9 +41,11 @@ Every feature follows strict Red-Green-Refactor cycle:
 ## Test Categories
 
 ### Unit Tests (80% coverage target)
+
 **Location:** Co-located with source files (`*.test.ts`, `*.test.tsx`)
 
 **Scope:**
+
 - Pure functions and utilities
 - Component behavior and props
 - Business logic calculations
@@ -47,29 +53,32 @@ Every feature follows strict Red-Green-Refactor cycle:
 - Model transformations
 
 **Example Structure:**
+
 ```typescript
 // src/lib/model/calculations.test.ts
 describe('Elo Rating Calculations', () => {
   it('should update ratings after win', () => {
     // Arrange
-    const team1Elo = 1500;
-    const team2Elo = 1600;
-    const kFactor = 24;
-    
+    const team1Elo = 1500
+    const team2Elo = 1600
+    const kFactor = 24
+
     // Act
-    const result = updateEloRatings(team1Elo, team2Elo, 'WIN', kFactor);
-    
+    const result = updateEloRatings(team1Elo, team2Elo, 'WIN', kFactor)
+
     // Assert
-    expect(result.team1NewElo).toBe(1512);
-    expect(result.team2NewElo).toBe(1588);
-  });
-});
+    expect(result.team1NewElo).toBe(1512)
+    expect(result.team2NewElo).toBe(1588)
+  })
+})
 ```
 
 ### Integration Tests (15% coverage target)
+
 **Location:** `/src/test/integration/`
 
 **Scope:**
+
 - API endpoint behavior
 - Database operations with test DB
 - File upload processing
@@ -77,30 +86,33 @@ describe('Elo Rating Calculations', () => {
 - End-to-end feature workflows
 
 **Example Structure:**
+
 ```typescript
 // src/test/integration/upload.test.ts
 describe('CSV Upload Integration', () => {
   it('should process valid CSV and create database records', async () => {
     // Arrange
-    const csvContent = readTestFixture('valid-lines.csv');
-    
+    const csvContent = readTestFixture('valid-lines.csv')
+
     // Act
     const response = await request(app)
       .post('/api/upload')
-      .attach('file', Buffer.from(csvContent), 'test.csv');
-    
+      .attach('file', Buffer.from(csvContent), 'test.csv')
+
     // Assert
-    expect(response.status).toBe(200);
-    const games = await prisma.game.findMany();
-    expect(games).toHaveLength(16);
-  });
-});
+    expect(response.status).toBe(200)
+    const games = await prisma.game.findMany()
+    expect(games).toHaveLength(16)
+  })
+})
 ```
 
 ### Component Tests (5% coverage target)
+
 **Location:** Co-located with components (`*.test.tsx`)
 
 **Scope:**
+
 - User interaction flows
 - State management
 - Form validation
@@ -108,6 +120,7 @@ describe('CSV Upload Integration', () => {
 - Event handling
 
 **Example Structure:**
+
 ```typescript
 // src/components/UploadForm.test.tsx
 describe('UploadForm Component', () => {
@@ -115,10 +128,10 @@ describe('UploadForm Component', () => {
     // Arrange
     render(<UploadForm onUpload={mockFn} />);
     const fileInput = screen.getByLabelText(/upload file/i);
-    
+
     // Act
     await userEvent.upload(fileInput, invalidFile);
-    
+
     // Assert
     expect(screen.getByText(/invalid file format/i)).toBeInTheDocument();
   });
@@ -128,6 +141,7 @@ describe('UploadForm Component', () => {
 ## Test Configuration
 
 ### Vitest Setup
+
 ```typescript
 // vitest.config.ts
 export default defineConfig({
@@ -143,38 +157,42 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-});
+})
 ```
 
 ### Test Setup File
+
 ```typescript
 // src/test/setup.ts
-import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import '@testing-library/jest-dom'
+import { vi } from 'vitest'
 
 // Mock environment variables
 vi.mock('process.env', () => ({
   DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
   USE_LLM_NORMALIZER: 'false',
   LLM_ADVISOR_ENABLED: 'false',
-}));
+}))
 
 // Global test utilities
-global.mockPrisma = vi.mocked(prisma);
+global.mockPrisma = vi.mocked(prisma)
 ```
 
 ## Test Data Management
 
 ### Fixtures
+
 **Location:** `/src/test/fixtures/`
 
 **Categories:**
+
 - `csv/` - Sample CSV files for upload testing
 - `images/` - Test images for OCR processing
 - `api/` - Mock API responses
 - `database/` - Seed data for integration tests
 
 ### Factory Functions
+
 ```typescript
 // src/test/factories/game.factory.ts
 export const createTestGame = (overrides: Partial<Game> = {}): Game => ({
@@ -185,43 +203,46 @@ export const createTestGame = (overrides: Partial<Game> = {}): Game => ({
   homeTeamId: faker.string.uuid(),
   awayTeamId: faker.string.uuid(),
   ...overrides,
-});
+})
 ```
 
 ### Database Test Utilities
+
 ```typescript
 // src/test/utils/database.ts
 export const cleanDatabase = async () => {
-  await prisma.grade.deleteMany();
-  await prisma.pick.deleteMany();
-  await prisma.entry.deleteMany();
+  await prisma.grade.deleteMany()
+  await prisma.pick.deleteMany()
+  await prisma.entry.deleteMany()
   // ... cleanup in dependency order
-};
+}
 
 export const seedTestData = async () => {
   await prisma.team.createMany({
     data: NFL_TEAMS_FIXTURE,
-  });
-};
+  })
+}
 ```
 
 ## Mocking Strategy
 
 ### External APIs
+
 ```typescript
 // src/test/mocks/handlers.ts
 export const handlers = [
   rest.get('https://api.weather.com/*', (req, res, ctx) => {
-    return res(ctx.json(weatherFixture));
+    return res(ctx.json(weatherFixture))
   }),
-  
+
   rest.post('https://api.openai.com/v1/chat/completions', (req, res, ctx) => {
-    return res(ctx.json(llmResponseFixture));
+    return res(ctx.json(llmResponseFixture))
   }),
-];
+]
 ```
 
 ### Database Operations
+
 ```typescript
 // src/test/mocks/prisma.ts
 export const mockPrisma = {
@@ -230,18 +251,20 @@ export const mockPrisma = {
     create: vi.fn().mockResolvedValue(mockGame),
   },
   // ... other models
-};
+}
 ```
 
 ## Coverage Targets
 
 ### Overall Coverage: >85%
+
 - **Statements:** 90%
 - **Branches:** 85%
 - **Functions:** 90%
 - **Lines:** 90%
 
 ### Critical Path Coverage: 100%
+
 - Pick validation logic
 - Grading calculations
 - Model score computations
@@ -249,6 +272,7 @@ export const mockPrisma = {
 - File upload processing
 
 ### Exclusions
+
 - Type definitions
 - Configuration files
 - Development utilities
@@ -257,12 +281,14 @@ export const mockPrisma = {
 ## Test Organization
 
 ### File Naming Conventions
+
 - Unit tests: `*.test.ts` or `*.test.tsx`
 - Integration tests: `*.integration.test.ts`
 - Component tests: `*.component.test.tsx`
 - E2E tests: `*.e2e.test.ts` (future)
 
 ### Test Suite Structure
+
 ```
 src/
 ├── lib/
@@ -286,12 +312,14 @@ src/
 ## Continuous Integration
 
 ### Pre-commit Hooks
+
 - Run affected tests
 - Type checking
 - Linting
 - Format checking
 
 ### GitHub Actions
+
 ```yaml
 test:
   runs-on: ubuntu-latest
@@ -318,21 +346,23 @@ test:
 ## TDD Guard Configuration
 
 ### Custom Reporter
+
 ```typescript
 // src/test/tdd-guard-reporter.ts
 export class TDDGuardReporter implements Reporter {
   onTaskUpdate(packs: TaskResultPack[]) {
-    const failed = packs.filter(p => p.result?.state === 'fail');
+    const failed = packs.filter((p) => p.result?.state === 'fail')
     if (failed.length > 0) {
-      console.log(chalk.red(`❌ ${failed.length} tests failing`));
+      console.log(chalk.red(`❌ ${failed.length} tests failing`))
     } else {
-      console.log(chalk.green('✅ All tests passing'));
+      console.log(chalk.green('✅ All tests passing'))
     }
   }
 }
 ```
 
 ### Workflow Integration
+
 1. **Terminal 1:** `npx tdd-guard` (file watcher)
 2. **Terminal 2:** `npm run test:watch` (test runner)
 3. **IDE:** Live feedback on test status
@@ -340,31 +370,35 @@ export class TDDGuardReporter implements Reporter {
 ## Performance Testing
 
 ### Load Testing (Future)
+
 - API endpoint performance
 - Database query optimization
 - File upload limits
 - LLM request timeouts
 
 ### Benchmark Tests
+
 ```typescript
 // src/test/benchmarks/model.bench.ts
 describe('Model Performance', () => {
   bench('should calculate 1000 pick confidences under 100ms', async () => {
-    const games = generateTestGames(1000);
-    await calculatePickConfidences(games);
-  });
-});
+    const games = generateTestGames(1000)
+    await calculatePickConfidences(games)
+  })
+})
 ```
 
 ## Test Maintenance
 
 ### Regular Tasks
+
 - Update fixtures with real data samples
 - Review and update mock responses
 - Prune obsolete test cases
 - Optimize slow-running tests
 
 ### Test Debt Prevention
+
 - Mandatory test writing before implementation
 - Test review in code reviews
 - Regular refactoring of test utilities
@@ -373,12 +407,14 @@ describe('Model Performance', () => {
 ## Debugging & Troubleshooting
 
 ### Common Issues
+
 - **Slow tests:** Check for unnecessary async operations
 - **Flaky tests:** Review timing dependencies and mocks
 - **Memory leaks:** Ensure proper cleanup in test teardown
 - **Mock staleness:** Regular sync with actual API responses
 
 ### Debug Tools
+
 - `--reporter=verbose` for detailed test output
 - `--run` for single test execution
 - `--coverage` for coverage analysis

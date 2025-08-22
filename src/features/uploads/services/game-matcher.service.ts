@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import type { NormalizedSpreadData } from './llm-normalizer.service'
-
-const prisma = new PrismaClient()
 
 export interface GameMatchResult {
   gameId: string
@@ -303,9 +301,9 @@ export class GameMatcherService {
       }
     }
 
-    // Fuzzy partial matches for team names (minimum 3 characters)
-    if (normalizedUpload.length >= 3 && normalizedDb.length >= 3) {
-      // Check if one contains the other
+    // Fuzzy partial matches for team names (minimum 4 characters to avoid false positives)
+    if (normalizedUpload.length >= 4 && normalizedDb.length >= 4) {
+      // Check if one contains the other (but both must be at least 4 chars)
       if (
         normalizedUpload.includes(normalizedDb) ||
         normalizedDb.includes(normalizedUpload)
@@ -314,14 +312,23 @@ export class GameMatcherService {
       }
 
       // Check if either normalized value contains variations
+      // Only match if the substring is at least 4 characters to avoid CAR->Cardinals, PHI->Dolphins
       for (const variation of dbVariations) {
         const normalizedVar = normalize(variation)
-        if (
-          normalizedVar.length >= 3 &&
-          (normalizedUpload.includes(normalizedVar) ||
-            normalizedVar.includes(normalizedUpload))
-        ) {
-          return true
+        if (normalizedVar.length >= 4) {
+          // Only match if the shorter string is at least 4 chars
+          if (
+            normalizedUpload.length >= 4 &&
+            normalizedVar.includes(normalizedUpload)
+          ) {
+            return true
+          }
+          if (
+            normalizedUpload.length >= 4 &&
+            normalizedUpload.includes(normalizedVar)
+          ) {
+            return true
+          }
         }
       }
     }
@@ -336,9 +343,13 @@ export class GameMatcherService {
     }
 
     // Levenshtein distance for very close matches (typos)
+    // Only apply to longer strings to avoid false positives with 3-char abbreviations
+    const distance = this.getLevenshteinDistance(normalizedDb, normalizedUpload)
+    const minLength = Math.min(normalizedDb.length, normalizedUpload.length)
+
     if (
-      this.getLevenshteinDistance(normalizedDb, normalizedUpload) <= 1 &&
-      Math.min(normalizedDb.length, normalizedUpload.length) >= 3
+      distance <= 1 &&
+      minLength >= 6 // Require at least 6 characters to use Levenshtein (avoids TEN/DEN, LAR/LAC false matches)
     ) {
       return true
     }

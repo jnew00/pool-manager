@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { dataProviderRegistry } from '@/lib/data-sources/provider-registry'
 import { EspnOddsProvider } from '@/lib/data-sources/providers/espn-odds-provider'
 import { OpenWeatherProvider } from '@/lib/data-sources/providers/openweather-provider'
@@ -7,8 +7,6 @@ import {
   MockOddsProvider,
   MockWeatherProvider,
 } from '@/lib/data-sources/providers'
-
-const prisma = new PrismaClient()
 
 // Initialize providers
 const espnProvider = new EspnOddsProvider()

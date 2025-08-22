@@ -20,7 +20,9 @@ async function verifyData() {
     orderBy: { kickoff: 'asc' },
   })
 
-  console.log(`🏈 Games: ${gameCount} total, ${week1Games.length} in Week 1 of 2025\n`)
+  console.log(
+    `🏈 Games: ${gameCount} total, ${week1Games.length} in Week 1 of 2025\n`
+  )
 
   if (week1Games.length > 0) {
     console.log('📋 Week 1 Games:')
@@ -31,7 +33,7 @@ async function verifyData() {
         day: 'numeric',
         hour: 'numeric',
         minute: '2-digit',
-        timeZoneName: 'short'
+        timeZoneName: 'short',
       })
       console.log(
         `   ${index + 1}. ${game.awayTeam.nflAbbr} @ ${game.homeTeam.nflAbbr} - ${kickoffLocal}`
@@ -43,12 +45,14 @@ async function verifyData() {
   // Check pools
   const poolCount = await prisma.pool.count()
   const pools = await prisma.pool.findMany({
-    select: { name: true, type: true, buyIn: true, season: true }
+    select: { name: true, type: true, buyIn: true, season: true },
   })
-  
+
   console.log(`\n🏊 Pools: ${poolCount} total`)
-  pools.forEach(pool => {
-    console.log(`   - ${pool.name} (${pool.type}, $${pool.buyIn}, Season ${pool.season})`)
+  pools.forEach((pool) => {
+    console.log(
+      `   - ${pool.name} (${pool.type}, $${pool.buyIn}, Season ${pool.season})`
+    )
   })
 
   // Check model weights
@@ -61,7 +65,7 @@ async function verifyData() {
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   verifyData()
-    .catch(error => {
+    .catch((error) => {
       console.error('❌ Error verifying data:', error)
       process.exit(1)
     })

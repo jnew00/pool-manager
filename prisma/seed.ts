@@ -142,9 +142,16 @@ const WEEK1_GAMES_2025 = [
 async function main() {
   console.log('🌱 Seeding database...')
 
-  // Clear existing data
+  // Clear existing data in correct order (dependent records first)
   await prisma.grade.deleteMany()
   await prisma.pick.deleteMany()
+  // Delete survivor entries before pools
+  try {
+    await prisma.$executeRaw`DELETE FROM survivor_picks`
+    await prisma.$executeRaw`DELETE FROM survivor_entries`
+  } catch (e) {
+    console.log('Note: Survivor tables may not exist yet')
+  }
   await prisma.entry.deleteMany()
   await prisma.result.deleteMany()
   await prisma.line.deleteMany()
@@ -175,9 +182,11 @@ async function main() {
     WEEK1_GAMES_2025.map((game) => {
       const homeTeamId = teamLookup.get(game.homeTeamAbbr)
       const awayTeamId = teamLookup.get(game.awayTeamAbbr)
-      
+
       if (!homeTeamId || !awayTeamId) {
-        throw new Error(`Could not find team IDs for ${game.awayTeamAbbr} @ ${game.homeTeamAbbr}`)
+        throw new Error(
+          `Could not find team IDs for ${game.awayTeamAbbr} @ ${game.homeTeamAbbr}`
+        )
       }
 
       return prisma.game.create({

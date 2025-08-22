@@ -56,7 +56,7 @@ describe('PlayoffImplicationsAnalyzer', () => {
       // 8-8 late in season should still be in contention
       const contention = analyzer.isInPlayoffContention(8, 8, 17)
       expect(contention).toBe(true)
-      
+
       // Very poor record should be eliminated
       const eliminated = analyzer.isInPlayoffContention(1, 15, 17)
       expect(eliminated).toBe(false)
@@ -69,7 +69,7 @@ describe('PlayoffImplicationsAnalyzer', () => {
       const homeAdvantage = analyzer.calculateMotivationFactor(0.8, 0.4)
       expect(homeAdvantage).toBeCloseTo(0.8, 1) // 0.4 * 2 = 0.8 points
 
-      // Away team more motivated  
+      // Away team more motivated
       const awayAdvantage = analyzer.calculateMotivationFactor(0.3, 0.7)
       expect(awayAdvantage).toBeCloseTo(-0.8, 1) // -0.4 * 2 = -0.8 points
 

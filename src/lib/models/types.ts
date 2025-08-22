@@ -128,6 +128,7 @@ export interface ModelInput {
   kickoffTime: Date
   venue?: string
 
+  poolType?: 'ATS' | 'SU' | 'POINTS_PLUS' | 'SURVIVOR' // Added pool type awareness
   marketData: MarketData
   currentMarketData?: MarketData
   weatherData?: WeatherFactors
@@ -137,11 +138,36 @@ export interface ModelInput {
   weights: ModelWeights['weights']
 }
 
+export interface ScorePrediction {
+  homeScore: number
+  awayScore: number
+  totalPoints: number
+  margin: number // Positive = home team wins by this margin
+  confidence: number // Confidence in score prediction (0-100)
+}
+
+export interface TieBreakerData {
+  scorePrediction: ScorePrediction
+  overUnderPrediction: {
+    prediction: number // Predicted total points
+    confidence: number // Confidence in O/U prediction (0-100)
+    marketTotal?: number // Vegas over/under for reference
+    recommendation: 'OVER' | 'UNDER' | 'PUSH'
+  }
+  bettingReference: {
+    spread?: number
+    moneylineHome?: number
+    moneylineAway?: number
+    total?: number
+  }
+}
+
 export interface ModelOutput {
   gameId: string
   confidence: number // 0-100
   recommendedPick: 'HOME' | 'AWAY'
   factors: GameFactors
+  tieBreakerData?: TieBreakerData // Added for score/O-U predictions
   calculatedAt: Date
   modelVersion: string
 }

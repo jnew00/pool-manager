@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Tippy from '@tippyjs/react'
 import 'tippy.js/dist/tippy.css'
 import {
@@ -18,10 +18,11 @@ import {
   CloudDrizzle,
   Thermometer,
   Droplets,
-  Eye
+  Eye,
 } from 'lucide-react'
 import ControlPanel from './control-panel'
 import { GameProjection } from '@/features/projections/components/GameProjection'
+import { PointsPlusStrategyAdvisor } from '@/features/pools/components/PointsPlusStrategyAdvisor'
 import type { ModelOutput } from '@/lib/models/types'
 
 interface Pool {
@@ -55,6 +56,7 @@ interface Game {
 
 export default function PoolDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const poolId = params?.id as string
 
   const [pool, setPool] = useState<Pool | null>(null)
@@ -101,6 +103,14 @@ export default function PoolDetailPage() {
         throw new Error('Failed to fetch pool')
       }
       const data = await response.json()
+
+      // Check if it's a Survivor pool and redirect
+      if (data.data?.type === 'SURVIVOR') {
+        // Use window.location for a hard redirect to avoid webpack issues
+        window.location.href = `/survivor/${poolId}`
+        return
+      }
+
       setPool(data.data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load pool')
@@ -296,7 +306,6 @@ export default function PoolDetailPage() {
 
     const factors = rec.recommendation.factors || {}
 
-
     return {
       gameId: game.id,
       confidence: rec.recommendation.confidence || 0,
@@ -324,6 +333,7 @@ export default function PoolDetailPage() {
         factorBreakdown: factors.factorBreakdown || [],
         newsAnalysis: factors.newsAnalysis || null,
       },
+      tieBreakerData: rec.recommendation.tieBreakerData || null,
       modelVersion: rec.recommendation.modelVersion || '1.0.0',
       calculatedAt: new Date(),
     }
@@ -452,7 +462,11 @@ export default function PoolDetailPage() {
           <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Week Selection & Spread Upload
+                {pool?.type === 'SU'
+                  ? 'Week Selection'
+                  : pool?.type === 'POINTS_PLUS'
+                    ? 'Week Selection & Points Plus Strategy'
+                    : 'Week Selection & Spread Upload'}
               </h2>
               <div className="flex items-center space-x-4">
                 <select
@@ -466,26 +480,28 @@ export default function PoolDetailPage() {
                     </option>
                   ))}
                 </select>
-                <button
-                  onClick={() => setShowImageUpload(true)}
-                  disabled={uploadingImage}
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {pool?.type !== 'SU' && pool?.type !== 'POINTS_PLUS' && (
+                  <button
+                    onClick={() => setShowImageUpload(true)}
+                    disabled={uploadingImage}
+                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                    />
-                  </svg>
-                  {uploadingImage ? 'Processing...' : 'Upload Spreads'}
-                </button>
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      />
+                    </svg>
+                    {uploadingImage ? 'Processing...' : 'Upload Spreads'}
+                  </button>
+                )}
                 <button
                   onClick={handleFetchExternalData}
                   disabled={fetchingExternalData || games.length === 0}
@@ -601,8 +617,12 @@ export default function PoolDetailPage() {
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
                   <p className="text-sm text-blue-800 dark:text-blue-400">
                     <span className="font-semibold">{games.length} games</span>{' '}
-                    loaded for Week {selectedWeek}. Upload spreads above to get
-                    AI recommendations.
+                    loaded for Week {selectedWeek}.{' '}
+                    {pool?.type === 'SU'
+                      ? 'Ready for straight-up AI recommendations.'
+                      : pool?.type === 'POINTS_PLUS'
+                        ? 'Use the Points Plus strategy advisor below for optimal picks.'
+                        : 'Upload spreads above to get AI recommendations.'}
                   </p>
                 </div>
               )}
@@ -610,18 +630,26 @@ export default function PoolDetailPage() {
           </div>
         </div>
 
-        {/* Control Panel */}
-        {pool && (
+        {/* Control Panel or Points Plus Strategy */}
+        {pool && pool.type === 'POINTS_PLUS' ? (
+          <div className="mb-8">
+            <PointsPlusStrategyAdvisor
+              poolId={pool.id}
+              week={selectedWeek}
+              season={pool.season}
+            />
+          </div>
+        ) : pool ? (
           <div className="mb-8">
             <ControlPanel
               poolId={pool.id}
               onWeightsChange={handleWeightsChange}
             />
           </div>
-        )}
+        ) : null}
 
         {/* Sortable Games & Recommendations Table */}
-        {games.length > 0 && (
+        {games.length > 0 && pool?.type !== 'POINTS_PLUS' && (
           <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -738,15 +766,17 @@ export default function PoolDetailPage() {
                         <th className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-white">
                           Weather
                         </th>
-                        <th
-                          className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                          onClick={() => handleSort('spread')}
-                        >
-                          <div className="flex items-center space-x-1">
-                            <span>Spread</span>
-                            <SortIcon field="spread" />
-                          </div>
-                        </th>
+                        {pool?.type !== 'SU' && (
+                          <th
+                            className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                            onClick={() => handleSort('spread')}
+                          >
+                            <div className="flex items-center space-x-1">
+                              <span>Spread</span>
+                              <SortIcon field="spread" />
+                            </div>
+                          </th>
+                        )}
                         <th
                           className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
                           onClick={() => handleSort('confidence')}
@@ -796,8 +826,12 @@ export default function PoolDetailPage() {
                               <Tippy
                                 content={
                                   <div className="text-center">
-                                    <div className="font-semibold">Domed Stadium</div>
-                                    <div className="text-sm text-gray-300">{game.venue}</div>
+                                    <div className="font-semibold">
+                                      Domed Stadium
+                                    </div>
+                                    <div className="text-sm text-gray-300">
+                                      {game.venue}
+                                    </div>
                                     <div className="text-xs text-gray-400 mt-1">
                                       Weather conditions don't affect gameplay
                                     </div>
@@ -814,31 +848,51 @@ export default function PoolDetailPage() {
                           // Check for actual weather data in apiRefs
                           const weatherData = (game as any).apiRefs?.weather
                           if (weatherData && weatherData.conditions) {
-                            const condition = weatherData.conditions.toLowerCase()
-                            const temp = weatherData.temperature ? `${Math.round(weatherData.temperature)}°F` : ''
-                            const humidity = weatherData.humidity ? `${Math.round(weatherData.humidity * 100)}%` : ''
-                            const windSpeed = weatherData.windSpeed ? `${weatherData.windSpeed} mph` : ''
+                            const condition =
+                              weatherData.conditions.toLowerCase()
+                            const temp = weatherData.temperature
+                              ? `${Math.round(weatherData.temperature)}°F`
+                              : ''
+                            const humidity = weatherData.humidity
+                              ? `${Math.round(weatherData.humidity * 100)}%`
+                              : ''
+                            const windSpeed = weatherData.windSpeed
+                              ? `${weatherData.windSpeed} mph`
+                              : ''
                             const windDir = weatherData.windDirection || ''
-                            const precipChance = weatherData.precipitationChance ? 
-                              `${Math.round(weatherData.precipitationChance * 100)}%` : ''
-                            
+                            const precipChance = weatherData.precipitationChance
+                              ? `${Math.round(weatherData.precipitationChance * 100)}%`
+                              : ''
+
                             // Weather condition to icon mapping
                             let WeatherIcon = Cloud // default
                             let iconColor = 'text-gray-500'
-                            
-                            if (condition.includes('rain') || condition.includes('shower')) {
+
+                            if (
+                              condition.includes('rain') ||
+                              condition.includes('shower')
+                            ) {
                               WeatherIcon = CloudRain
                               iconColor = 'text-blue-500'
                             } else if (condition.includes('drizzle')) {
-                              WeatherIcon = CloudDrizzle  
+                              WeatherIcon = CloudDrizzle
                               iconColor = 'text-blue-400'
-                            } else if (condition.includes('snow') || condition.includes('blizzard')) {
+                            } else if (
+                              condition.includes('snow') ||
+                              condition.includes('blizzard')
+                            ) {
                               WeatherIcon = CloudSnow
                               iconColor = 'text-blue-200'
-                            } else if (condition.includes('thunder') || condition.includes('storm')) {
+                            } else if (
+                              condition.includes('thunder') ||
+                              condition.includes('storm')
+                            ) {
                               WeatherIcon = Zap
                               iconColor = 'text-yellow-500'
-                            } else if (condition.includes('fog') || condition.includes('mist')) {
+                            } else if (
+                              condition.includes('fog') ||
+                              condition.includes('mist')
+                            ) {
                               WeatherIcon = CloudFog
                               iconColor = 'text-gray-400'
                             } else if (condition.includes('wind')) {
@@ -847,11 +901,14 @@ export default function PoolDetailPage() {
                             } else if (condition.includes('cloud')) {
                               WeatherIcon = Cloud
                               iconColor = 'text-gray-500'
-                            } else if (condition.includes('clear') || condition.includes('sun')) {
+                            } else if (
+                              condition.includes('clear') ||
+                              condition.includes('sun')
+                            ) {
                               WeatherIcon = Sun
                               iconColor = 'text-yellow-500'
                             }
-                            
+
                             return (
                               <Tippy
                                 content={
@@ -867,8 +924,13 @@ export default function PoolDetailPage() {
                                         <div className="flex items-center space-x-1">
                                           <Thermometer className="w-3 h-3 text-orange-400" />
                                           <div>
-                                            <span className="text-blue-300">Temperature:</span><br />
-                                            <span className="font-medium">{temp}</span>
+                                            <span className="text-blue-300">
+                                              Temperature:
+                                            </span>
+                                            <br />
+                                            <span className="font-medium">
+                                              {temp}
+                                            </span>
                                           </div>
                                         </div>
                                       )}
@@ -876,8 +938,13 @@ export default function PoolDetailPage() {
                                         <div className="flex items-center space-x-1">
                                           <Droplets className="w-3 h-3 text-blue-400" />
                                           <div>
-                                            <span className="text-blue-300">Rain Chance:</span><br />
-                                            <span className="font-medium">{precipChance}</span>
+                                            <span className="text-blue-300">
+                                              Rain Chance:
+                                            </span>
+                                            <br />
+                                            <span className="font-medium">
+                                              {precipChance}
+                                            </span>
                                           </div>
                                         </div>
                                       )}
@@ -885,8 +952,13 @@ export default function PoolDetailPage() {
                                         <div className="flex items-center space-x-1">
                                           <Wind className="w-3 h-3 text-gray-400" />
                                           <div>
-                                            <span className="text-blue-300">Wind:</span><br />
-                                            <span className="font-medium">{windSpeed} {windDir}</span>
+                                            <span className="text-blue-300">
+                                              Wind:
+                                            </span>
+                                            <br />
+                                            <span className="font-medium">
+                                              {windSpeed} {windDir}
+                                            </span>
                                           </div>
                                         </div>
                                       )}
@@ -894,8 +966,13 @@ export default function PoolDetailPage() {
                                         <div className="flex items-center space-x-1">
                                           <Eye className="w-3 h-3 text-teal-400" />
                                           <div>
-                                            <span className="text-blue-300">Humidity:</span><br />
-                                            <span className="font-medium">{humidity}</span>
+                                            <span className="text-blue-300">
+                                              Humidity:
+                                            </span>
+                                            <br />
+                                            <span className="font-medium">
+                                              {humidity}
+                                            </span>
                                           </div>
                                         </div>
                                       )}
@@ -911,7 +988,9 @@ export default function PoolDetailPage() {
                                 arrow={true}
                                 maxWidth={300}
                               >
-                                <WeatherIcon className={`w-6 h-6 cursor-help hover:scale-110 transition-all ${iconColor}`} />
+                                <WeatherIcon
+                                  className={`w-6 h-6 cursor-help hover:scale-110 transition-all ${iconColor}`}
+                                />
                               </Tippy>
                             )
                           }
@@ -921,10 +1000,15 @@ export default function PoolDetailPage() {
                             <Tippy
                               content={
                                 <div className="text-center">
-                                  <div className="font-semibold">Outdoor Stadium</div>
-                                  <div className="text-sm text-gray-300">{game.venue}</div>
+                                  <div className="font-semibold">
+                                    Outdoor Stadium
+                                  </div>
+                                  <div className="text-sm text-gray-300">
+                                    {game.venue}
+                                  </div>
                                   <div className="text-xs text-gray-400 mt-1">
-                                    Weather data not available<br />
+                                    Weather data not available
+                                    <br />
                                     (Game too far in advance for forecast)
                                   </div>
                                 </div>
@@ -939,197 +1023,209 @@ export default function PoolDetailPage() {
 
                         return (
                           <React.Fragment key={game.id}>
-                            <tr
-                              className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                            >
-                            <td className="py-4 px-4">
-                              <div className="flex items-center space-x-3">
-                                <div>
-                                  <div className="font-medium text-gray-900 dark:text-white">
-                                    <span
-                                      className={
-                                        rec &&
-                                        rec.recommendation.pick === 'AWAY'
-                                          ? 'font-bold text-purple-600 dark:text-purple-400'
-                                          : ''
-                                      }
-                                    >
-                                      {game.awayTeam.nflAbbr}
-                                    </span>
-                                    {' @ '}
-                                    <span
-                                      className={
-                                        rec &&
-                                        rec.recommendation.pick === 'HOME'
-                                          ? 'font-bold text-blue-600 dark:text-blue-400'
-                                          : ''
-                                      }
-                                    >
-                                      {game.homeTeam.nflAbbr}
-                                    </span>
-                                  </div>
-                                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                                    {game.awayTeam.name} at {game.homeTeam.name}
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-4 px-4">
-                              <div className="text-sm text-gray-900 dark:text-white">
-                                {new Date(game.kickoff).toLocaleDateString(
-                                  'en-US',
-                                  {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    weekday: 'short',
-                                  }
-                                )}
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {new Date(game.kickoff).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}{' '}
-                                ET
-                              </div>
-                            </td>
-                            <td className="py-4 px-4 text-center">
-                              {getWeatherIcon()}
-                            </td>
-                            <td className="py-4 px-4">
-                              {rec?.line?.spread ? (
-                                <div className="text-sm">
-                                  {rec.line.spread > 0 ? (
-                                    // Home team favored
-                                    <div>
-                                      <div className="font-bold text-blue-600 dark:text-blue-400">
-                                        {game.homeTeam.nflAbbr} -
-                                        {Math.abs(rec.line.spread)}
-                                      </div>
-                                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                                        {game.awayTeam.nflAbbr} +
-                                        {Math.abs(rec.line.spread)}
-                                      </div>
+                            <tr className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                              <td className="py-4 px-4">
+                                <div className="flex items-center space-x-3">
+                                  <div>
+                                    <div className="font-medium text-gray-900 dark:text-white">
+                                      <span
+                                        className={
+                                          rec &&
+                                          rec.recommendation.pick === 'AWAY'
+                                            ? 'font-bold text-purple-600 dark:text-purple-400'
+                                            : ''
+                                        }
+                                      >
+                                        {game.awayTeam.nflAbbr}
+                                      </span>
+                                      {' @ '}
+                                      <span
+                                        className={
+                                          rec &&
+                                          rec.recommendation.pick === 'HOME'
+                                            ? 'font-bold text-blue-600 dark:text-blue-400'
+                                            : ''
+                                        }
+                                      >
+                                        {game.homeTeam.nflAbbr}
+                                      </span>
                                     </div>
-                                  ) : (
-                                    // Away team favored
-                                    <div>
-                                      <div className="font-bold text-purple-600 dark:text-purple-400">
-                                        {game.awayTeam.nflAbbr} -
-                                        {Math.abs(rec.line.spread)}
-                                      </div>
-                                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                                        {game.homeTeam.nflAbbr} +
-                                        {Math.abs(rec.line.spread)}
-                                      </div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                      {game.awayTeam.name} at{' '}
+                                      {game.homeTeam.name}
                                     </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="text-xs text-gray-400 dark:text-gray-500">
-                                  No line
-                                </div>
-                              )}
-                            </td>
-                            <td className="py-4 px-4 text-center">
-                              {rec ? (
-                                <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                  {typeof rec.recommendation.confidence ===
-                                  'number'
-                                    ? rec.recommendation.confidence.toFixed(1)
-                                    : '0.0'}
-                                  %
-                                </div>
-                              ) : (
-                                <div className="text-xs text-gray-400 dark:text-gray-500">
-                                  -
-                                </div>
-                              )}
-                            </td>
-                            <td className="py-4 px-4 text-center">
-                              {rec ? (
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    rec.recommendation.strength === 'Strong'
-                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                                      : rec.recommendation.strength ===
-                                          'Moderate'
-                                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                                  }`}
-                                >
-                                  {rec.recommendation.strength}
-                                </span>
-                              ) : (
-                                <div className="text-xs text-gray-400 dark:text-gray-500">
-                                  -
-                                </div>
-                              )}
-                            </td>
-                            <td className="py-4 px-4 text-right">
-                              {rec ? (
-                                <span
-                                  className={`px-4 py-2 rounded-lg text-lg font-bold ${
-                                    rec.recommendation.pick === 'HOME'
-                                      ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300'
-                                      : 'bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-300'
-                                  }`}
-                                >
-                                  {game.pickedTeam}
-                                </span>
-                              ) : (
-                                <div className="text-xs text-gray-400 dark:text-gray-500 text-right">
-                                  Upload spreads
-                                </div>
-                              )}
-                            </td>
-                            <td className="py-4 px-4 text-center">
-                              <button
-                                onClick={() =>
-                                  setExpandedGameId(
-                                    expandedGameId === game.id ? null : game.id
-                                  )
-                                }
-                                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
-                              >
-                                {expandedGameId === game.id ? 'Hide' : 'Show'}
-                              </button>
-                            </td>
-                          </tr>
-                          {/* Expanded GameProjection Row */}
-                          {expandedGameId === game.id && rec && (
-                            <tr key={`${game.id}-expanded`}>
-                              <td
-                                colSpan={8}
-                                className="py-0 px-4 bg-gray-50 dark:bg-gray-800/50"
-                              >
-                                <div className="py-4">
-                                  {(() => {
-                                    const projection = transformRecommendationToModelOutput(game, rec)
-                                    if (!projection) return null
-                                    
-                                    return (
-                                      <GameProjection
-                                        projection={projection}
-                                        gameDetails={{
-                                          homeTeam: {
-                                            name: game.homeTeam.name,
-                                            nflAbbr: game.homeTeam.nflAbbr,
-                                          },
-                                          awayTeam: {
-                                            name: game.awayTeam.name,
-                                            nflAbbr: game.awayTeam.nflAbbr,
-                                          },
-                                          kickoffTime: new Date(game.kickoff),
-                                          venue: game.venue,
-                                        }}
-                                      />
-                                    )
-                                  })()}
+                                  </div>
                                 </div>
                               </td>
+                              <td className="py-4 px-4">
+                                <div className="text-sm text-gray-900 dark:text-white">
+                                  {new Date(game.kickoff).toLocaleDateString(
+                                    'en-US',
+                                    {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      weekday: 'short',
+                                    }
+                                  )}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  {new Date(game.kickoff).toLocaleTimeString(
+                                    [],
+                                    {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    }
+                                  )}{' '}
+                                  ET
+                                </div>
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                {getWeatherIcon()}
+                              </td>
+                              {pool?.type !== 'SU' && (
+                                <td className="py-4 px-4">
+                                  {rec?.line?.spread ? (
+                                    <div className="text-sm">
+                                      {rec.line.spread < 0 ? (
+                                        // Home team favored (negative spread means home is favored)
+                                        <div>
+                                          <div className="font-bold text-blue-600 dark:text-blue-400">
+                                            {game.homeTeam.nflAbbr}{' '}
+                                            {rec.line.spread}
+                                          </div>
+                                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                                            {game.awayTeam.nflAbbr} +
+                                            {Math.abs(rec.line.spread)}
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        // Away team favored (positive spread means away is favored)
+                                        <div>
+                                          <div className="font-bold text-purple-600 dark:text-purple-400">
+                                            {game.awayTeam.nflAbbr} -
+                                            {rec.line.spread}
+                                          </div>
+                                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                                            {game.homeTeam.nflAbbr} +
+                                            {rec.line.spread}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div className="text-xs text-gray-400 dark:text-gray-500">
+                                      No line
+                                    </div>
+                                  )}
+                                </td>
+                              )}
+                              <td className="py-4 px-4 text-center">
+                                {rec ? (
+                                  <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                    {typeof rec.recommendation.confidence ===
+                                    'number'
+                                      ? rec.recommendation.confidence.toFixed(1)
+                                      : '0.0'}
+                                    %
+                                  </div>
+                                ) : (
+                                  <div className="text-xs text-gray-400 dark:text-gray-500">
+                                    -
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                {rec ? (
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      rec.recommendation.strength === 'Strong'
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                                        : rec.recommendation.strength ===
+                                            'Moderate'
+                                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                    }`}
+                                  >
+                                    {rec.recommendation.strength}
+                                  </span>
+                                ) : (
+                                  <div className="text-xs text-gray-400 dark:text-gray-500">
+                                    -
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-4 px-4 text-right">
+                                {rec ? (
+                                  <span
+                                    className={`px-4 py-2 rounded-lg text-lg font-bold ${
+                                      rec.recommendation.pick === 'HOME'
+                                        ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300'
+                                        : 'bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-300'
+                                    }`}
+                                  >
+                                    {game.pickedTeam}
+                                  </span>
+                                ) : (
+                                  <div className="text-xs text-gray-400 dark:text-gray-500 text-right">
+                                    {pool?.type === 'SU'
+                                      ? 'Ready'
+                                      : 'Upload spreads'}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                <button
+                                  onClick={() =>
+                                    setExpandedGameId(
+                                      expandedGameId === game.id
+                                        ? null
+                                        : game.id
+                                    )
+                                  }
+                                  className="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
+                                >
+                                  {expandedGameId === game.id ? 'Hide' : 'Show'}
+                                </button>
+                              </td>
                             </tr>
-                          )}
+                            {/* Expanded GameProjection Row */}
+                            {expandedGameId === game.id && rec && (
+                              <tr key={`${game.id}-expanded`}>
+                                <td
+                                  colSpan={pool?.type === 'SU' ? 7 : 8}
+                                  className="py-0 px-4 bg-gray-50 dark:bg-gray-800/50"
+                                >
+                                  <div className="py-4">
+                                    {(() => {
+                                      const projection =
+                                        transformRecommendationToModelOutput(
+                                          game,
+                                          rec
+                                        )
+                                      if (!projection) return null
+
+                                      return (
+                                        <GameProjection
+                                          projection={projection}
+                                          gameDetails={{
+                                            homeTeam: {
+                                              name: game.homeTeam.name,
+                                              nflAbbr: game.homeTeam.nflAbbr,
+                                            },
+                                            awayTeam: {
+                                              name: game.awayTeam.name,
+                                              nflAbbr: game.awayTeam.nflAbbr,
+                                            },
+                                            kickoffTime: new Date(game.kickoff),
+                                            venue: game.venue,
+                                          }}
+                                        />
+                                      )
+                                    })()}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
                           </React.Fragment>
                         )
                       })}
@@ -1158,8 +1254,9 @@ export default function PoolDetailPage() {
                 </svg>
                 <p className="font-medium">No AI recommendations yet</p>
                 <p className="text-sm mt-1">
-                  Upload pool spreads above to get AI-powered pick suggestions
-                  with confidence ratings
+                  {pool?.type === 'SU'
+                    ? 'Fetch odds & weather data above to get straight-up AI pick suggestions'
+                    : 'Upload pool spreads above to get AI-powered pick suggestions with confidence ratings'}
                 </p>
               </div>
             )}

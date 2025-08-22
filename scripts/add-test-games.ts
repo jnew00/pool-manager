@@ -58,8 +58,8 @@ async function addTestGames(games: TestGame[]) {
 
   // Check for missing teams
   const missingTeams = games
-    .flatMap(g => [g.homeTeamAbbr, g.awayTeamAbbr])
-    .filter(abbr => !teamLookup.has(abbr))
+    .flatMap((g) => [g.homeTeamAbbr, g.awayTeamAbbr])
+    .filter((abbr) => !teamLookup.has(abbr))
     .filter((abbr, index, arr) => arr.indexOf(abbr) === index) // unique
 
   if (missingTeams.length > 0) {
@@ -101,21 +101,24 @@ async function addTestGames(games: TestGame[]) {
   )
 
   console.log(`✅ Added/updated ${createdGames.length} test games`)
-  
+
   // Display the games
   console.log('\n📋 Games created:')
   for (const game of createdGames) {
-    const homeTeam = allTeams.find(t => t.id === game.homeTeamId)
-    const awayTeam = allTeams.find(t => t.id === game.awayTeamId)
+    const homeTeam = allTeams.find((t) => t.id === game.homeTeamId)
+    const awayTeam = allTeams.find((t) => t.id === game.awayTeamId)
     console.log(
-      `   ${awayTeam?.nflAbbr} @ ${homeTeam?.nflAbbr} - ${game.kickoff.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        timeZoneName: 'short'
-      })}`
+      `   ${awayTeam?.nflAbbr} @ ${homeTeam?.nflAbbr} - ${game.kickoff.toLocaleDateString(
+        'en-US',
+        {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          timeZoneName: 'short',
+        }
+      )}`
     )
   }
 }

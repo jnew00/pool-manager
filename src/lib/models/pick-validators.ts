@@ -38,23 +38,43 @@ export class PickValidators {
       const isFavorite = this.determineIfFavorite(game.marketData, isHomePick)
       const isPickEm = this.isPickEmGame(game.marketData)
 
-      // Points Plus rules validation
-      const validation = this.validatePointsPlusRules(
+      // Points Plus rules validation (now async)
+      const validation = await this.validatePointsPlusRules(
         currentPicks,
         isFavorite,
-        isPickEm
+        isPickEm,
+        gameId
       )
 
       if (!validation.minimumPicksMet) {
-        warnings.push('Need to make more picks to meet minimum requirement')
+        warnings.push(
+          `Need at least 4 picks (currently have ${validation.totalPicks - 1})`
+        )
       }
 
-      if (!validation.favoriteUnderdogBalance && !isPickEm) {
-        warnings.push('Consider balancing favorites and underdogs')
+      // Strict enforcement of favorite/underdog balance
+      if (!isPickEm) {
+        if (
+          isFavorite &&
+          validation.favoritesCount > validation.underdogsCount
+        ) {
+          errors.push(
+            `Must pick an underdog first - you have ${validation.favoritesCount - 1} favorites and ${validation.underdogsCount} underdogs`
+          )
+        } else if (
+          !isFavorite &&
+          validation.underdogsCount > validation.favoritesCount
+        ) {
+          errors.push(
+            `Must pick a favorite first - you have ${validation.favoritesCount} favorites and ${validation.underdogsCount - 1} underdogs`
+          )
+        }
       }
 
-      if (validation.noPickEmGames && isPickEm) {
-        errors.push("Pick'em games are not allowed in Points Plus pools")
+      if (isPickEm) {
+        errors.push(
+          "Pick'em games (spread = 0) are not allowed in Points Plus pools"
+        )
       }
 
       // Check for duplicate picks
@@ -64,11 +84,24 @@ export class PickValidators {
         errors.push('You have already made a pick for this game')
       }
 
+      // Add helpful warnings about strategy
+      if (validation.totalPicks <= 2 && !errors.length) {
+        warnings.push(
+          'Consider your overall strategy - picking only heavy favorites may limit upside'
+        )
+      }
+
       return {
         isValid: errors.length === 0,
         errors,
         warnings,
         pickType: 'POINTS_PLUS',
+        metadata: {
+          favoritesCount: validation.favoritesCount,
+          underdogsCount: validation.underdogsCount,
+          totalPicks: validation.totalPicks,
+          isPickEm,
+        },
       }
     } catch (error) {
       console.error('Error validating Points Plus pick:', error)
@@ -94,70 +127,147 @@ export class PickValidators {
     const warnings: string[] = []
 
     try {
-      // Check if entry is still alive
-      const entry = await prisma.entry.findUnique({
-        where: { id: entryId },
+      // Get survivor entry with enhanced data
+      const survivorEntry = await prisma.survivorEntry.findFirst({
+        where: { entryId },
         include: {
           picks: {
-            where: {
-              game: {
-                week: { lt: week },
-              },
-            },
             include: {
               game: {
                 include: {
                   Result: true,
+                  homeTeam: true,
+                  awayTeam: true,
                 },
               },
+              team: true,
+            },
+            orderBy: { week: 'asc' },
+          },
+          entry: {
+            include: {
+              pool: true,
             },
           },
         },
       })
 
-      if (!entry) {
-        errors.push('Entry not found')
+      if (!survivorEntry) {
+        errors.push('Survivor entry not found')
         return { isValid: false, errors, warnings, pickType: 'SURVIVOR' }
       }
 
-      // Check if entry has been eliminated
-      const isEliminated = this.checkSurvivorElimination(entry.picks)
-      if (isEliminated) {
-        errors.push('Entry has been eliminated and cannot make more picks')
+      // Get pool rules
+      const poolRules = survivorEntry.entry.pool.rules as any
+      const strikesAllowed = poolRules?.survivor?.strikesAllowed || 0
+      const tiebreaker = poolRules?.survivor?.tiebreaker || 'POINT_DIFFERENTIAL'
+      const buybackEnabled = poolRules?.survivor?.buybackEnabled || false
+      const buybackWeek = poolRules?.survivor?.buybackWeek || 5
+
+      // Check if entry is still active
+      if (!survivorEntry.isActive) {
+        if (survivorEntry.eliminatedWeek) {
+          errors.push(
+            `Entry was eliminated in week ${survivorEntry.eliminatedWeek}`
+          )
+        } else {
+          errors.push('Entry is no longer active')
+        }
+
+        // Check buyback eligibility
+        if (
+          buybackEnabled &&
+          week === buybackWeek &&
+          survivorEntry.eliminatedWeek &&
+          survivorEntry.eliminatedWeek < buybackWeek
+        ) {
+          warnings.push(
+            `Buyback available this week! Contact pool admin to re-enter.`
+          )
+        }
+
+        return { isValid: false, errors, warnings, pickType: 'SURVIVOR' }
+      }
+
+      // Check if already picked this week
+      const thisWeekPick = survivorEntry.picks.find((p) => p.week === week)
+      if (thisWeekPick) {
+        errors.push(
+          `Already made a pick for week ${week}: ${thisWeekPick.team.nflAbbr}`
+        )
         return { isValid: false, errors, warnings, pickType: 'SURVIVOR' }
       }
 
       // Get all teams previously used by this entry
-      const usedTeams = entry.picks.map((pick) => pick.teamId)
+      const usedTeams = new Set(survivorEntry.picks.map((pick) => pick.teamId))
 
       // Check if team has been used before
-      if (usedTeams.includes(teamId)) {
-        errors.push('This team has already been used in a previous week')
+      if (usedTeams.has(teamId)) {
+        const previousPick = survivorEntry.picks.find(
+          (p) => p.teamId === teamId
+        )
+        errors.push(
+          `${previousPick?.team.nflAbbr} was already used in week ${previousPick?.week}`
+        )
       }
 
-      // Survivor-specific warnings
+      // Get game and market data for strategic warnings
+      const game = await this.getGameWithMarketData(gameId)
       const team = await prisma.team.findUnique({ where: { id: teamId } })
-      if (team) {
-        // Warn about using popular teams early in season
-        if (week <= 8 && this.isPopularSurvivorTeam(team.nflAbbr)) {
+
+      if (game && team) {
+        const isHomePick = teamId === game.homeTeamId
+        const isFavorite = this.determineIfFavorite(game.marketData, isHomePick)
+
+        // Win probability warning
+        const winProb = this.calculateWinProbability(
+          game.marketData,
+          isHomePick
+        )
+        if (winProb < 0.6) {
           warnings.push(
-            `${team.nflAbbr} is a popular choice - consider saving for later weeks`
+            `${team.nflAbbr} has only ${(winProb * 100).toFixed(1)}% win probability`
           )
         }
 
-        // Warn about road favorites
-        const game = await this.getGameWithMarketData(gameId)
-        if (game) {
-          const isHomePick = teamId === game.homeTeamId
-          const isFavorite = this.determineIfFavorite(
-            game.marketData,
-            isHomePick
+        // Road favorite warning
+        if (isFavorite && !isHomePick) {
+          warnings.push(
+            'Road favorites historically underperform in Survivor pools'
           )
-
-          if (isFavorite && !isHomePick) {
-            warnings.push('Road favorites can be risky in Survivor pools')
-          }
         }
+
+        // Early season premium team warning
+        if (week <= 6 && this.isPopularSurvivorTeam(team.nflAbbr)) {
+          warnings.push(
+            `${team.nflAbbr} is a premium team - consider saving for later weeks`
+          )
+        }
+
+        // Division rival warning
+        const opponent = isHomePick ? game.awayTeam : game.homeTeam
+        if (
+          opponent &&
+          this.areDivisionRivals(team.nflAbbr, opponent.nflAbbr)
+        ) {
+          warnings.push('Division games can be unpredictable')
+        }
+      }
+
+      // Strikes status
+      if (strikesAllowed > 0) {
+        warnings.push(
+          `Strikes used: ${survivorEntry.strikes}/${strikesAllowed}`
+        )
+      }
+
+      // Critical weeks ahead warning
+      const remainingWeeks = 18 - week
+      const remainingTeams = 32 - usedTeams.size
+      if (remainingWeeks > remainingTeams) {
+        warnings.push(
+          `Limited teams remaining: ${remainingTeams} teams for ${remainingWeeks} potential weeks`
+        )
       }
 
       return {
@@ -165,6 +275,14 @@ export class PickValidators {
         errors,
         warnings,
         pickType: 'SURVIVOR',
+        metadata: {
+          usedTeams: Array.from(usedTeams),
+          strikesUsed: survivorEntry.strikes,
+          strikesAllowed,
+          weeksSurvived: survivorEntry.picks.filter((p) => p.result === 'WIN')
+            .length,
+          isActive: survivorEntry.isActive,
+        },
       }
     } catch (error) {
       console.error('Error validating Survivor pick:', error)
@@ -415,40 +533,51 @@ export class PickValidators {
     return false
   }
 
-  private validatePointsPlusRules(
+  private async validatePointsPlusRules(
     currentPicks: any[],
     isFavorite: boolean,
-    isPickEm: boolean
-  ): PointsPlusValidation {
+    isPickEm: boolean,
+    gameId: string
+  ): Promise<PointsPlusValidation> {
     let favoritesCount = 0
     let underdogsCount = 0
 
+    // Count existing picks properly
     for (const pick of currentPicks) {
-      // Would need to determine favorite/underdog for each existing pick
-      // For now, assume roughly even split
-      if (Math.random() > 0.5) {
-        favoritesCount++
-      } else {
-        underdogsCount++
+      if (pick.game && pick.game.id !== gameId) {
+        const pickGame = await this.getGameWithMarketData(pick.game.id)
+        if (pickGame && pickGame.marketData?.spread) {
+          const isHomePick = pick.teamId === pickGame.homeTeamId
+          const pickIsFavorite = this.determineIfFavorite(
+            pickGame.marketData,
+            isHomePick
+          )
+          if (pickIsFavorite) {
+            favoritesCount++
+          } else {
+            underdogsCount++
+          }
+        }
       }
     }
 
     // Add current pick
-    if (isFavorite) {
+    if (isFavorite && !isPickEm) {
       favoritesCount++
-    } else if (!isPickEm) {
+    } else if (!isFavorite && !isPickEm) {
       underdogsCount++
     }
 
-    const totalPicks = currentPicks.length + 1
-    const minimumPicks = 5 // Configurable per pool
+    const totalPicks =
+      currentPicks.filter((p) => p.game?.id !== gameId).length + 1
+    const minimumPicks = 4 // Points Plus minimum
 
     return {
       totalPicks,
       favoritesCount,
       underdogsCount,
       minimumPicksMet: totalPicks >= minimumPicks,
-      favoriteUnderdogBalance: Math.abs(favoritesCount - underdogsCount) <= 2,
+      favoriteUnderdogBalance: favoritesCount === underdogsCount,
       noPickEmGames: !isPickEm,
     }
   }
@@ -478,6 +607,59 @@ export class PickValidators {
     // Teams commonly used early in Survivor pools
     const popularTeams = ['KC', 'BUF', 'PHI', 'SF', 'DAL', 'MIA', 'BAL']
     return popularTeams.includes(teamAbbr)
+  }
+
+  private calculateWinProbability(
+    marketData: MarketData,
+    isHomePick: boolean
+  ): number {
+    // Convert moneyline to win probability
+    if (marketData.moneylineHome && marketData.moneylineAway) {
+      const homeLine = marketData.moneylineHome
+      const awayLine = marketData.moneylineAway
+
+      let homeWinProb: number
+      if (homeLine < 0) {
+        // Home team is favorite
+        homeWinProb = Math.abs(homeLine) / (Math.abs(homeLine) + 100)
+      } else {
+        // Home team is underdog
+        homeWinProb = 100 / (homeLine + 100)
+      }
+
+      return isHomePick ? homeWinProb : 1 - homeWinProb
+    }
+
+    // Fallback to spread-based calculation
+    if (marketData.spread !== undefined) {
+      const baseProb = 0.5
+      const probPerPoint = 0.025
+      const homeWinProb = baseProb + -marketData.spread * probPerPoint
+      return isHomePick ? homeWinProb : 1 - homeWinProb
+    }
+
+    return 0.5 // Default to 50% if no data
+  }
+
+  private areDivisionRivals(team1: string, team2: string): boolean {
+    const divisions = {
+      'AFC East': ['BUF', 'MIA', 'NE', 'NYJ'],
+      'AFC North': ['BAL', 'CIN', 'CLE', 'PIT'],
+      'AFC South': ['HOU', 'IND', 'JAX', 'TEN'],
+      'AFC West': ['DEN', 'KC', 'LV', 'LAC'],
+      'NFC East': ['DAL', 'NYG', 'PHI', 'WAS'],
+      'NFC North': ['CHI', 'DET', 'GB', 'MIN'],
+      'NFC South': ['ATL', 'CAR', 'NO', 'TB'],
+      'NFC West': ['ARI', 'LAR', 'SF', 'SEA'],
+    }
+
+    for (const division of Object.values(divisions)) {
+      if (division.includes(team1) && division.includes(team2)) {
+        return true
+      }
+    }
+
+    return false
   }
 
   private async getMaxPicksForWeek(week: number): Promise<number> {
@@ -519,24 +701,43 @@ export class PickValidators {
   private async getSurvivorValidationSummary(
     entryId: string
   ): Promise<SurvivorValidation> {
-    const allPicks = await prisma.pick.findMany({
+    const survivorEntry = await prisma.survivorEntry.findFirst({
       where: { entryId },
       include: {
-        game: {
+        picks: {
           include: {
-            Result: true,
+            game: {
+              include: {
+                Result: true,
+              },
+            },
+            team: true,
+          },
+        },
+        entry: {
+          include: {
+            pool: true,
           },
         },
       },
     })
 
-    const usedTeams = allPicks.map((pick) => pick.teamId)
-    const eliminatedEntry = this.checkSurvivorElimination(allPicks)
+    if (!survivorEntry) {
+      return {
+        teamAlreadyUsed: false,
+        eliminatedEntry: true,
+        validPick: false,
+        usedTeams: [],
+      }
+    }
+
+    const usedTeams = survivorEntry.picks.map((pick) => pick.teamId)
+    const eliminatedEntry = !survivorEntry.isActive
 
     return {
       teamAlreadyUsed: false, // Would check against specific team
       eliminatedEntry,
-      validPick: !eliminatedEntry,
+      validPick: survivorEntry.isActive,
       usedTeams,
     }
   }

@@ -22,9 +22,12 @@ export function GameProjection({
   className = '',
 }: GameProjectionProps) {
   const [showDetails, setShowDetails] = useState(false)
-  
+
   // Debug logging for news analysis
-  console.log('[GameProjection] projection.factors.newsAnalysis:', projection.factors.newsAnalysis)
+  console.log(
+    '[GameProjection] projection.factors.newsAnalysis:',
+    projection.factors.newsAnalysis
+  )
 
   const confidenceLevel = getConfidenceLevel(projection.confidence)
   const isHomeRecommended = projection.recommendedPick === 'HOME'
@@ -182,11 +185,35 @@ export function GameProjection({
           <div>
             <span className="text-gray-600">Total Adjustments:</span>
             <span className="ml-2 font-medium">
-              {(
-                projection.factors.weatherPenalty +
-                projection.factors.injuryPenalty +
-                projection.factors.restAdvantage
-              ).toFixed(1)}{' '}
+              {(() => {
+                const homeAdvantage = projection.factors.homeAdvantage || 0
+                const restAdvantage = projection.factors.restAdvantage || 0
+                const divisionalFactor =
+                  projection.factors.divisionalFactor || 0
+                const revengeGameFactor =
+                  projection.factors.revengeGameFactor || 0
+                const recentFormFactor =
+                  projection.factors.recentFormFactor || 0
+                const playoffImplicationsFactor =
+                  projection.factors.playoffImplicationsFactor || 0
+                const travelScheduleFactor =
+                  projection.factors.travelScheduleFactor || 0
+                const weatherPenalty = projection.factors.weatherPenalty || 0
+                const injuryPenalty = projection.factors.injuryPenalty || 0
+
+                const total =
+                  homeAdvantage +
+                  restAdvantage +
+                  divisionalFactor +
+                  revengeGameFactor +
+                  recentFormFactor +
+                  playoffImplicationsFactor +
+                  travelScheduleFactor -
+                  weatherPenalty -
+                  injuryPenalty
+
+                return isNaN(total) ? '0.0' : total.toFixed(1)
+              })()}{' '}
               pts
             </span>
           </div>
@@ -212,6 +239,167 @@ export function GameProjection({
                 <FactorBar key={index} factor={factor} />
               ))}
             </div>
+
+            {/* Tie-Breaker Data */}
+            {projection.tieBreakerData && (
+              <div className="mt-6 pt-4 border-t">
+                <h5 className="font-medium text-gray-900 mb-3">
+                  Tie-Breaker Predictions
+                </h5>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Score Prediction */}
+                  <div className="bg-white rounded-lg p-3 border">
+                    <h6 className="font-medium text-sm text-gray-700 mb-2">
+                      Predicted Final Score
+                    </h6>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-gray-900 mb-1">
+                        <span
+                          className={
+                            projection.recommendedPick === 'AWAY'
+                              ? 'text-green-600'
+                              : ''
+                          }
+                        >
+                          {gameDetails.awayTeam.nflAbbr}{' '}
+                          {projection.tieBreakerData.scorePrediction.awayScore}
+                        </span>
+                        {' - '}
+                        <span
+                          className={
+                            projection.recommendedPick === 'HOME'
+                              ? 'text-blue-600'
+                              : ''
+                          }
+                        >
+                          {gameDetails.homeTeam.nflAbbr}{' '}
+                          {projection.tieBreakerData.scorePrediction.homeScore}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Margin:{' '}
+                        {Math.abs(
+                          projection.tieBreakerData.scorePrediction.margin
+                        ).toFixed(1)}{' '}
+                        pts
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Confidence:{' '}
+                        {projection.tieBreakerData.scorePrediction.confidence}%
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Over/Under Prediction */}
+                  <div className="bg-white rounded-lg p-3 border">
+                    <h6 className="font-medium text-sm text-gray-700 mb-2">
+                      Over/Under Prediction
+                    </h6>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-gray-900 mb-1">
+                        {
+                          projection.tieBreakerData.overUnderPrediction
+                            .prediction
+                        }{' '}
+                        pts
+                      </div>
+                      <div
+                        className={`text-sm font-medium mb-1 ${
+                          projection.tieBreakerData.overUnderPrediction
+                            .recommendation === 'OVER'
+                            ? 'text-green-600'
+                            : projection.tieBreakerData.overUnderPrediction
+                                  .recommendation === 'UNDER'
+                              ? 'text-red-600'
+                              : 'text-gray-600'
+                        }`}
+                      >
+                        {
+                          projection.tieBreakerData.overUnderPrediction
+                            .recommendation
+                        }
+                        {projection.tieBreakerData.overUnderPrediction
+                          .marketTotal &&
+                          ` (vs ${projection.tieBreakerData.overUnderPrediction.marketTotal})`}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Confidence:{' '}
+                        {
+                          projection.tieBreakerData.overUnderPrediction
+                            .confidence
+                        }
+                        %
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Betting Reference */}
+                <div className="mt-4 bg-white rounded-lg p-3 border">
+                  <h6 className="font-medium text-sm text-gray-700 mb-2">
+                    Betting Reference
+                  </h6>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    {projection.tieBreakerData.bettingReference.spread !==
+                      undefined && (
+                      <div>
+                        <div className="text-gray-500">Spread</div>
+                        <div className="font-mono">
+                          {projection.tieBreakerData.bettingReference.spread > 0
+                            ? `${gameDetails.awayTeam.nflAbbr} -${projection.tieBreakerData.bettingReference.spread}`
+                            : `${gameDetails.homeTeam.nflAbbr} ${projection.tieBreakerData.bettingReference.spread}`}
+                        </div>
+                      </div>
+                    )}
+                    {projection.tieBreakerData.bettingReference.total && (
+                      <div>
+                        <div className="text-gray-500">O/U</div>
+                        <div className="font-mono">
+                          {projection.tieBreakerData.bettingReference.total}
+                        </div>
+                      </div>
+                    )}
+                    {projection.tieBreakerData.bettingReference
+                      .moneylineHome && (
+                      <div>
+                        <div className="text-gray-500">
+                          {gameDetails.homeTeam.nflAbbr} ML
+                        </div>
+                        <div className="font-mono">
+                          {projection.tieBreakerData.bettingReference
+                            .moneylineHome > 0
+                            ? '+'
+                            : ''}
+                          {
+                            projection.tieBreakerData.bettingReference
+                              .moneylineHome
+                          }
+                        </div>
+                      </div>
+                    )}
+                    {projection.tieBreakerData.bettingReference
+                      .moneylineAway && (
+                      <div>
+                        <div className="text-gray-500">
+                          {gameDetails.awayTeam.nflAbbr} ML
+                        </div>
+                        <div className="font-mono">
+                          {projection.tieBreakerData.bettingReference
+                            .moneylineAway > 0
+                            ? '+'
+                            : ''}
+                          {
+                            projection.tieBreakerData.bettingReference
+                              .moneylineAway
+                          }
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Model Details */}
             <div className="mt-4 pt-4 border-t text-xs text-gray-500">
@@ -241,7 +429,7 @@ function FactorBar({ factor }: FactorBarProps) {
   const weight = factor.weight ?? 0
   const contribution = factor.contribution ?? 0
   const value = factor.value ?? 0
-  
+
   const impact = contribution * weight
   const isPositive = impact > 0
   const barWidth = Math.min(Math.abs(impact) * 200, 100) // Scale for display

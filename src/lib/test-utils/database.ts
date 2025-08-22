@@ -15,8 +15,15 @@ import type {
 export class DatabaseTestUtils {
   /**
    * Clean up all test data in proper order (respecting foreign key constraints)
+   * DISABLED to protect production data - no database cleanup operations allowed
    */
   static async cleanupTestData(): Promise<void> {
+    // ALL CLEANUP OPERATIONS DISABLED TO PROTECT PRODUCTION DATA
+    console.warn('Database cleanup is disabled to protect production data')
+    return
+
+    /*
+    // THESE OPERATIONS ARE PERMANENTLY DISABLED TO PREVENT DATA LOSS
     // Delete in reverse dependency order, being careful to only delete test data
     await prisma.gradeOverride.deleteMany({})
     await prisma.grade.deleteMany({})
@@ -32,10 +39,91 @@ export class DatabaseTestUtils {
       },
     })
 
-    // Delete lines before games
-    await prisma.line.deleteMany({})
-    await prisma.result.deleteMany({})
-    await prisma.game.deleteMany({})
+    // Delete only test lines and results before games
+    // Only delete lines associated with test games or test pools
+    await prisma.line.deleteMany({
+      where: {
+        OR: [
+          {
+            source: {
+              contains: 'Test',
+            },
+          },
+          {
+            poolId: {
+              in: await prisma.pool.findMany({
+                where: {
+                  name: {
+                    contains: 'Test',
+                  },
+                },
+                select: { id: true },
+              }).then(pools => pools.map(p => p.id)),
+            },
+          },
+        ],
+      },
+    })
+    
+    // Only delete test results and games (those created by tests)
+    await prisma.result.deleteMany({
+      where: {
+        game: {
+          OR: [
+            {
+              homeTeam: {
+                nflAbbr: {
+                  startsWith: 'TST',
+                },
+              },
+            },
+            {
+              awayTeam: {
+                nflAbbr: {
+                  startsWith: 'TST',
+                },
+              },
+            },
+          ],
+        },
+      },
+    })
+    
+    // Only delete test games (those involving test teams)
+    await prisma.game.deleteMany({
+      where: {
+        OR: [
+          {
+            homeTeam: {
+              nflAbbr: {
+                startsWith: 'TST',
+              },
+            },
+          },
+          {
+            awayTeam: {
+              nflAbbr: {
+                startsWith: 'TST',
+              },
+            },
+          },
+          {
+            homeTeam: {
+              nflAbbr: {
+                in: ['DEV', 'TEST'],
+              },
+            },
+          },
+          {
+            awayTeam: {
+              nflAbbr: {
+                in: ['DEV', 'TEST'],
+              },
+            },
+          },
+        ],
+      },
+    })
 
     // Only delete test mapping profiles (those with Test in the name)
     await prisma.mappingProfile.deleteMany({
@@ -68,6 +156,7 @@ export class DatabaseTestUtils {
         ],
       },
     })
+    */
   }
 
   /**

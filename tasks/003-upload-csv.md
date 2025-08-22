@@ -6,11 +6,13 @@
 **Milestone:** 3 - File Upload System
 
 ## Objective
+
 Build a complete CSV upload system with column mapping, validation, preview, and data import functionality that integrates with the database schema.
 
 ## Acceptance Criteria
 
 ### File Upload Interface
+
 - [ ] Drag-and-drop file upload component
 - [ ] File type validation (CSV only for this task)
 - [ ] File size limits and validation
@@ -18,6 +20,7 @@ Build a complete CSV upload system with column mapping, validation, preview, and
 - [ ] Error handling with user-friendly messages
 
 ### CSV Processing
+
 - [ ] CSV parsing with configurable delimiters
 - [ ] Header row detection and handling
 - [ ] Column mapping interface (CSV columns → database fields)
@@ -25,24 +28,28 @@ Build a complete CSV upload system with column mapping, validation, preview, and
 - [ ] Duplicate detection and handling
 
 ### Mapping Profiles
+
 - [ ] Save/load column mapping configurations
 - [ ] Named mapping profiles for reuse
 - [ ] Default mappings for common CSV formats
 - [ ] Profile management interface (create, edit, delete)
 
 ### Data Preview
+
 - [ ] Raw CSV data preview (first 10 rows)
 - [ ] Mapped data preview with validation results
 - [ ] Error highlighting for invalid data
 - [ ] Import confirmation with summary stats
 
 ### Data Import
+
 - [ ] Bulk insert to database with transactions
 - [ ] Progress tracking for large imports
 - [ ] Error recovery and partial import handling
 - [ ] Import result summary and reporting
 
 ### Integration
+
 - [ ] Upload metadata tracking in database
 - [ ] Association with mapping profiles
 - [ ] File storage and cleanup management
@@ -51,6 +58,7 @@ Build a complete CSV upload system with column mapping, validation, preview, and
 ## Test List
 
 ### File Upload Tests (TDD)
+
 1. **Upload Component**
    - **RED:** Test file upload with invalid file type
    - **GREEN:** Implement file type validation
@@ -68,6 +76,7 @@ Build a complete CSV upload system with column mapping, validation, preview, and
    - Quote and escape character handling
 
 ### Column Mapping Tests
+
 1. **Mapping Interface**
    - **RED:** Test mapping with missing required fields
    - **GREEN:** Implement required field validation
@@ -85,6 +94,7 @@ Build a complete CSV upload system with column mapping, validation, preview, and
    - Profile export/import functionality
 
 ### Data Validation Tests
+
 1. **Field Validation**
    - **RED:** Test invalid data type conversion
    - **GREEN:** Implement type-specific validators
@@ -102,6 +112,7 @@ Build a complete CSV upload system with column mapping, validation, preview, and
    - Error aggregation and reporting
 
 ### Import Process Tests
+
 1. **Database Import**
    - **RED:** Test import with database constraint violation
    - **GREEN:** Implement constraint validation before import
@@ -119,6 +130,7 @@ Build a complete CSV upload system with column mapping, validation, preview, and
    - Import result reporting
 
 ### Integration Tests
+
 1. **End-to-End Upload Flow**
    - Upload CSV → Map columns → Preview → Import → Verify data
    - Error scenarios at each step
@@ -134,30 +146,35 @@ Build a complete CSV upload system with column mapping, validation, preview, and
 ## Implementation Steps
 
 ### Phase 1: Upload Component (TDD Red-Green-Refactor)
+
 1. **RED:** Create test for file upload component
 2. **GREEN:** Build basic file input with validation
 3. **REFACTOR:** Add drag-and-drop and styling
 4. Integrate with Next.js API routes for file handling
 
 ### Phase 2: CSV Parser (TDD Red-Green-Refactor)
+
 1. **RED:** Test CSV parsing with various formats
 2. **GREEN:** Implement robust CSV parser
 3. **REFACTOR:** Add configuration options and error handling
 4. Build column detection and data type inference
 
 ### Phase 3: Mapping Interface (TDD Red-Green-Refactor)
+
 1. **RED:** Test column mapping component
 2. **GREEN:** Build mapping interface with dropdowns
 3. **REFACTOR:** Add validation and user experience improvements
 4. Implement mapping profile storage and retrieval
 
 ### Phase 4: Data Preview (TDD Red-Green-Refactor)
+
 1. **RED:** Test preview component with validation
 2. **GREEN:** Build preview table with error highlighting
 3. **REFACTOR:** Add filtering and sorting capabilities
 4. Implement import confirmation workflow
 
 ### Phase 5: Import Engine (TDD Red-Green-Refactor)
+
 1. **RED:** Test bulk import with large dataset
 2. **GREEN:** Implement chunked import with progress
 3. **REFACTOR:** Add error recovery and reporting
@@ -166,6 +183,7 @@ Build a complete CSV upload system with column mapping, validation, preview, and
 ## File Deliverables
 
 ### UI Components
+
 - `src/components/upload/FileUpload.tsx` - Drag-and-drop upload
 - `src/components/upload/ColumnMapper.tsx` - Column mapping interface
 - `src/components/upload/DataPreview.tsx` - Preview table with validation
@@ -173,6 +191,7 @@ Build a complete CSV upload system with column mapping, validation, preview, and
 - `src/components/upload/MappingProfiles.tsx` - Profile management
 
 ### API Routes
+
 - `src/app/api/upload/route.ts` - File upload endpoint
 - `src/app/api/upload/parse/route.ts` - CSV parsing endpoint
 - `src/app/api/upload/preview/route.ts` - Data preview endpoint
@@ -180,6 +199,7 @@ Build a complete CSV upload system with column mapping, validation, preview, and
 - `src/app/api/mapping-profiles/route.ts` - Profile management
 
 ### Services
+
 - `src/lib/upload/csv-parser.ts` - CSV parsing utilities
 - `src/lib/upload/column-mapper.ts` - Column mapping logic
 - `src/lib/upload/data-validator.ts` - Data validation rules
@@ -187,11 +207,13 @@ Build a complete CSV upload system with column mapping, validation, preview, and
 - `src/server/services/upload.service.ts` - Upload management
 
 ### Types & Interfaces
+
 - `src/lib/types/upload.ts` - Upload-related types
 - `src/lib/types/mapping.ts` - Column mapping types
 - `src/lib/types/validation.ts` - Validation result types
 
 ### Test Files
+
 - `src/components/upload/*.test.tsx` - Component tests
 - `src/lib/upload/*.test.ts` - Utility function tests
 - `src/test/fixtures/csv/` - Sample CSV files for testing
@@ -200,77 +222,82 @@ Build a complete CSV upload system with column mapping, validation, preview, and
 ## Technical Specifications
 
 ### File Upload Constraints
+
 ```typescript
 const UPLOAD_CONSTRAINTS = {
   maxFileSize: 10 * 1024 * 1024, // 10MB
   allowedTypes: ['text/csv', 'application/csv'],
   maxRows: 10000, // Configurable limit
   timeout: 300000, // 5 minutes
-};
+}
 ```
 
 ### Column Mapping Schema
+
 ```typescript
 interface ColumnMapping {
-  csvColumn: string;
-  dbField: string;
-  dataType: 'string' | 'number' | 'date' | 'boolean' | 'enum';
-  required: boolean;
-  defaultValue?: any;
-  validator?: string; // Validation rule name
+  csvColumn: string
+  dbField: string
+  dataType: 'string' | 'number' | 'date' | 'boolean' | 'enum'
+  required: boolean
+  defaultValue?: any
+  validator?: string // Validation rule name
 }
 
 interface MappingProfile {
-  id: string;
-  name: string;
-  description?: string;
-  columnMappings: ColumnMapping[];
-  createdAt: Date;
-  updatedAt: Date;
+  id: string
+  name: string
+  description?: string
+  columnMappings: ColumnMapping[]
+  createdAt: Date
+  updatedAt: Date
 }
 ```
 
 ### Validation Rules
+
 ```typescript
 interface ValidationRule {
-  name: string;
-  type: 'format' | 'range' | 'enum' | 'custom';
+  name: string
+  type: 'format' | 'range' | 'enum' | 'custom'
   config: {
-    pattern?: string; // Regex for format validation
-    min?: number; // Min value/length
-    max?: number; // Max value/length
-    values?: string[]; // Enum values
-    validator?: (value: any) => boolean; // Custom function
-  };
-  message: string; // Error message template
+    pattern?: string // Regex for format validation
+    min?: number // Min value/length
+    max?: number // Max value/length
+    values?: string[] // Enum values
+    validator?: (value: any) => boolean // Custom function
+  }
+  message: string // Error message template
 }
 ```
 
 ### Import Process Flow
+
 ```typescript
 interface ImportProcess {
-  id: string;
-  uploadId: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  id: string
+  uploadId: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
   progress: {
-    total: number;
-    processed: number;
-    errors: number;
-    startTime: Date;
-    estimatedCompletion?: Date;
-  };
+    total: number
+    processed: number
+    errors: number
+    startTime: Date
+    estimatedCompletion?: Date
+  }
   result?: {
-    imported: number;
-    skipped: number;
-    errors: ImportError[];
-    summary: Record<string, any>;
-  };
+    imported: number
+    skipped: number
+    errors: ImportError[]
+    summary: Record<string, any>
+  }
 }
 ```
 
 ## Common CSV Mapping Scenarios
 
 ### NFL Game Lines CSV
+
 ```csv
 Date,Time,Away,Home,Spread,Total,ML_Away,ML_Home
 2024-09-08,13:00,BUF,NYJ,-6.5,40.5,-280,+240
@@ -278,6 +305,7 @@ Date,Time,Away,Home,Spread,Total,ML_Away,ML_Home
 ```
 
 **Mapping:**
+
 - Date + Time → kickoff (datetime conversion)
 - Away → awayTeam (NFL abbreviation validation)
 - Home → homeTeam (NFL abbreviation validation)
@@ -286,6 +314,7 @@ Date,Time,Away,Home,Spread,Total,ML_Away,ML_Home
 - ML_Away/ML_Home → Line.moneylineAway/Home (integer)
 
 ### Points Plus Pick CSV
+
 ```csv
 Game,Pick,Confidence
 BUF@NYJ,NYJ,85
@@ -293,11 +322,13 @@ LAC@MIA,LAC,72
 ```
 
 **Mapping:**
+
 - Game → Game lookup (parse team abbreviations)
 - Pick → teamId (resolve team from abbreviation)
 - Confidence → confidence (numeric 0-100 validation)
 
 ## Definition of Done
+
 - [ ] All upload tests pass with TDD Guard
 - [ ] File upload works in browser with drag-and-drop
 - [ ] CSV parsing handles various formats correctly
@@ -311,6 +342,7 @@ LAC@MIA,LAC,72
 - [ ] All acceptance criteria verified
 
 ## Notes
+
 - Focus on CSV first; image upload will be handled in task 004
 - Use chunked processing for large files to prevent memory issues
 - Implement proper transaction handling for data consistency

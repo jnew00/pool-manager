@@ -47,19 +47,21 @@ export default function NewsAnalysisDebugPage() {
       newsAnalysis: {
         confidence: 20, // Above the 5 threshold
         recommendedTeam: 'HOME' as const,
-        summary: newsResult?.success ? newsResult.result.summary : 'Key factors: Test quarterback listed as questionable with ankle injury; Recent roster move impacts team depth; Weather conditions favor running game',
-        adjustment: 2.5
-      }
+        summary: newsResult?.success
+          ? newsResult.result.summary
+          : 'Key factors: Test quarterback listed as questionable with ankle injury; Recent roster move impacts team depth; Weather conditions favor running game',
+        adjustment: 2.5,
+      },
     },
     modelVersion: '1.0.0',
-    calculatedAt: new Date()
+    calculatedAt: new Date(),
   }
 
   const mockGameDetails = {
     homeTeam: { name: 'Kansas City Chiefs', nflAbbr: 'KC' },
     awayTeam: { name: 'Buffalo Bills', nflAbbr: 'BUF' },
     kickoffTime: new Date(),
-    venue: 'Arrowhead Stadium'
+    venue: 'Arrowhead Stadium',
   }
 
   if (loading) {
@@ -69,7 +71,7 @@ export default function NewsAnalysisDebugPage() {
   return (
     <div className="p-8 space-y-6">
       <h1 className="text-2xl font-bold">News Analysis Debug Page</h1>
-      
+
       <div className="bg-gray-100 p-4 rounded">
         <h2 className="text-lg font-semibold mb-2">Service Test Result</h2>
         <pre className="text-sm overflow-auto">
@@ -78,13 +80,17 @@ export default function NewsAnalysisDebugPage() {
       </div>
 
       <div className="bg-white border rounded-lg p-4">
-        <h2 className="text-lg font-semibold mb-4">GameProjection Component Test</h2>
-        
+        <h2 className="text-lg font-semibold mb-4">
+          GameProjection Component Test
+        </h2>
+
         <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm">
-          <strong>Debug:</strong> mockProjection.factors.newsAnalysis = 
-          <pre className="mt-1">{JSON.stringify(mockProjection.factors.newsAnalysis, null, 2)}</pre>
+          <strong>Debug:</strong> mockProjection.factors.newsAnalysis =
+          <pre className="mt-1">
+            {JSON.stringify(mockProjection.factors.newsAnalysis, null, 2)}
+          </pre>
         </div>
-        
+
         <GameProjection
           projection={mockProjection}
           gameDetails={mockGameDetails}

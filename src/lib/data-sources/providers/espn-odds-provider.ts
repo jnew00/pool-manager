@@ -63,7 +63,11 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
   /**
    * Get odds for multiple games
    */
-  async getOddsForGames(gameIds: string[], season?: number, week?: number): Promise<ApiResponse<OddsData[]>> {
+  async getOddsForGames(
+    gameIds: string[],
+    season?: number,
+    week?: number
+  ): Promise<ApiResponse<OddsData[]>> {
     return this.withRetry(async () => {
       const allOdds: OddsData[] = []
 
@@ -246,7 +250,10 @@ export class EspnOddsProvider extends BaseDataProvider implements OddsProvider {
   /**
    * Get all current odds for a specific week
    */
-  async getAllCurrentOdds(season?: number, week?: number): Promise<ApiResponse<OddsData[]>> {
+  async getAllCurrentOdds(
+    season?: number,
+    week?: number
+  ): Promise<ApiResponse<OddsData[]>> {
     return this.getOddsForGames([], season, week)
   }
 

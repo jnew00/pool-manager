@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { dataProviderRegistry } from '@/lib/data-sources/provider-registry'
 import { EspnOddsProvider } from '@/lib/data-sources/providers/espn-odds-provider'
 import { OpenWeatherProvider } from '@/lib/data-sources/providers/openweather-provider'
@@ -8,59 +8,66 @@ import {
   MockWeatherProvider,
 } from '@/lib/data-sources/providers'
 
-const prisma = new PrismaClient()
+// Lazy initialization of providers
+let providersInitialized = false
 
-// Initialize providers
-const espnProvider = new EspnOddsProvider()
-const weatherProvider = new OpenWeatherProvider({
-  apiKey: process.env.OPENWEATHER_API_KEY,
-})
-const mockOddsProvider = new MockOddsProvider()
-const mockWeatherProvider = new MockWeatherProvider()
+function initializeProviders() {
+  if (providersInitialized) return
 
-// Register providers (use ESPN for odds always, use real weather if API key available)
-dataProviderRegistry.registerOddsProvider(espnProvider, true)
-dataProviderRegistry.registerWeatherProvider(
-  process.env.OPENWEATHER_API_KEY ? weatherProvider : mockWeatherProvider,
-  true
-)
+  // Initialize providers
+  const espnProvider = new EspnOddsProvider()
+  const weatherProvider = new OpenWeatherProvider({
+    apiKey: process.env.OPENWEATHER_API_KEY,
+  })
+  const mockOddsProvider = new MockOddsProvider()
+  const mockWeatherProvider = new MockWeatherProvider()
+
+  // Register providers (use ESPN for odds always, use real weather if API key available)
+  dataProviderRegistry.registerOddsProvider(espnProvider, true)
+  dataProviderRegistry.registerWeatherProvider(
+    process.env.OPENWEATHER_API_KEY ? weatherProvider : mockWeatherProvider,
+    true
+  )
+
+  providersInitialized = true
+}
 
 // Stadium name mapping for better weather data
 const STADIUM_NAMES: Record<string, string> = {
-  'ARI': 'State Farm Stadium',
-  'ATL': 'Mercedes-Benz Stadium', 
-  'BAL': 'M&T Bank Stadium',
-  'BUF': 'Highmark Stadium',
-  'CAR': 'Bank of America Stadium',
-  'CHI': 'Soldier Field',
-  'CIN': 'Paycor Stadium',
-  'CLE': 'FirstEnergy Stadium',
-  'DAL': 'AT&T Stadium',
-  'DEN': 'Empower Field at Mile High',
-  'DET': 'Ford Field',
-  'GB': 'Lambeau Field',
-  'HOU': 'NRG Stadium',
-  'IND': 'Lucas Oil Stadium',
-  'JAX': 'TIAA Bank Field',
-  'KC': 'GEHA Field at Arrowhead Stadium',
-  'LV': 'Allegiant Stadium',
-  'LVR': 'Allegiant Stadium',
-  'LAC': 'SoFi Stadium',
-  'LAR': 'SoFi Stadium', 
-  'MIA': 'Hard Rock Stadium',
-  'MIN': 'U.S. Bank Stadium',
-  'NE': 'Gillette Stadium',
-  'NO': 'Caesars Superdome',
-  'NYG': 'MetLife Stadium',
-  'NYJ': 'MetLife Stadium',
-  'PHI': 'Lincoln Financial Field',
-  'PIT': 'Acrisure Stadium',
-  'SEA': 'Lumen Field',
-  'SF': 'Levi\'s Stadium',
-  'TB': 'Raymond James Stadium',
-  'TEN': 'Nissan Stadium',
-  'WAS': 'FedExField',
-  'WSH': 'FedExField'
+  ARI: 'State Farm Stadium',
+  ATL: 'Mercedes-Benz Stadium',
+  BAL: 'M&T Bank Stadium',
+  BUF: 'Highmark Stadium',
+  CAR: 'Bank of America Stadium',
+  CHI: 'Soldier Field',
+  CIN: 'Paycor Stadium',
+  CLE: 'FirstEnergy Stadium',
+  DAL: 'AT&T Stadium',
+  DEN: 'Empower Field at Mile High',
+  DET: 'Ford Field',
+  GB: 'Lambeau Field',
+  HOU: 'NRG Stadium',
+  IND: 'Lucas Oil Stadium',
+  JAX: 'TIAA Bank Field',
+  KC: 'GEHA Field at Arrowhead Stadium',
+  LV: 'Allegiant Stadium',
+  LVR: 'Allegiant Stadium',
+  LAC: 'SoFi Stadium',
+  LAR: 'SoFi Stadium',
+  MIA: 'Hard Rock Stadium',
+  MIN: 'U.S. Bank Stadium',
+  NE: 'Gillette Stadium',
+  NO: 'Caesars Superdome',
+  NYG: 'MetLife Stadium',
+  NYJ: 'MetLife Stadium',
+  PHI: 'Lincoln Financial Field',
+  PIT: 'Acrisure Stadium',
+  SEA: 'Lumen Field',
+  SF: "Levi's Stadium",
+  TB: 'Raymond James Stadium',
+  TEN: 'Nissan Stadium',
+  WAS: 'FedExField',
+  WSH: 'FedExField',
 }
 
 function getStadiumName(teamAbbr: string): string {
@@ -72,6 +79,7 @@ function getStadiumName(teamAbbr: string): string {
  */
 export async function GET(request: NextRequest) {
   try {
+    initializeProviders()
     const availableProviders = dataProviderRegistry.getAvailableProviders()
     const healthStatus = await dataProviderRegistry.checkProviderHealth()
 
@@ -101,6 +109,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    initializeProviders()
     const body = await request.json()
     const { gameIds, season, week, dataTypes = ['odds', 'weather'] } = body
 
@@ -132,71 +141,94 @@ export async function POST(request: NextRequest) {
 
     // If no games found in database, try to fetch and create them from ESPN
     if (games.length === 0 && season && week) {
-      console.log(`[Data Sources] No games found in DB for season ${season} week ${week}, fetching from ESPN...`)
-      
+      console.log(
+        `[Data Sources] No games found in DB for season ${season} week ${week}, fetching from ESPN...`
+      )
+
       try {
-        const allOddsResponse = await dataProviderRegistry.getAllCurrentOdds('ESPN', season, week)
-        
-        if (allOddsResponse.success && allOddsResponse.data && allOddsResponse.data.length > 0) {
-          console.log(`[Data Sources] ESPN returned ${allOddsResponse.data.length} games, creating teams and games...`)
-          
+        const allOddsResponse = await dataProviderRegistry.getAllCurrentOdds(
+          'ESPN',
+          season,
+          week
+        )
+
+        if (
+          allOddsResponse.success &&
+          allOddsResponse.data &&
+          allOddsResponse.data.length > 0
+        ) {
+          console.log(
+            `[Data Sources] ESPN returned ${allOddsResponse.data.length} games, creating teams and games...`
+          )
+
           const createdGames = []
-          
+
           for (const espnGame of allOddsResponse.data) {
+            // Skip games without team information
+            if (!espnGame.homeTeam || !espnGame.awayTeam) {
+              console.warn(
+                `[Data Sources] Skipping game with missing team data:`,
+                espnGame
+              )
+              continue
+            }
+
             // Create or find teams
             const homeTeam = await prisma.team.upsert({
               where: { nflAbbr: espnGame.homeTeam },
               update: {},
               create: {
                 nflAbbr: espnGame.homeTeam,
-                name: espnGame.homeTeam // ESPN doesn't provide full names, use abbreviation
-              }
+                name: espnGame.homeTeam, // ESPN doesn't provide full names, use abbreviation
+              },
             })
-            
+
             const awayTeam = await prisma.team.upsert({
               where: { nflAbbr: espnGame.awayTeam },
               update: {},
               create: {
                 nflAbbr: espnGame.awayTeam,
-                name: espnGame.awayTeam // ESPN doesn't provide full names, use abbreviation
-              }
+                name: espnGame.awayTeam, // ESPN doesn't provide full names, use abbreviation
+              },
             })
-            
+
             // Create game
             const game = await prisma.game.create({
               data: {
-                season,
-                week,
-                kickoff: espnGame.kickoff,
+                season: season!,
+                week: week!,
+                kickoff: espnGame.kickoff || new Date(),
                 homeTeamId: homeTeam.id,
                 awayTeamId: awayTeam.id,
                 status: 'SCHEDULED',
-                venue: this.getStadiumName(espnGame.homeTeam)
+                venue: getStadiumName(espnGame.homeTeam),
               },
               include: {
                 homeTeam: true,
                 awayTeam: true,
-              }
+              },
             })
-            
+
             createdGames.push(game)
-            
+
             // Create odds line immediately
             await prisma.line.create({
               data: {
                 gameId: game.id,
-                source: espnGame.source,
+                source: espnGame.source || 'ESPN',
                 spread: espnGame.spread,
                 total: espnGame.total,
                 moneylineHome: espnGame.moneylineHome,
                 moneylineAway: espnGame.moneylineAway,
-                capturedAt: espnGame.capturedAt
-              }
+                capturedAt: espnGame.capturedAt || new Date(),
+              },
             })
           }
-          
-          console.log(`[Data Sources] Created ${createdGames.length} games and ${createdGames.length} lines from ESPN`)
-          
+
+          console.log(
+            `[Data Sources] Created ${createdGames.length} games and ${createdGames.length} lines from ESPN`
+          )
+
           return NextResponse.json({
             success: true,
             data: {
@@ -204,14 +236,14 @@ export async function POST(request: NextRequest) {
               oddsCreated: createdGames.length,
               weatherUpdated: 0,
               message: `Created ${createdGames.length} games from ESPN for season ${season} week ${week}`,
-              timestamp: new Date()
-            }
+              timestamp: new Date(),
+            },
           })
         }
       } catch (error) {
         console.error('[Data Sources] Error fetching from ESPN:', error)
       }
-      
+
       return NextResponse.json({
         success: true,
         data: {
@@ -250,7 +282,10 @@ export async function POST(request: NextRequest) {
               console.log(
                 `[Data Sources] Available games:`,
                 allOddsResponse.data
-                  .map((odds) => `${odds.awayTeam} @ ${odds.homeTeam}`)
+                  .map(
+                    (odds) =>
+                      `${odds.awayTeam || 'Unknown'} @ ${odds.homeTeam || 'Unknown'}`
+                  )
                   .join(', ')
               )
 
@@ -259,7 +294,7 @@ export async function POST(request: NextRequest) {
                 // Try to match teams - ESPN might use slightly different abbreviations
                 const homeMatch = odds.homeTeam === game.homeTeam.nflAbbr
                 const awayMatch = odds.awayTeam === game.awayTeam.nflAbbr
-                return homeMatch && awayMatch
+                return homeMatch && awayMatch && odds.homeTeam && odds.awayTeam
               })
 
               if (matchingOdds) {

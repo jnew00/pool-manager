@@ -45,7 +45,7 @@ const deepSeekService = new NewsAnalysisService({
   llmProvider: 'deepseek',
   model: 'deepseek-chat',
   maxTokens: 1000,
-  temperature: 0.3
+  temperature: 0.3,
 })
 
 // Anthropic configuration
@@ -53,7 +53,7 @@ const claudeService = new NewsAnalysisService({
   llmProvider: 'anthropic',
   model: 'claude-3-haiku-20240307',
   maxTokens: 1000,
-  temperature: 0.3
+  temperature: 0.3,
 })
 
 // Custom provider configuration
@@ -63,7 +63,7 @@ const customService = new NewsAnalysisService({
   model: 'your-model',
   apiKey: 'your-key',
   maxTokens: 1000,
-  temperature: 0.3
+  temperature: 0.3,
 })
 ```
 
@@ -81,7 +81,7 @@ const customService = new NewsAnalysisService({
 The GameProjection component automatically displays a news analysis badge when the service returns results:
 
 - **Blue badge**: News analysis favors home team
-- **Green badge**: News analysis favors away team  
+- **Green badge**: News analysis favors away team
 - **Gray badge**: News analysis found factors but no clear recommendation
 - **Hover tooltip**: Shows analysis summary and confidence level
 

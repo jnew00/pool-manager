@@ -2,7 +2,18 @@
 
 import { useState, useCallback } from 'react'
 import { defaultModelWeights } from '@/lib/models/confidence-engine'
-import { Shield, Zap, Scale, BarChart3, CloudRain, Target, Activity, Trophy, Settings, Plane } from 'lucide-react'
+import {
+  Shield,
+  Zap,
+  Scale,
+  BarChart3,
+  CloudRain,
+  Target,
+  Activity,
+  Trophy,
+  Settings,
+  Plane,
+} from 'lucide-react'
 
 // Preset weight configurations for different betting strategies
 const presetConfigurations = {
@@ -184,7 +195,7 @@ export default function ControlPanel({
             Strategy Presets
           </h4>
           <span className="text-xs text-gray-500 dark:text-gray-400">
-{currentPreset === 'custom'
+            {currentPreset === 'custom'
               ? 'Custom'
               : presetConfigurations[
                   currentPreset as keyof typeof presetConfigurations
@@ -287,7 +298,8 @@ export default function ControlPanel({
                   <div className="flex items-center space-x-1 mb-2">
                     <Target className="w-4 h-4 text-green-600" />
                     <label className="block text-sm font-medium text-green-800 dark:text-green-200">
-                      Line Value (Arbitrage): {(weights.lineValueWeight * 100).toFixed(0)}%
+                      Line Value (Arbitrage):{' '}
+                      {(weights.lineValueWeight * 100).toFixed(0)}%
                     </label>
                   </div>
                   <input
@@ -365,7 +377,8 @@ export default function ControlPanel({
                   <div className="flex items-center space-x-1 mb-2">
                     <Trophy className="w-4 h-4 text-orange-600" />
                     <label className="block text-sm font-medium text-orange-800 dark:text-orange-200">
-                      Division Rivalry: {(weights.divisionalWeight * 100).toFixed(0)}%
+                      Division Rivalry:{' '}
+                      {(weights.divisionalWeight * 100).toFixed(0)}%
                     </label>
                   </div>
                   <input
@@ -395,7 +408,8 @@ export default function ControlPanel({
                   <div className="flex items-center space-x-1 mb-2">
                     <Zap className="w-4 h-4 text-purple-600" />
                     <label className="block text-sm font-medium text-purple-800 dark:text-purple-200">
-                      Revenge Game: {(weights.revengeGameWeight * 100).toFixed(0)}%
+                      Revenge Game:{' '}
+                      {(weights.revengeGameWeight * 100).toFixed(0)}%
                     </label>
                   </div>
                   <input
@@ -425,7 +439,8 @@ export default function ControlPanel({
                   <div className="flex items-center space-x-1 mb-2">
                     <Plane className="w-4 h-4 text-blue-600" />
                     <label className="block text-sm font-medium text-blue-800 dark:text-blue-200">
-                      Travel/Schedule: {(weights.travelScheduleWeight * 100).toFixed(0)}%
+                      Travel/Schedule:{' '}
+                      {(weights.travelScheduleWeight * 100).toFixed(0)}%
                     </label>
                   </div>
                   <input

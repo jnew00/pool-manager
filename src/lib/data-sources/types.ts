@@ -88,10 +88,17 @@ export interface DataProvider {
  * Interface for odds data providers
  */
 export interface OddsProvider extends DataProvider {
-  getOddsForGames(gameIds: string[], season?: number, week?: number): Promise<ApiResponse<OddsData[]>>
+  getOddsForGames(
+    gameIds: string[],
+    season?: number,
+    week?: number
+  ): Promise<ApiResponse<OddsData[]>>
   getOddsForGame(gameId: string): Promise<ApiResponse<OddsData>>
   getAvailableBookmakers(): Promise<ApiResponse<string[]>>
-  getAllCurrentOdds?(season?: number, week?: number): Promise<ApiResponse<OddsData[]>>
+  getAllCurrentOdds?(
+    season?: number,
+    week?: number
+  ): Promise<ApiResponse<OddsData[]>>
 }
 
 /**

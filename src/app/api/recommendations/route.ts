@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import {
   ConfidenceEngine,
   defaultModelWeights,
 } from '@/lib/models/confidence-engine'
 import { dataProviderRegistry } from '@/lib/data-sources/provider-registry'
 import type { ModelInput } from '@/lib/models/types'
-
-const prisma = new PrismaClient()
 const confidenceEngine = new ConfidenceEngine()
 
 // Helper function to determine if venue is a dome
@@ -126,15 +124,38 @@ export async function GET(request: NextRequest) {
     for (const game of games) {
       const line = game.lines[0] // Most recent line
 
-      if (!line) {
-        // Skip games without betting data
+      // For non-SU pools, we require betting lines
+      if (!line && pool.type !== 'SU') {
+        // Skip games without betting data for ATS and other pools
         continue
       }
+
+      // For SU pools, we can proceed without lines (will rely on Elo and other factors)
+      const marketData = line
+        ? {
+            spread: line.spread
+              ? parseFloat(line.spread.toString())
+              : undefined,
+            total: line.total ? parseFloat(line.total.toString()) : undefined,
+            moneylineHome: line.moneylineHome
+              ? Number(line.moneylineHome)
+              : undefined,
+            moneylineAway: line.moneylineAway
+              ? Number(line.moneylineAway)
+              : undefined,
+          }
+        : {
+            // Default empty market data for SU pools without lines
+            spread: undefined,
+            total: undefined,
+            moneylineHome: undefined,
+            moneylineAway: undefined,
+          }
 
       // Get real weather data if available
       const gameApiRefs = game.apiRefs as any
       const weatherData = gameApiRefs?.weather || {
-        isDome: isVenueDome(game.venue),
+        isDome: isVenueDome(game.venue || ''),
         temperature: 65,
         windSpeed: 5,
         precipitationChance: 0.0,
@@ -145,6 +166,10 @@ export async function GET(request: NextRequest) {
       const injuryData = {
         homeTeamPenalty: 0,
         awayTeamPenalty: 0,
+        totalPenalty: 0,
+        qbImpact: false,
+        lineImpact: false,
+        secondaryImpact: false,
       }
 
       // TODO: Calculate real rest days from game history
@@ -152,6 +177,7 @@ export async function GET(request: NextRequest) {
       const restData = {
         homeDaysRest: 7,
         awayDaysRest: 7,
+        advantage: 0, // No rest advantage
       }
 
       // Get current market data from ESPN odds provider
@@ -184,12 +210,8 @@ export async function GET(request: NextRequest) {
         homeTeamId: game.homeTeam.id,
         awayTeamId: game.awayTeam.id,
         kickoffTime: game.kickoff,
-        marketData: {
-          spread: line.spread ? parseFloat(line.spread.toString()) : undefined,
-          total: line.total ? parseFloat(line.total.toString()) : undefined,
-          moneylineHome: line.moneylineHome,
-          moneylineAway: line.moneylineAway,
-        },
+        poolType: pool.type, // Pass the pool type for proper confidence calculation
+        marketData,
         currentMarketData,
         weights: weights as any,
         venue: game.venue,
@@ -199,7 +221,7 @@ export async function GET(request: NextRequest) {
       }
 
       console.log(
-        `[Recommendations] Game ${game.homeTeam.nflAbbr} vs ${game.awayTeam.nflAbbr}: spread=${line.spread}, total=${line.total}, ML=${line.moneylineHome}/${line.moneylineAway}`
+        `[Recommendations] Game ${game.homeTeam.nflAbbr} vs ${game.awayTeam.nflAbbr}: spread=${line?.spread || 'N/A'}, total=${line?.total || 'N/A'}, ML=${line?.moneylineHome || 'N/A'}/${line?.moneylineAway || 'N/A'}`
       )
       console.log(`[Recommendations] marketData:`, modelInput.marketData)
 
@@ -225,17 +247,26 @@ export async function GET(request: NextRequest) {
           week: game.week,
           season: game.season,
         },
-        line: {
-          spread: line.spread,
-          total: line.total,
-          moneylineHome: line.moneylineHome,
-          moneylineAway: line.moneylineAway,
-          source: line.source,
-        },
+        line: line
+          ? {
+              spread: line.spread,
+              total: line.total,
+              moneylineHome: line.moneylineHome,
+              moneylineAway: line.moneylineAway,
+              source: line.source,
+            }
+          : {
+              spread: null,
+              total: null,
+              moneylineHome: null,
+              moneylineAway: null,
+              source: 'No lines available',
+            },
         recommendation: {
           pick: result.recommendedPick || 'HOME',
           confidence: confidence,
           factors: result.factors || {}, // Include all factors, not just factorBreakdown
+          tieBreakerData: result.tieBreakerData || null, // Include tie-breaker predictions
           strength:
             confidence > 60 ? 'Strong' : confidence > 55 ? 'Moderate' : 'Weak',
           modelVersion: '1.0.0',

@@ -5,7 +5,7 @@ export async function GET() {
   try {
     // Test the news analysis service with mock data
     const service = new NewsAnalysisService()
-    
+
     const testInput = {
       gameId: 'test-game-1',
       homeTeamId: 'test-home',
@@ -16,18 +16,18 @@ export async function GET() {
       venue: 'Arrowhead Stadium',
       confidenceDifference: 5, // 45-55% confidence range
       currentHomeConfidence: 55,
-      currentAwayConfidence: 45
+      currentAwayConfidence: 45,
     }
 
     console.log('[Debug] Testing news analysis service...')
     const result = await service.analyzeGame(testInput)
-    
+
     console.log('[Debug] News analysis result:', {
       analysisConfidence: result.analysisConfidence,
       recommendedTeam: result.recommendedTeam,
       keyFactors: result.keyFactors?.length,
       summary: result.summary,
-      sources: result.sources?.length
+      sources: result.sources?.length,
     })
 
     return NextResponse.json({
@@ -36,11 +36,10 @@ export async function GET() {
         useMockData: process.env.USE_MOCK_NEWS_DATA,
         newsApiKey: !!process.env.NEWS_API_KEY,
         minRange: process.env.NEWS_ANALYSIS_MIN_RANGE,
-        maxRange: process.env.NEWS_ANALYSIS_MAX_RANGE
+        maxRange: process.env.NEWS_ANALYSIS_MAX_RANGE,
       },
-      result
+      result,
     })
-
   } catch (error) {
     console.error('[Debug] News analysis test failed:', error)
     return NextResponse.json({
@@ -50,8 +49,8 @@ export async function GET() {
         useMockData: process.env.USE_MOCK_NEWS_DATA,
         newsApiKey: !!process.env.NEWS_API_KEY,
         minRange: process.env.NEWS_ANALYSIS_MIN_RANGE,
-        maxRange: process.env.NEWS_ANALYSIS_MAX_RANGE
-      }
+        maxRange: process.env.NEWS_ANALYSIS_MAX_RANGE,
+      },
     })
   }
 }

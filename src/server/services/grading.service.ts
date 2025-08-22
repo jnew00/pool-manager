@@ -109,9 +109,13 @@ export class GradingService extends BaseService {
 
     // Determine if picked team won, lost, or tied
     let didWin: boolean | null = null
+    let pickedTeamScore = 0
+    let opponentScore = 0
 
     if (pickedTeamId === game.homeTeamId) {
       // Picked home team
+      pickedTeamScore = homeScore
+      opponentScore = awayScore
       if (homeScore > awayScore) {
         didWin = true
       } else if (homeScore < awayScore) {
@@ -121,6 +125,8 @@ export class GradingService extends BaseService {
       }
     } else if (pickedTeamId === game.awayTeamId) {
       // Picked away team
+      pickedTeamScore = awayScore
+      opponentScore = homeScore
       if (awayScore > homeScore) {
         didWin = true
       } else if (awayScore < homeScore) {
@@ -132,7 +138,18 @@ export class GradingService extends BaseService {
       throw new ValidationError('Pick team does not match game teams', 'teamId')
     }
 
-    // Handle ties first
+    // Points Plus uses margin-based scoring
+    if (poolType === 'POINTS_PLUS') {
+      return this.calculatePointsPlusGrade(
+        didWin,
+        pickedTeamScore,
+        opponentScore,
+        homeScore,
+        awayScore
+      )
+    }
+
+    // Handle ties first for other pool types
     if (didWin === null) {
       return {
         outcome: 'PUSH',
@@ -140,7 +157,7 @@ export class GradingService extends BaseService {
       }
     }
 
-    // Handle wins and losses
+    // Handle wins and losses for other pool types
     if (didWin) {
       const points = this.calculateWinPoints(poolType, pick.confidence)
       return {
@@ -157,6 +174,60 @@ export class GradingService extends BaseService {
   }
 
   /**
+   * Calculate Points Plus grading based on margin of victory/defeat
+   */
+  private calculatePointsPlusGrade(
+    didWin: boolean | null,
+    pickedTeamScore: number,
+    opponentScore: number,
+    homeScore: number,
+    awayScore: number
+  ): {
+    outcome: PickOutcome
+    points: number
+    details?: Record<string, any>
+  } {
+    // Handle ties - 0 points for Points Plus
+    if (didWin === null) {
+      return {
+        outcome: 'PUSH',
+        points: 0,
+        details: {
+          homeScore,
+          awayScore,
+          tie: true,
+        },
+      }
+    }
+
+    const margin = Math.abs(pickedTeamScore - opponentScore)
+
+    if (didWin) {
+      // Win: add margin of victory
+      return {
+        outcome: 'WIN',
+        points: margin,
+        details: {
+          marginOfVictory: margin,
+          homeScore,
+          awayScore,
+        },
+      }
+    } else {
+      // Loss: subtract margin of defeat
+      return {
+        outcome: 'LOSS',
+        points: -margin,
+        details: {
+          marginOfDefeat: margin,
+          homeScore,
+          awayScore,
+        },
+      }
+    }
+  }
+
+  /**
    * Calculate points awarded for a win based on pool type
    */
   private calculateWinPoints(poolType: PoolType, confidence: number): number {
@@ -167,8 +238,7 @@ export class GradingService extends BaseService {
         return 1.0 // Standard point for these pool types
 
       case 'POINTS_PLUS':
-        // Confidence-based scoring: confidence% / 50
-        // 50% confidence = 1.0 point, 100% confidence = 2.0 points
+        // This should not be called for Points Plus - use calculatePointsPlusGrade instead
         return confidence / 50.0
 
       default:

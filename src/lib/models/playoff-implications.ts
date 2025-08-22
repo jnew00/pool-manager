@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { prisma as globalPrisma } from '@/lib/prisma'
 
 export interface TeamPlayoffImplications {
   inPlayoffContention: boolean
@@ -32,7 +33,7 @@ export class PlayoffImplicationsAnalyzer {
   private prisma: PrismaClient
 
   constructor(prisma?: PrismaClient) {
-    this.prisma = prisma || new PrismaClient()
+    this.prisma = prisma || globalPrisma
   }
 
   /**
@@ -46,7 +47,7 @@ export class PlayoffImplicationsAnalyzer {
   ): Promise<PlayoffImplicationsResult> {
     const [homeImplications, awayImplications] = await Promise.all([
       this.analyzeTeamPlayoffSituation(homeTeamId, season, week),
-      this.analyzeTeamPlayoffSituation(awayTeamId, season, week)
+      this.analyzeTeamPlayoffSituation(awayTeamId, season, week),
     ])
 
     // Calculate motivation based on playoff implications
@@ -58,13 +59,13 @@ export class PlayoffImplicationsAnalyzer {
       awayMotivation,
       implications: {
         home: homeImplications,
-        away: awayImplications
+        away: awayImplications,
       },
       weeklyContext: {
         week,
         isLateSeeason: week >= 14,
-        isPlayoffWeek: week >= 18 // Wild card week
-      }
+        isPlayoffWeek: week >= 18, // Wild card week
+      },
     }
   }
 
@@ -98,14 +99,14 @@ export class PlayoffImplicationsAnalyzer {
     const record = {
       wins,
       losses,
-      winPercentage
+      winPercentage,
     }
 
     return {
       inPlayoffContention,
       playoffPressure,
       record,
-      motivation: 0.5 // Will be calculated separately
+      motivation: 0.5, // Will be calculated separately
     }
   }
 
@@ -114,7 +115,7 @@ export class PlayoffImplicationsAnalyzer {
    */
   isInPlayoffContention(wins: number, losses: number, week: number): boolean {
     const totalGames = wins + losses
-    
+
     // Early season - everyone is in contention
     if (week <= 8 || totalGames < 6) {
       return true
@@ -127,20 +128,20 @@ export class PlayoffImplicationsAnalyzer {
     if (week >= 16) {
       // Very late season - need strong record or mathematical chance
       if (winPercentage >= 0.625) return true // 10+ wins likely
-      if (winPercentage >= 0.500 && gamesRemaining >= 1) return true // 8+ wins possible
+      if (winPercentage >= 0.5 && gamesRemaining >= 1) return true // 8+ wins possible
       return false
     }
 
     // Mid-to-late season
     if (week >= 12) {
       // Need at least .400 win percentage with games remaining
-      if (winPercentage >= 0.400 && gamesRemaining >= 2) return true
-      if (winPercentage >= 0.500) return true
+      if (winPercentage >= 0.4 && gamesRemaining >= 2) return true
+      if (winPercentage >= 0.5) return true
       return false
     }
 
     // Mid season - more lenient
-    return winPercentage >= 0.300
+    return winPercentage >= 0.3
   }
 
   /**
@@ -148,7 +149,7 @@ export class PlayoffImplicationsAnalyzer {
    */
   calculatePlayoffPressure(wins: number, losses: number, week: number): number {
     const totalGames = wins + losses
-    
+
     if (totalGames === 0) {
       return 0.5 // Default pressure for no games played
     }
@@ -157,22 +158,26 @@ export class PlayoffImplicationsAnalyzer {
     const gamesRemaining = 17 - totalGames
 
     // Strong teams (likely playoff bound) have lower pressure
-    if (winPercentage >= 0.750) {
+    if (winPercentage >= 0.75) {
       return Math.max(0.1, (week - 10) / 20) // Minimal pressure, slight increase late
     }
 
     // Eliminated teams have minimal pressure
-    if (winPercentage < 0.300 && week >= 14) {
+    if (winPercentage < 0.3 && week >= 14) {
       return Math.max(0.05, 0.3 - winPercentage)
     }
 
     // Bubble teams have highest pressure
-    if (winPercentage >= 0.400 && winPercentage <= 0.650) {
+    if (winPercentage >= 0.4 && winPercentage <= 0.65) {
       const lateSeeasonMultiplier = week >= 14 ? 1.5 : 1.0
       const gamesRemainingFactor = gamesRemaining <= 3 ? 1.3 : 1.0
-      
-      return Math.min(1.0, (0.5 + (0.5 - Math.abs(winPercentage - 0.500))) * 
-                           lateSeeasonMultiplier * gamesRemainingFactor)
+
+      return Math.min(
+        1.0,
+        (0.5 + (0.5 - Math.abs(winPercentage - 0.5))) *
+          lateSeeasonMultiplier *
+          gamesRemainingFactor
+      )
     }
 
     // Default moderate pressure
@@ -183,7 +188,7 @@ export class PlayoffImplicationsAnalyzer {
    * Calculate overall motivation based on playoff implications
    */
   private calculateMotivation(
-    implications: TeamPlayoffImplications, 
+    implications: TeamPlayoffImplications,
     week: number
   ): number {
     const { inPlayoffContention, playoffPressure, record } = implications
@@ -200,7 +205,7 @@ export class PlayoffImplicationsAnalyzer {
     }
 
     // Teams in contention
-    motivation = 0.5 + (playoffPressure * 0.4) // 0.5 to 0.9 range
+    motivation = 0.5 + playoffPressure * 0.4 // 0.5 to 0.9 range
 
     // Late season bonus for playoff-bound teams
     if (week >= 16) {
@@ -208,7 +213,7 @@ export class PlayoffImplicationsAnalyzer {
     }
 
     // Strong teams fighting for seeding
-    if (record.winPercentage >= 0.700) {
+    if (record.winPercentage >= 0.7) {
       motivation = Math.max(motivation, 0.6) // Minimum motivation for good teams
     }
 
@@ -224,7 +229,7 @@ export class PlayoffImplicationsAnalyzer {
     awayMotivation: number
   ): number {
     const motivationDifference = homeMotivation - awayMotivation
-    
+
     // Convert motivation difference to points (max ±2 points)
     return motivationDifference * 2
   }

@@ -30,6 +30,7 @@ enum PickOutcome {
   LOSS
   PUSH
   VOID
+  PENDING
 }
 
 enum UploadKind {
@@ -44,10 +45,11 @@ model Team {
   name    String
 
   // Relations
-  homeGames Game[] @relation("HomeTeam")
-  awayGames Game[] @relation("AwayTeam")
-  picks     Pick[]
-  eloRating TeamRating?
+  homeGames     Game[] @relation("HomeTeam")
+  awayGames     Game[] @relation("AwayTeam")
+  picks         Pick[]
+  survivorPicks SurvivorPick[]
+  eloRating     TeamRating?
 
   @@map("teams")
 }
@@ -82,11 +84,12 @@ model Game {
   apiRefs    Json?
 
   // Relations
-  homeTeam Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  awayTeam Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
-  lines    Line[]
-  picks    Pick[]
-  result   Result?
+  homeTeam      Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam      Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  lines         Line[]
+  picks         Pick[]
+  survivorPicks SurvivorPick[]
+  result        Result?
 
   @@unique([season, week, homeTeamId, awayTeamId])
   @@index([season, week])
@@ -125,10 +128,13 @@ model Pool {
   isActive    Boolean  @default(true)
   description String?
   rules       Json?
+  creatorId   String?  // User who created the pool
 
   // Relations
-  entries Entry[]
-  lines   Line[]
+  entries          Entry[]
+  lines            Line[]
+  survivorEntries  SurvivorEntry[]
+  survivorWeekData SurvivorWeekData[]
 
   @@index([season])
   @@map("pools")
@@ -245,4 +251,66 @@ model GradeOverride {
   pick Pick @relation(fields: [pickId], references: [id])
 
   @@map("grade_overrides")
+}
+
+// Survivor Pool specific models
+model SurvivorEntry {
+  id             String    @id @default(cuid())
+  poolId         String
+  userId         String?   // Optional user identifier
+  entryName      String?   // Optional name for the entry
+  eliminatedWeek Int?      // Week when eliminated (null if still active)
+  strikes        Int       @default(0) // Number of strikes/mulligans used
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  pool           Pool            @relation(fields: [poolId], references: [id])
+  picks          SurvivorPick[]
+
+  @@unique([poolId, userId, entryName])
+  @@index([poolId])
+  @@index([isActive])
+  @@map("survivor_entries")
+}
+
+model SurvivorPick {
+  id              String      @id @default(cuid())
+  entryId         String
+  week            Int
+  teamId          String
+  gameId          String
+  result          PickOutcome?
+  marginOfVictory Int?        // Points won/lost by
+  pickedAt        DateTime    @default(now())
+  lockedAt        DateTime?   // When the pick was locked in
+
+  // Relations
+  entry           SurvivorEntry @relation(fields: [entryId], references: [id])
+  team            Team          @relation(fields: [teamId], references: [id])
+  game            Game          @relation(fields: [gameId], references: [id])
+
+  @@unique([entryId, week])
+  @@unique([entryId, teamId]) // Enforce no team reuse per entry
+  @@index([week])
+  @@index([teamId])
+  @@map("survivor_picks")
+}
+
+model SurvivorWeekData {
+  id                 String   @id @default(cuid())
+  poolId             String
+  week               Int
+  totalEntries       Int      // Total entries at start of week
+  survivingEntries   Int      // Entries that survived the week
+  publicPickData     Json?    // Store public pick percentages per team
+  capturedAt         DateTime @default(now())
+
+  // Relations
+  pool Pool @relation(fields: [poolId], references: [id])
+
+  @@unique([poolId, week])
+  @@index([week])
+  @@map("survivor_week_data")
 }

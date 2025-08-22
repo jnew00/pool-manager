@@ -171,13 +171,13 @@ export class EloSystem {
         team: {
           select: {
             name: true,
-            nflAbbr: true
-          }
-        }
+            nflAbbr: true,
+          },
+        },
       },
       orderBy: {
-        rating: 'desc'
-      }
+        rating: 'desc',
+      },
     })
 
     return ratingsWithTeams.map((rating, index) => ({
@@ -186,7 +186,7 @@ export class EloSystem {
       gamesPlayed: rating.gamesPlayed,
       lastUpdated: rating.lastUpdated,
       rank: index + 1,
-      team: rating.team
+      team: rating.team,
     }))
   }
 
@@ -223,15 +223,17 @@ export class EloSystem {
   private async getStoredRating(teamId: string): Promise<TeamRating | null> {
     try {
       const rating = await prisma.teamRating.findUnique({
-        where: { teamId }
+        where: { teamId },
       })
 
-      return rating ? {
-        teamId: rating.teamId,
-        rating: rating.rating,
-        gamesPlayed: rating.gamesPlayed,
-        lastUpdated: rating.lastUpdated
-      } : null
+      return rating
+        ? {
+            teamId: rating.teamId,
+            rating: rating.rating,
+            gamesPlayed: rating.gamesPlayed,
+            lastUpdated: rating.lastUpdated,
+          }
+        : null
     } catch {
       return null
     }
@@ -240,12 +242,12 @@ export class EloSystem {
   private async getAllStoredRatings(): Promise<TeamRating[]> {
     try {
       const ratings = await prisma.teamRating.findMany()
-      
-      return ratings.map(rating => ({
+
+      return ratings.map((rating) => ({
         teamId: rating.teamId,
         rating: rating.rating,
         gamesPlayed: rating.gamesPlayed,
-        lastUpdated: rating.lastUpdated
+        lastUpdated: rating.lastUpdated,
       }))
     } catch {
       return []
@@ -263,14 +265,14 @@ export class EloSystem {
         update: {
           rating,
           gamesPlayed,
-          lastUpdated: new Date()
+          lastUpdated: new Date(),
         },
         create: {
           teamId,
           rating,
           gamesPlayed,
-          lastUpdated: new Date()
-        }
+          lastUpdated: new Date(),
+        },
       })
     } catch (error) {
       console.error('Failed to update team rating:', error)

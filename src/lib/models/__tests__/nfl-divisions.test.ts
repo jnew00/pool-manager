@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { 
-  areTeamsDivisionRivals, 
-  areTeamsSameConference, 
+import {
+  areTeamsDivisionRivals,
+  areTeamsSameConference,
   getTeamDivision,
   getDivisionRivals,
   getRivalryIntensity,
-  TEAM_DIVISIONS 
+  TEAM_DIVISIONS,
 } from '../nfl-divisions'
 
 describe('NFL Divisions', () => {
@@ -119,7 +119,7 @@ describe('NFL Divisions', () => {
     it('should include all 32 NFL teams', () => {
       const allTeams = Object.keys(TEAM_DIVISIONS)
       expect(allTeams).toHaveLength(32)
-      
+
       // Check a few key teams are included
       expect(allTeams).toContain('KC')
       expect(allTeams).toContain('TB')
@@ -128,12 +128,21 @@ describe('NFL Divisions', () => {
     })
 
     it('should have exactly 4 teams per division', () => {
-      const divisions = ['AFC_NORTH', 'AFC_SOUTH', 'AFC_EAST', 'AFC_WEST', 
-                        'NFC_NORTH', 'NFC_SOUTH', 'NFC_EAST', 'NFC_WEST']
-      
-      Object.values(divisions).forEach(divisionKey => {
-        const teams = Object.entries(TEAM_DIVISIONS)
-          .filter(([_, info]) => info.division === divisionKey)
+      const divisions = [
+        'AFC_NORTH',
+        'AFC_SOUTH',
+        'AFC_EAST',
+        'AFC_WEST',
+        'NFC_NORTH',
+        'NFC_SOUTH',
+        'NFC_EAST',
+        'NFC_WEST',
+      ]
+
+      Object.values(divisions).forEach((divisionKey) => {
+        const teams = Object.entries(TEAM_DIVISIONS).filter(
+          ([_, info]) => info.division === divisionKey
+        )
         expect(teams).toHaveLength(4)
       })
     })

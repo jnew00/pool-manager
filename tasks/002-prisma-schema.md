@@ -6,17 +6,20 @@
 **Milestone:** 2 - Database Schema & Prisma Setup
 
 ## Objective
+
 Implement complete database schema with Prisma ORM, including all entities, relationships, and basic CRUD operations with comprehensive testing.
 
 ## Acceptance Criteria
 
 ### Prisma Configuration
+
 - [ ] Prisma client installed and configured
 - [ ] PostgreSQL provider configured in schema
 - [ ] Database connection using existing `DATABASE_URL` from `.env`
 - [ ] Prisma generate and migrate commands working
 
 ### Database Schema
+
 - [ ] All entities defined with proper relationships:
   - Team (id, nflAbbr, name)
   - Game (id, season, week, kickoff, homeTeamId, awayTeamId, venue?, lat?, lon?, apiRefs JSONB?)
@@ -31,17 +34,20 @@ Implement complete database schema with Prisma ORM, including all entities, rela
   - ModelWeights (id, name, weights JSONB, createdAt)
 
 ### Data Relationships
+
 - [ ] Proper foreign key constraints
 - [ ] Cascade delete behaviors where appropriate
 - [ ] Unique constraints on business keys
 - [ ] Indexes on frequently queried fields
 
 ### Seed Data
+
 - [ ] Complete NFL teams data (32 teams with official abbreviations)
 - [ ] Sample pool configurations for each type
 - [ ] Test data for development environment
 
 ### CRUD Operations
+
 - [ ] Service layer with TypeScript interfaces
 - [ ] Create, Read, Update, Delete for all entities
 - [ ] Batch operations for bulk inserts
@@ -49,6 +55,7 @@ Implement complete database schema with Prisma ORM, including all entities, rela
 - [ ] Error handling and validation
 
 ### Testing
+
 - [ ] Database test utilities (setup/teardown)
 - [ ] Unit tests for all CRUD operations
 - [ ] Integration tests with actual database
@@ -58,6 +65,7 @@ Implement complete database schema with Prisma ORM, including all entities, rela
 ## Test List
 
 ### Schema Validation Tests
+
 1. **Migration Tests**
    - Schema generates without errors
    - Migration applies successfully to empty database
@@ -77,6 +85,7 @@ Implement complete database schema with Prisma ORM, including all entities, rela
    - String length limits enforced
 
 ### CRUD Operation Tests (TDD)
+
 1. **Team Entity**
    - **RED:** Test creating team with invalid NFL abbreviation
    - **GREEN:** Implement validation for NFL abbreviations
@@ -111,6 +120,7 @@ Implement complete database schema with Prisma ORM, including all entities, rela
    - Mapping profile associations
 
 ### Integration Tests
+
 1. **Complete Game Flow**
    - Create teams → create game → create lines → create picks → grade picks
    - Data consistency throughout workflow
@@ -124,6 +134,7 @@ Implement complete database schema with Prisma ORM, including all entities, rela
 ## Implementation Steps
 
 ### Phase 1: Prisma Setup (TDD Red)
+
 ```bash
 # Install Prisma
 npm install prisma @prisma/client
@@ -134,12 +145,14 @@ npx prisma init --datasource-provider postgresql
 ```
 
 ### Phase 2: Schema Definition (TDD Green)
+
 1. Define all entities in `prisma/schema.prisma`
 2. Set up proper relationships and constraints
 3. Configure indexes for performance
 4. Define enums for status fields
 
 ### Phase 3: Migration & Generation (TDD Refactor)
+
 ```bash
 # Generate initial migration
 npx prisma migrate dev --name init
@@ -149,12 +162,14 @@ npx prisma generate
 ```
 
 ### Phase 4: Service Layer (TDD Red-Green-Refactor)
+
 1. **RED:** Write tests for team CRUD operations
 2. **GREEN:** Implement team service with basic operations
 3. **REFACTOR:** Extract common patterns to base service
 4. Repeat for each entity following TDD cycle
 
 ### Phase 5: Seed Data
+
 1. Create comprehensive NFL teams data
 2. Sample configurations for all pool types
 3. Development test data for realistic scenarios
@@ -162,11 +177,13 @@ npx prisma generate
 ## File Deliverables
 
 ### Prisma Files
+
 - `prisma/schema.prisma` - Complete database schema
 - `prisma/migrations/` - Database migration files
 - `prisma/seed.ts` - Seed data script
 
 ### Service Layer
+
 - `src/server/services/base.service.ts` - Base CRUD operations
 - `src/server/services/team.service.ts` - Team-specific operations
 - `src/server/services/game.service.ts` - Game management
@@ -175,22 +192,26 @@ npx prisma generate
 - `src/server/services/grade.service.ts` - Grading operations
 
 ### Type Definitions
+
 - `src/lib/types/database.ts` - Prisma type exports
 - `src/lib/types/enums.ts` - Enum definitions
 - `src/lib/types/api.ts` - API request/response types
 
 ### Test Files
+
 - `src/test/utils/database.test.ts` - Database utilities
 - `src/server/services/*.test.ts` - Service layer tests
 - `src/test/integration/database.integration.test.ts` - Full integration
 
 ### Configuration
+
 - `package.json` - Updated with Prisma scripts
 - `.env.example` - Database URL template
 
 ## Schema Details
 
 ### Key Relationships
+
 ```prisma
 model Game {
   id         String  @id @default(cuid())
@@ -202,7 +223,7 @@ model Game {
   lines      Line[]
   picks      Pick[]
   result     Result?
-  
+
   @@unique([season, week, homeTeamId, awayTeamId])
   @@index([season, week])
   @@index([kickoff])
@@ -210,6 +231,7 @@ model Game {
 ```
 
 ### Enum Definitions
+
 ```prisma
 enum PoolType {
   ATS
@@ -237,29 +259,31 @@ enum UploadKind {
 ```
 
 ### JSONB Schema Examples
+
 ```typescript
 // Pool rules for Points Plus
 interface PointsPlusRules {
-  minGames: number;
-  requireEqualFavUnderdogs: boolean;
-  allowPickEm: boolean;
-  pushHandling: 'void' | 'half_point';
+  minGames: number
+  requireEqualFavUnderdogs: boolean
+  allowPickEm: boolean
+  pushHandling: 'void' | 'half_point'
 }
 
 // Model weights configuration
 interface ModelWeights {
-  market_prob_weight: number;
-  elo_weight: number;
-  home_adv_weight: number;
-  rest_weight: number;
-  weather_penalty_weight: number;
-  injury_penalty_weight: number;
-  k_elo: number;
+  market_prob_weight: number
+  elo_weight: number
+  home_adv_weight: number
+  rest_weight: number
+  weather_penalty_weight: number
+  injury_penalty_weight: number
+  k_elo: number
   // ... additional weights
 }
 ```
 
 ## Definition of Done
+
 - [ ] All Prisma migrations apply successfully
 - [ ] Prisma client generates without errors
 - [ ] All CRUD operations tested and working
@@ -271,6 +295,7 @@ interface ModelWeights {
 - [ ] All acceptance criteria verified
 
 ## Notes
+
 - Use existing `DATABASE_URL` from project `.env`
 - Follow TDD strictly for all service implementations
 - Keep database queries optimized with proper indexing

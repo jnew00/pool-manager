@@ -134,7 +134,7 @@ export class ProviderRegistry {
     if (provider.getAllCurrentOdds) {
       return provider.getAllCurrentOdds(season, week)
     }
-    
+
     return provider.getOddsForGames([], season, week)
   }
 

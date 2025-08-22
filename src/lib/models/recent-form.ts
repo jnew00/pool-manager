@@ -33,27 +33,24 @@ export class RecentFormAnalyzer {
     // Get recent games for the team (completed games only)
     const recentGames = await prisma.game.findMany({
       where: {
-        OR: [
-          { homeTeamId: teamId },
-          { awayTeamId: teamId }
-        ],
+        OR: [{ homeTeamId: teamId }, { awayTeamId: teamId }],
         season,
         kickoff: {
-          lt: currentDate
+          lt: currentDate,
         },
         result: {
-          status: 'FINAL'
-        }
+          status: 'FINAL',
+        },
       },
       include: {
         result: true,
         homeTeam: { select: { id: true } },
-        awayTeam: { select: { id: true } }
+        awayTeam: { select: { id: true } },
       },
       orderBy: {
-        kickoff: 'desc'
+        kickoff: 'desc',
       },
-      take: gamesToAnalyze
+      take: gamesToAnalyze,
     })
 
     if (recentGames.length === 0) {
@@ -64,7 +61,7 @@ export class RecentFormAnalyzer {
         wins: 0,
         losses: 0,
         avgMarginOfVictory: 0,
-        recentTrend: 'neutral'
+        recentTrend: 'neutral',
       }
     }
 
@@ -76,8 +73,12 @@ export class RecentFormAnalyzer {
       if (!game.result) continue
 
       const isHomeTeam = game.homeTeamId === teamId
-      const teamScore = isHomeTeam ? game.result.homeScore : game.result.awayScore
-      const opponentScore = isHomeTeam ? game.result.awayScore : game.result.homeScore
+      const teamScore = isHomeTeam
+        ? game.result.homeScore
+        : game.result.awayScore
+      const opponentScore = isHomeTeam
+        ? game.result.awayScore
+        : game.result.homeScore
 
       if (teamScore === null || opponentScore === null) continue
 
@@ -93,13 +94,21 @@ export class RecentFormAnalyzer {
 
     const gamesAnalyzed = wins + losses
     const winPercentage = gamesAnalyzed > 0 ? wins / gamesAnalyzed : 0
-    const avgMarginOfVictory = gamesAnalyzed > 0 ? totalMargin / gamesAnalyzed : 0
+    const avgMarginOfVictory =
+      gamesAnalyzed > 0 ? totalMargin / gamesAnalyzed : 0
 
     // Calculate form score (-100 to +100)
-    const formScore = this.calculateFormScore(winPercentage, avgMarginOfVictory, gamesAnalyzed)
+    const formScore = this.calculateFormScore(
+      winPercentage,
+      avgMarginOfVictory,
+      gamesAnalyzed
+    )
 
     // Determine trend
-    const recentTrend = this.determineRecentTrend(winPercentage, avgMarginOfVictory)
+    const recentTrend = this.determineRecentTrend(
+      winPercentage,
+      avgMarginOfVictory
+    )
 
     return {
       teamId,
@@ -108,7 +117,7 @@ export class RecentFormAnalyzer {
       wins,
       losses,
       avgMarginOfVictory,
-      recentTrend
+      recentTrend,
     }
   }
 
@@ -124,7 +133,7 @@ export class RecentFormAnalyzer {
   ): Promise<FormComparisonResult> {
     const [homeTeamForm, awayTeamForm] = await Promise.all([
       this.analyzeTeamForm(homeTeamId, currentDate, season, gamesToAnalyze),
-      this.analyzeTeamForm(awayTeamId, currentDate, season, gamesToAnalyze)
+      this.analyzeTeamForm(awayTeamId, currentDate, season, gamesToAnalyze),
     ])
 
     const formAdvantage = homeTeamForm.formScore - awayTeamForm.formScore
@@ -134,7 +143,7 @@ export class RecentFormAnalyzer {
       homeTeamForm,
       awayTeamForm,
       formAdvantage,
-      homeTeamFavored
+      homeTeamFavored,
     }
   }
 
@@ -163,7 +172,10 @@ export class RecentFormAnalyzer {
   /**
    * Determine recent trend category
    */
-  private determineRecentTrend(winPercentage: number, avgMarginOfVictory: number): 'hot' | 'cold' | 'neutral' {
+  private determineRecentTrend(
+    winPercentage: number,
+    avgMarginOfVictory: number
+  ): 'hot' | 'cold' | 'neutral' {
     if (winPercentage > 0.6 && avgMarginOfVictory > 3) {
       return 'hot'
     } else if (winPercentage < 0.4 && avgMarginOfVictory < -3) {
