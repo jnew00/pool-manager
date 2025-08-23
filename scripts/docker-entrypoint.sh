@@ -24,11 +24,22 @@ done
 echo "🔄 Running database migrations..."
 npx prisma migrate deploy
 
-if [ $? -eq 0 ]; then
-  echo "✅ Migrations completed successfully"
+if [ $? -ne 0 ]; then
+  echo "⚠️  Migration failed, attempting to baseline existing database..."
+  # Try to baseline with the first migration
+  npx prisma migrate resolve --applied "20250816213427_init"
+  
+  # Run migrations again
+  npx prisma migrate deploy
+  
+  if [ $? -eq 0 ]; then
+    echo "✅ Migrations completed after baseline"
+  else
+    echo "❌ Migrations still failed"
+    exit 1
+  fi
 else
-  echo "❌ Migrations failed"
-  exit 1
+  echo "✅ Migrations completed successfully"
 fi
 
 # Start the application
