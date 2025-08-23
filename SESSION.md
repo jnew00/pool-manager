@@ -1401,3 +1401,31 @@ d575ded workflow
 *[Auto-generated from git history - No LLM used]*
 
 ---
+
+
+## Session - 2025-08-23 12:41
+
+### Files Changed
+**Modified:**
+- .github/workflows/deploy.yml
+
+### Git Statistics
+```
+ .github/workflows/deploy.yml | 23 +++++++++++++++--------
+ 1 file changed, 15 insertions(+), 8 deletions(-)
+
+```
+
+### Recent Commits
+```
+1a66e61 Reverts to Tailscale GitHub Action v1
+1541e42 Updates Tailscale action configuration
+35e50bd Updates Tailscale action and debugs secrets
+18d65fa Adds Diun integration to Docker deployment
+5fb7f5d Improves migration robustness
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
