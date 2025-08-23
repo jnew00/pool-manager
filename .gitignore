@@ -12,3 +12,7 @@ out/
 # TypeScript build info
 *.tsbuildinfo
 .session_backup_*
+
+.serena
+backups
+
