@@ -24,10 +24,43 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
+          platforms: linux/amd64
           push: true
           tags: |
             ${{ vars.DOCKER_REPO }}/${{ vars.DOCKER_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          
+      - name: Notify Diun of new image
+        run: |
+          echo "🚀 Notifying Diun of new PoolManager image..."
+          curl -X POST http://YOUR_TAILSCALE_IP:8042/webhooks/docker \
+               -H "Content-Type: application/json" \
+               -d '{
+                 "push_data": {
+                   "tag": "latest"
+                 },
+                 "repository": {
+                   "repo_name": "${{ vars.DOCKER_REPO }}/${{ vars.DOCKER_IMAGE }}"
+                 }
+               }' \
+          && echo "✅ Diun notification sent successfully" \
+          || echo "❌ Failed to notify Diun (check Tailscale connection)"
+
+      - name: Build summary
+        run: |
+          echo "## 🐳 Docker Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ vars.DOCKER_REPO }}/${{ vars.DOCKER_IMAGE }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** Docker Hub" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** linux/amd64" >> $GITHUB_STEP_SUMMARY
         

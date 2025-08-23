@@ -1,0 +1,56 @@
+# Complete Diun Configuration for Tailscale + Discord
+# Place this file at: /mnt/user/appdata/diun/diun.yml
+
+# Database
+db:
+  path: /data/diun.db
+
+# Webhook server (receives GitHub Actions notifications)
+server:
+  addr: ":8080"
+  path: "/webhooks"
+
+# Logging
+log:
+  level: info
+  json: false
+
+# Discord notifications
+notif:
+  discord:
+    webhookURL: "https://discord.com/api/webhooks/YOUR_DISCORD_WEBHOOK_ID/YOUR_DISCORD_WEBHOOK_TOKEN"
+    timeout: 10s
+    templateBody: |
+      🚀 **PoolManager Image Updated!**
+      
+      **Repository:** `{{ .Entry.Image }}`
+      **Tag:** `{{ .Entry.Tag }}`
+      **Registry:** {{ .Entry.Registry }}
+      
+      📅 **Updated:** {{ .Entry.Manifest.Created }}
+      🏗️ **Platform:** {{ .Entry.Manifest.Platform }}
+      
+      **Ready to pull and deploy!** 🎯
+      
+      ```
+      docker pull {{ .Entry.Image }}:{{ .Entry.Tag }}
+      ```
+
+# Registry settings
+regopts:
+  - name: "docker.io"
+    timeout: 30s
+    insecure: false
+
+# Optional: Monitor running containers with labels
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    watchByDefault: false
+    watchStopped: false
+
+# Optional: Watch specific images directly (without webhooks)
+# Uncomment if you want polling as backup
+# watch:
+#   - name: "your-registry/poolmanager"
+#     tag: "latest"
