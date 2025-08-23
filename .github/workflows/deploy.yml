@@ -30,7 +30,4 @@ jobs:
           push: true
           tags: |
             ${{ vars.DOCKER_REPO }}/${{ vars.DOCKER_IMAGE }}:latest
-            ${{ vars.DOCKER_REPO }}/${{ vars.DOCKER_IMAGE }}:${{ github.sha }}
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+        
