@@ -58,7 +58,7 @@ jobs:
       - name: Notify Diun of new image
         run: |
           echo "🚀 Notifying Diun of new PoolManager image..."
-          curl -X POST http://YOUR_TAILSCALE_IP:8042/webhooks/docker \
+          curl -X POST http://100.127.37.80:8042/webhooks/docker \
                -H "Content-Type: application/json" \
                -d '{
                  "push_data": {
