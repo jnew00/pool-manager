@@ -1,1031 +1,5 @@
 # SESSION.md (Auto-Compacted)
 
-- src/features/survivor/components/WeekMatchupGrid.tsx
-- src/features/uploads/components/ProfileSelector.tsx
-- src/lib/models/survivor-recommendations.ts
-
-**Created:**
-- .dockerignore
-- .env.production.example
-- .env.staging.example
-- .github/
-- Dockerfile
-- docker-compose.prod.yml
-- docs/API_KEYS_SETUP.md
-- docs/DEPLOYMENT_GUIDE.md
-- docs/PRODUCTION_MIGRATION_PLAN.md
-- prisma/migrations/20250823_add_data_source_tracking/
-- prisma/migrations/20250823_optimize_indexes/
-- scripts/migrate-production.ts
-- src/app/api/debug/injury-providers/
-- src/app/api/survivor/pools/[poolId]/entries/[entryId]/route.ts
-- src/components/ui/data-source-indicator.tsx
-- src/components/ui/injury-data-source-indicator.tsx
-- src/lib/data-sources/providers/espn-injury-provider.ts
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/data-sources/providers/mysportsfeeds-injury-provider.ts
-- src/lib/models/real-injury-analysis.ts
-- src/lib/models/real-schedule-analysis.ts
-- src/lib/models/real-team-analysis.ts
-- unraid-template.xml
-
-### Git Statistics
-```
- .gitignore                                         |    1 +
- .../document_symbols_cache_v23-06-25.pkl           |  Bin 119996337 -> 120517604 bytes
- SESSION.md                                         | 3490 ++++++++++----------
- next.config.js                                     |    2 +
- package-lock.json                                  |  127 +-
- package.json                                       |    3 +
- prisma/schema.prisma                               |    1 +
- .../api/survivor/pools/[poolId]/entries/route.ts   |    8 +
- src/app/api/survivor/recommendations/route.ts      |   12 +-
- src/app/debug/news-analysis/page.tsx               |    4 +-
- src/app/pools/[id]/page.tsx                        |    7 +-
- src/app/survivor/[id]/page.tsx                     |   68 +-
- src/app/test-badge/page.tsx                        |    2 +-
- src/components/ui/tabs.tsx                         |   23 +-
- src/features/picks/components/WeeklyPickScreen.tsx |    2 +-
- .../pools/components/PoolConfigurationForm.tsx     |    2 +-
- .../survivor/components/MultiEntryManager.tsx      |  109 +-
- .../survivor/components/SurvivorPoolManager.tsx    |    2 +-
- .../survivor/components/WeekMatchupGrid.tsx        |    2 +-
- .../uploads/components/ProfileSelector.tsx         |    5 +-
- src/lib/models/survivor-recommendations.ts         |   74 +-
- 21 files changed, 2021 insertions(+), 1923 deletions(-)
-
-```
-
-### Recent Commits
-```
-79a8915 survivor
-cec0cd6 feat(models): implement travel/scheduling analysis factor
-ec28e12 working
-2da9bcc initial
-ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-23 00:12
-
-### Files Changed
-**Modified:**
-- .gitignore
-- .serena/cache/typescript/document_symbols_cache_v23-06-25.pkl
-- SESSION.md
-- next.config.js
-- package-lock.json
-- package.json
-- prisma/schema.prisma
-- src/app/api/survivor/pools/[poolId]/entries/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/debug/news-analysis/page.tsx
-- src/app/pools/[id]/page.tsx
-- src/app/survivor/[id]/page.tsx
-- src/app/test-badge/page.tsx
-- src/components/ui/tabs.tsx
-- src/features/picks/components/WeeklyPickScreen.tsx
-- src/features/pools/components/PoolConfigurationForm.tsx
-- src/features/survivor/components/MultiEntryManager.tsx
-- src/features/survivor/components/SurvivorPoolManager.tsx
-- src/features/survivor/components/WeekMatchupGrid.tsx
-- src/features/uploads/components/ProfileSelector.tsx
-- src/lib/models/survivor-recommendations.ts
-
-**Created:**
-- .dockerignore
-- .env.production.example
-- .env.staging.example
-- .github/
-- Dockerfile
-- docker-compose.prod.yml
-- docs/API_KEYS_SETUP.md
-- docs/DEPLOYMENT_GUIDE.md
-- docs/PRODUCTION_MIGRATION_PLAN.md
-- prisma/migrations/20250823_add_data_source_tracking/
-- prisma/migrations/20250823_optimize_indexes/
-- scripts/migrate-production.ts
-- src/app/api/debug/injury-providers/
-- src/app/api/survivor/pools/[poolId]/entries/[entryId]/route.ts
-- src/components/ui/data-source-indicator.tsx
-- src/components/ui/injury-data-source-indicator.tsx
-- src/lib/data-sources/providers/espn-injury-provider.ts
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/data-sources/providers/mysportsfeeds-injury-provider.ts
-- src/lib/models/real-injury-analysis.ts
-- src/lib/models/real-schedule-analysis.ts
-- src/lib/models/real-team-analysis.ts
-- unraid-template.xml
-
-### Git Statistics
-```
- .gitignore                                         |    1 +
- .../document_symbols_cache_v23-06-25.pkl           |  Bin 119996337 -> 120517604 bytes
- SESSION.md                                         | 2580 ++++++--------------
- next.config.js                                     |    2 +
- package-lock.json                                  |  127 +-
- package.json                                       |    3 +
- prisma/schema.prisma                               |    1 +
- .../api/survivor/pools/[poolId]/entries/route.ts   |    8 +
- src/app/api/survivor/recommendations/route.ts      |   12 +-
- src/app/debug/news-analysis/page.tsx               |    4 +-
- src/app/pools/[id]/page.tsx                        |    7 +-
- src/app/survivor/[id]/page.tsx                     |   68 +-
- src/app/test-badge/page.tsx                        |    2 +-
- src/components/ui/tabs.tsx                         |   23 +-
- src/features/picks/components/WeeklyPickScreen.tsx |    2 +-
- .../pools/components/PoolConfigurationForm.tsx     |    2 +-
- .../survivor/components/MultiEntryManager.tsx      |  109 +-
- .../survivor/components/SurvivorPoolManager.tsx    |    2 +-
- .../survivor/components/WeekMatchupGrid.tsx        |    2 +-
- .../uploads/components/ProfileSelector.tsx         |    5 +-
- src/lib/models/survivor-recommendations.ts         |   74 +-
- 21 files changed, 1101 insertions(+), 1933 deletions(-)
-
-```
-
-### Recent Commits
-```
-79a8915 survivor
-cec0cd6 feat(models): implement travel/scheduling analysis factor
-ec28e12 working
-2da9bcc initial
-ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-23 00:13
-
-### Files Changed
-**Modified:**
-- .gitignore
-- .serena/cache/typescript/document_symbols_cache_v23-06-25.pkl
-- SESSION.md
-- next.config.js
-- package-lock.json
-- package.json
-- prisma/schema.prisma
-- src/app/api/survivor/pools/[poolId]/entries/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/debug/news-analysis/page.tsx
-- src/app/pools/[id]/page.tsx
-- src/app/survivor/[id]/page.tsx
-- src/app/test-badge/page.tsx
-- src/components/ui/tabs.tsx
-- src/features/picks/components/WeeklyPickScreen.tsx
-- src/features/pools/components/PoolConfigurationForm.tsx
-- src/features/survivor/components/MultiEntryManager.tsx
-- src/features/survivor/components/SurvivorPoolManager.tsx
-- src/features/survivor/components/WeekMatchupGrid.tsx
-- src/features/uploads/components/ProfileSelector.tsx
-- src/lib/models/survivor-recommendations.ts
-
-**Created:**
-- .dockerignore
-- .env.production.example
-- .env.staging.example
-- .github/
-- Dockerfile
-- docker-compose.prod.yml
-- docs/API_KEYS_SETUP.md
-- docs/DEPLOYMENT_GUIDE.md
-- docs/PRODUCTION_MIGRATION_PLAN.md
-- prisma/migrations/20250823_add_data_source_tracking/
-- prisma/migrations/20250823_optimize_indexes/
-- scripts/migrate-production.ts
-- src/app/api/debug/injury-providers/
-- src/app/api/survivor/pools/[poolId]/entries/[entryId]/route.ts
-- src/components/ui/data-source-indicator.tsx
-- src/components/ui/injury-data-source-indicator.tsx
-- src/lib/data-sources/providers/espn-injury-provider.ts
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/data-sources/providers/mysportsfeeds-injury-provider.ts
-- src/lib/models/real-injury-analysis.ts
-- src/lib/models/real-schedule-analysis.ts
-- src/lib/models/real-team-analysis.ts
-- unraid-template.xml
-
-### Git Statistics
-```
- .gitignore                                         |    1 +
- .../document_symbols_cache_v23-06-25.pkl           |  Bin 119996337 -> 120517604 bytes
- SESSION.md                                         | 2671 +++++++-------------
- next.config.js                                     |    2 +
- package-lock.json                                  |  127 +-
- package.json                                       |    3 +
- prisma/schema.prisma                               |    1 +
- .../api/survivor/pools/[poolId]/entries/route.ts   |    8 +
- src/app/api/survivor/recommendations/route.ts      |   12 +-
- src/app/debug/news-analysis/page.tsx               |    4 +-
- src/app/pools/[id]/page.tsx                        |    7 +-
- src/app/survivor/[id]/page.tsx                     |   68 +-
- src/app/test-badge/page.tsx                        |    2 +-
- src/components/ui/tabs.tsx                         |   23 +-
- src/features/picks/components/WeeklyPickScreen.tsx |    2 +-
- .../pools/components/PoolConfigurationForm.tsx     |    2 +-
- .../survivor/components/MultiEntryManager.tsx      |  109 +-
- .../survivor/components/SurvivorPoolManager.tsx    |    2 +-
- .../survivor/components/WeekMatchupGrid.tsx        |    2 +-
- .../uploads/components/ProfileSelector.tsx         |    5 +-
- src/lib/models/survivor-recommendations.ts         |   74 +-
- 21 files changed, 1193 insertions(+), 1932 deletions(-)
-
-```
-
-### Recent Commits
-```
-79a8915 survivor
-cec0cd6 feat(models): implement travel/scheduling analysis factor
-ec28e12 working
-2da9bcc initial
-ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-23 00:14
-
-### Files Changed
-**Modified:**
-- .gitignore
-- .serena/cache/typescript/document_symbols_cache_v23-06-25.pkl
-- SESSION.md
-- next.config.js
-- package-lock.json
-- package.json
-- prisma/schema.prisma
-- src/app/api/survivor/pools/[poolId]/entries/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/debug/news-analysis/page.tsx
-- src/app/pools/[id]/page.tsx
-- src/app/survivor/[id]/page.tsx
-- src/app/test-badge/page.tsx
-- src/components/ui/tabs.tsx
-- src/features/picks/components/WeeklyPickScreen.tsx
-- src/features/pools/components/PoolConfigurationForm.tsx
-- src/features/survivor/components/MultiEntryManager.tsx
-- src/features/survivor/components/SurvivorPoolManager.tsx
-- src/features/survivor/components/WeekMatchupGrid.tsx
-- src/features/uploads/components/ProfileSelector.tsx
-- src/lib/models/survivor-recommendations.ts
-
-**Created:**
-- .dockerignore
-- .env.production.example
-- .env.staging.example
-- .github/
-- Dockerfile
-- docker-compose.prod.yml
-- docs/API_KEYS_SETUP.md
-- docs/DEPLOYMENT_GUIDE.md
-- docs/PRODUCTION_MIGRATION_PLAN.md
-- prisma/migrations/20250823_add_data_source_tracking/
-- prisma/migrations/20250823_optimize_indexes/
-- scripts/migrate-production.ts
-- src/app/api/debug/injury-providers/
-- src/app/api/survivor/pools/[poolId]/entries/[entryId]/route.ts
-- src/components/ui/data-source-indicator.tsx
-- src/components/ui/injury-data-source-indicator.tsx
-- src/lib/data-sources/providers/espn-injury-provider.ts
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/data-sources/providers/mysportsfeeds-injury-provider.ts
-- src/lib/models/real-injury-analysis.ts
-- src/lib/models/real-schedule-analysis.ts
-- src/lib/models/real-team-analysis.ts
-- unraid-template.xml
-
-### Git Statistics
-```
- .gitignore                                         |    1 +
- .../document_symbols_cache_v23-06-25.pkl           |  Bin 119996337 -> 120517604 bytes
- SESSION.md                                         | 2762 +++++++-------------
- next.config.js                                     |    2 +
- package-lock.json                                  |  127 +-
- package.json                                       |    3 +
- prisma/schema.prisma                               |    1 +
- .../api/survivor/pools/[poolId]/entries/route.ts   |    8 +
- src/app/api/survivor/recommendations/route.ts      |   12 +-
- src/app/debug/news-analysis/page.tsx               |    4 +-
- src/app/pools/[id]/page.tsx                        |    7 +-
- src/app/survivor/[id]/page.tsx                     |   68 +-
- src/app/test-badge/page.tsx                        |    2 +-
- src/components/ui/tabs.tsx                         |   23 +-
- src/features/picks/components/WeeklyPickScreen.tsx |    2 +-
- .../pools/components/PoolConfigurationForm.tsx     |    2 +-
- .../survivor/components/MultiEntryManager.tsx      |  109 +-
- .../survivor/components/SurvivorPoolManager.tsx    |    2 +-
- .../survivor/components/WeekMatchupGrid.tsx        |    2 +-
- .../uploads/components/ProfileSelector.tsx         |    5 +-
- src/lib/models/survivor-recommendations.ts         |   74 +-
- 21 files changed, 1285 insertions(+), 1931 deletions(-)
-
-```
-
-### Recent Commits
-```
-79a8915 survivor
-cec0cd6 feat(models): implement travel/scheduling analysis factor
-ec28e12 working
-2da9bcc initial
-ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-23 00:15
-
-### Files Changed
-**Modified:**
-- .gitignore
-- .serena/cache/typescript/document_symbols_cache_v23-06-25.pkl
-- SESSION.md
-- next.config.js
-- package-lock.json
-- package.json
-- prisma/schema.prisma
-- src/app/api/survivor/pools/[poolId]/entries/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/debug/news-analysis/page.tsx
-- src/app/pools/[id]/page.tsx
-- src/app/survivor/[id]/page.tsx
-- src/app/test-badge/page.tsx
-- src/components/ui/tabs.tsx
-- src/features/picks/components/WeeklyPickScreen.tsx
-- src/features/pools/components/PoolConfigurationForm.tsx
-- src/features/survivor/components/MultiEntryManager.tsx
-- src/features/survivor/components/SurvivorPoolManager.tsx
-- src/features/survivor/components/WeekMatchupGrid.tsx
-- src/features/uploads/components/ProfileSelector.tsx
-- src/lib/models/survivor-recommendations.ts
-
-**Created:**
-- .dockerignore
-- .env.production.example
-- .env.staging.example
-- .github/
-- Dockerfile
-- docker-compose.prod.yml
-- docs/API_KEYS_SETUP.md
-- docs/DEPLOYMENT_GUIDE.md
-- docs/PRODUCTION_MIGRATION_PLAN.md
-- prisma/migrations/20250823_add_data_source_tracking/
-- prisma/migrations/20250823_optimize_indexes/
-- scripts/migrate-production.ts
-- src/app/api/debug/injury-providers/
-- src/app/api/survivor/pools/[poolId]/entries/[entryId]/route.ts
-- src/components/ui/data-source-indicator.tsx
-- src/components/ui/injury-data-source-indicator.tsx
-- src/lib/data-sources/providers/espn-injury-provider.ts
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/data-sources/providers/mysportsfeeds-injury-provider.ts
-- src/lib/models/real-injury-analysis.ts
-- src/lib/models/real-schedule-analysis.ts
-- src/lib/models/real-team-analysis.ts
-- unraid-template.xml
-
-### Git Statistics
-```
- .gitignore                                         |    1 +
- .../document_symbols_cache_v23-06-25.pkl           |  Bin 119996337 -> 120517604 bytes
- SESSION.md                                         | 2853 +++++++-------------
- next.config.js                                     |    2 +
- package-lock.json                                  |  127 +-
- package.json                                       |    3 +
- prisma/schema.prisma                               |    1 +
- .../api/survivor/pools/[poolId]/entries/route.ts   |    8 +
- src/app/api/survivor/recommendations/route.ts      |   12 +-
- src/app/debug/news-analysis/page.tsx               |    4 +-
- src/app/pools/[id]/page.tsx                        |    7 +-
- src/app/survivor/[id]/page.tsx                     |   68 +-
- src/app/test-badge/page.tsx                        |    2 +-
- src/components/ui/tabs.tsx                         |   23 +-
- src/features/picks/components/WeeklyPickScreen.tsx |    2 +-
- .../pools/components/PoolConfigurationForm.tsx     |    2 +-
- .../survivor/components/MultiEntryManager.tsx      |  109 +-
- .../survivor/components/SurvivorPoolManager.tsx    |    2 +-
- .../survivor/components/WeekMatchupGrid.tsx        |    2 +-
- .../uploads/components/ProfileSelector.tsx         |    5 +-
- src/lib/models/survivor-recommendations.ts         |   74 +-
- 21 files changed, 1377 insertions(+), 1930 deletions(-)
-
-```
-
-### Recent Commits
-```
-79a8915 survivor
-cec0cd6 feat(models): implement travel/scheduling analysis factor
-ec28e12 working
-2da9bcc initial
-ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-23 00:16
-
-### Files Changed
-**Modified:**
-- .gitignore
-- .serena/cache/typescript/document_symbols_cache_v23-06-25.pkl
-- SESSION.md
-- next.config.js
-- package-lock.json
-- package.json
-- prisma/schema.prisma
-- src/app/api/survivor/pools/[poolId]/entries/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/debug/news-analysis/page.tsx
-- src/app/pools/[id]/page.tsx
-- src/app/survivor/[id]/page.tsx
-- src/app/test-badge/page.tsx
-- src/components/ui/tabs.tsx
-- src/features/picks/components/WeeklyPickScreen.tsx
-- src/features/pools/components/PoolConfigurationForm.tsx
-- src/features/survivor/components/MultiEntryManager.tsx
-- src/features/survivor/components/SurvivorPoolManager.tsx
-- src/features/survivor/components/WeekMatchupGrid.tsx
-- src/features/uploads/components/ProfileSelector.tsx
-- src/lib/models/survivor-recommendations.ts
-
-**Created:**
-- .dockerignore
-- .env.production.example
-- .env.staging.example
-- .github/
-- Dockerfile
-- docker-compose.prod.yml
-- docs/API_KEYS_SETUP.md
-- docs/DEPLOYMENT_GUIDE.md
-- docs/PRODUCTION_MIGRATION_PLAN.md
-- prisma/migrations/20250823_add_data_source_tracking/
-- prisma/migrations/20250823_optimize_indexes/
-- scripts/migrate-production.ts
-- src/app/api/debug/injury-providers/
-- src/app/api/survivor/pools/[poolId]/entries/[entryId]/route.ts
-- src/components/ui/data-source-indicator.tsx
-- src/components/ui/injury-data-source-indicator.tsx
-- src/lib/data-sources/providers/espn-injury-provider.ts
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/data-sources/providers/mysportsfeeds-injury-provider.ts
-- src/lib/models/real-injury-analysis.ts
-- src/lib/models/real-schedule-analysis.ts
-- src/lib/models/real-team-analysis.ts
-- unraid-template.xml
-
-### Git Statistics
-```
- .gitignore                                         |    1 +
- .../document_symbols_cache_v23-06-25.pkl           |  Bin 119996337 -> 120517604 bytes
- SESSION.md                                         | 2944 ++++++++------------
- next.config.js                                     |    2 +
- package-lock.json                                  |  127 +-
- package.json                                       |    3 +
- prisma/schema.prisma                               |    1 +
- .../api/survivor/pools/[poolId]/entries/route.ts   |    8 +
- src/app/api/survivor/recommendations/route.ts      |   12 +-
- src/app/debug/news-analysis/page.tsx               |    4 +-
- src/app/pools/[id]/page.tsx                        |    7 +-
- src/app/survivor/[id]/page.tsx                     |   68 +-
- src/app/test-badge/page.tsx                        |    2 +-
- src/components/ui/tabs.tsx                         |   23 +-
- src/features/picks/components/WeeklyPickScreen.tsx |    2 +-
- .../pools/components/PoolConfigurationForm.tsx     |    2 +-
- .../survivor/components/MultiEntryManager.tsx      |  109 +-
- .../survivor/components/SurvivorPoolManager.tsx    |    2 +-
- .../survivor/components/WeekMatchupGrid.tsx        |    2 +-
- .../uploads/components/ProfileSelector.tsx         |    5 +-
- src/lib/models/survivor-recommendations.ts         |   74 +-
- 21 files changed, 1469 insertions(+), 1929 deletions(-)
-
-```
-
-### Recent Commits
-```
-79a8915 survivor
-cec0cd6 feat(models): implement travel/scheduling analysis factor
-ec28e12 working
-2da9bcc initial
-ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-23 00:17
-
-### Files Changed
-**Modified:**
-- .gitignore
-- .serena/cache/typescript/document_symbols_cache_v23-06-25.pkl
-- SESSION.md
-- next.config.js
-- package-lock.json
-- package.json
-- prisma/schema.prisma
-- src/app/api/survivor/pools/[poolId]/entries/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/debug/news-analysis/page.tsx
-- src/app/pools/[id]/page.tsx
-- src/app/survivor/[id]/page.tsx
-- src/app/test-badge/page.tsx
-- src/components/ui/tabs.tsx
-- src/features/picks/components/WeeklyPickScreen.tsx
-- src/features/pools/components/PoolConfigurationForm.tsx
-- src/features/survivor/components/MultiEntryManager.tsx
-- src/features/survivor/components/SurvivorPoolManager.tsx
-- src/features/survivor/components/WeekMatchupGrid.tsx
-- src/features/uploads/components/ProfileSelector.tsx
-- src/lib/models/survivor-recommendations.ts
-
-**Created:**
-- .dockerignore
-- .env.production.example
-- .env.staging.example
-- .github/
-- Dockerfile
-- docker-compose.prod.yml
-- docs/API_KEYS_SETUP.md
-- docs/DEPLOYMENT_GUIDE.md
-- docs/PRODUCTION_MIGRATION_PLAN.md
-- prisma/migrations/20250823_add_data_source_tracking/
-- prisma/migrations/20250823_optimize_indexes/
-- scripts/migrate-production.ts
-- src/app/api/debug/injury-providers/
-- src/app/api/survivor/pools/[poolId]/entries/[entryId]/route.ts
-- src/components/ui/data-source-indicator.tsx
-- src/components/ui/injury-data-source-indicator.tsx
-- src/lib/data-sources/providers/espn-injury-provider.ts
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/data-sources/providers/mysportsfeeds-injury-provider.ts
-- src/lib/models/real-injury-analysis.ts
-- src/lib/models/real-schedule-analysis.ts
-- src/lib/models/real-team-analysis.ts
-- unraid-template.xml
-
-### Git Statistics
-```
- .gitignore                                         |    1 +
- .../document_symbols_cache_v23-06-25.pkl           |  Bin 119996337 -> 120517604 bytes
- SESSION.md                                         | 3035 ++++++++------------
- next.config.js                                     |    2 +
- package-lock.json                                  |  127 +-
- package.json                                       |    3 +
- prisma/schema.prisma                               |    1 +
- .../api/survivor/pools/[poolId]/entries/route.ts   |    8 +
- src/app/api/survivor/recommendations/route.ts      |   12 +-
- src/app/debug/news-analysis/page.tsx               |    4 +-
- src/app/pools/[id]/page.tsx                        |    7 +-
- src/app/survivor/[id]/page.tsx                     |   68 +-
- src/app/test-badge/page.tsx                        |    2 +-
- src/components/ui/tabs.tsx                         |   23 +-
- src/features/picks/components/WeeklyPickScreen.tsx |    2 +-
- .../pools/components/PoolConfigurationForm.tsx     |    2 +-
- .../survivor/components/MultiEntryManager.tsx      |  109 +-
- .../survivor/components/SurvivorPoolManager.tsx    |    2 +-
- .../survivor/components/WeekMatchupGrid.tsx        |    2 +-
- .../uploads/components/ProfileSelector.tsx         |    5 +-
- src/lib/models/survivor-recommendations.ts         |   74 +-
- 21 files changed, 1561 insertions(+), 1928 deletions(-)
-
-```
-
-### Recent Commits
-```
-79a8915 survivor
-cec0cd6 feat(models): implement travel/scheduling analysis factor
-ec28e12 working
-2da9bcc initial
-ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-23 00:19
-
-### Files Changed
-**Modified:**
-- .gitignore
-- .serena/cache/typescript/document_symbols_cache_v23-06-25.pkl
-- SESSION.md
-- next.config.js
-- package-lock.json
-- package.json
-- prisma/schema.prisma
-- src/app/api/survivor/pools/[poolId]/entries/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/debug/news-analysis/page.tsx
-- src/app/pools/[id]/page.tsx
-- src/app/survivor/[id]/page.tsx
-- src/app/test-badge/page.tsx
-- src/components/ui/tabs.tsx
-- src/features/picks/components/WeeklyPickScreen.tsx
-- src/features/pools/components/PoolConfigurationForm.tsx
-- src/features/survivor/components/MultiEntryManager.tsx
-- src/features/survivor/components/SurvivorPoolManager.tsx
-- src/features/survivor/components/WeekMatchupGrid.tsx
-- src/features/uploads/components/ProfileSelector.tsx
-- src/lib/models/survivor-recommendations.ts
-
-**Created:**
-- .dockerignore
-- .env.production.example
-- .env.staging.example
-- .github/
-- Dockerfile
-- docker-compose.prod.yml
-- docs/API_KEYS_SETUP.md
-- docs/DEPLOYMENT_GUIDE.md
-- docs/PRODUCTION_MIGRATION_PLAN.md
-- prisma/migrations/20250823_add_data_source_tracking/
-- prisma/migrations/20250823_optimize_indexes/
-- scripts/migrate-production.ts
-- src/app/api/debug/injury-providers/
-- src/app/api/survivor/pools/[poolId]/entries/[entryId]/route.ts
-- src/components/ui/data-source-indicator.tsx
-- src/components/ui/injury-data-source-indicator.tsx
-- src/lib/data-sources/providers/espn-injury-provider.ts
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/data-sources/providers/mysportsfeeds-injury-provider.ts
-- src/lib/models/real-injury-analysis.ts
-- src/lib/models/real-schedule-analysis.ts
-- src/lib/models/real-team-analysis.ts
-- unraid-template.xml
-
-### Git Statistics
-```
- .gitignore                                         |    1 +
- .../document_symbols_cache_v23-06-25.pkl           |  Bin 119996337 -> 120517604 bytes
- SESSION.md                                         | 3126 +++++++++-----------
- next.config.js                                     |    2 +
- package-lock.json                                  |  127 +-
- package.json                                       |    3 +
- prisma/schema.prisma                               |    1 +
- .../api/survivor/pools/[poolId]/entries/route.ts   |    8 +
- src/app/api/survivor/recommendations/route.ts      |   12 +-
- src/app/debug/news-analysis/page.tsx               |    4 +-
- src/app/pools/[id]/page.tsx                        |    7 +-
- src/app/survivor/[id]/page.tsx                     |   68 +-
- src/app/test-badge/page.tsx                        |    2 +-
- src/components/ui/tabs.tsx                         |   23 +-
- src/features/picks/components/WeeklyPickScreen.tsx |    2 +-
- .../pools/components/PoolConfigurationForm.tsx     |    2 +-
- .../survivor/components/MultiEntryManager.tsx      |  109 +-
- .../survivor/components/SurvivorPoolManager.tsx    |    2 +-
- .../survivor/components/WeekMatchupGrid.tsx        |    2 +-
- .../uploads/components/ProfileSelector.tsx         |    5 +-
- src/lib/models/survivor-recommendations.ts         |   74 +-
- 21 files changed, 1653 insertions(+), 1927 deletions(-)
-
-```
-
-### Recent Commits
-```
-79a8915 survivor
-cec0cd6 feat(models): implement travel/scheduling analysis factor
-ec28e12 working
-2da9bcc initial
-ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-23 00:20
-
-### Files Changed
-**Modified:**
-- .gitignore
-- .serena/cache/typescript/document_symbols_cache_v23-06-25.pkl
-- SESSION.md
-- next.config.js
-- package-lock.json
-- package.json
-- prisma/schema.prisma
-- src/app/api/survivor/pools/[poolId]/entries/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/debug/news-analysis/page.tsx
-- src/app/pools/[id]/page.tsx
-- src/app/survivor/[id]/page.tsx
-- src/app/test-badge/page.tsx
-- src/components/ui/tabs.tsx
-- src/features/picks/components/WeeklyPickScreen.tsx
-- src/features/pools/components/PoolConfigurationForm.tsx
-- src/features/survivor/components/MultiEntryManager.tsx
-- src/features/survivor/components/SurvivorPoolManager.tsx
-- src/features/survivor/components/WeekMatchupGrid.tsx
-- src/features/uploads/components/ProfileSelector.tsx
-- src/lib/models/survivor-recommendations.ts
-
-**Created:**
-- .dockerignore
-- .env.production.example
-- .env.staging.example
-- .github/
-- Dockerfile
-- docker-compose.prod.yml
-- docs/API_KEYS_SETUP.md
-- docs/DEPLOYMENT_GUIDE.md
-- docs/PRODUCTION_MIGRATION_PLAN.md
-- prisma/migrations/20250823_add_data_source_tracking/
-- prisma/migrations/20250823_optimize_indexes/
-- scripts/migrate-production.ts
-- src/app/api/debug/injury-providers/
-- src/app/api/survivor/pools/[poolId]/entries/[entryId]/route.ts
-- src/components/ui/data-source-indicator.tsx
-- src/components/ui/injury-data-source-indicator.tsx
-- src/lib/data-sources/providers/espn-injury-provider.ts
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/data-sources/providers/mysportsfeeds-injury-provider.ts
-- src/lib/models/real-injury-analysis.ts
-- src/lib/models/real-schedule-analysis.ts
-- src/lib/models/real-team-analysis.ts
-- unraid-template.xml
-
-### Git Statistics
-```
- .gitignore                                         |    1 +
- .../document_symbols_cache_v23-06-25.pkl           |  Bin 119996337 -> 120517604 bytes
- SESSION.md                                         | 3217 +++++++++-----------
- next.config.js                                     |    2 +
- package-lock.json                                  |  127 +-
- package.json                                       |    3 +
- prisma/schema.prisma                               |    1 +
- .../api/survivor/pools/[poolId]/entries/route.ts   |    8 +
- src/app/api/survivor/recommendations/route.ts      |   12 +-
- src/app/debug/news-analysis/page.tsx               |    4 +-
- src/app/pools/[id]/page.tsx                        |    7 +-
- src/app/survivor/[id]/page.tsx                     |   68 +-
- src/app/test-badge/page.tsx                        |    2 +-
- src/components/ui/tabs.tsx                         |   23 +-
- src/features/picks/components/WeeklyPickScreen.tsx |    2 +-
- .../pools/components/PoolConfigurationForm.tsx     |    2 +-
- .../survivor/components/MultiEntryManager.tsx      |  109 +-
- .../survivor/components/SurvivorPoolManager.tsx    |    2 +-
- .../survivor/components/WeekMatchupGrid.tsx        |    2 +-
- .../uploads/components/ProfileSelector.tsx         |    5 +-
- src/lib/models/survivor-recommendations.ts         |   74 +-
- 21 files changed, 1745 insertions(+), 1926 deletions(-)
-
-```
-
-### Recent Commits
-```
-79a8915 survivor
-cec0cd6 feat(models): implement travel/scheduling analysis factor
-ec28e12 working
-2da9bcc initial
-ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-23 00:20
-
-### Files Changed
-**Modified:**
-- .gitignore
-- .serena/cache/typescript/document_symbols_cache_v23-06-25.pkl
-- SESSION.md
-- next.config.js
-- package-lock.json
-- package.json
-- prisma/schema.prisma
-- src/app/api/survivor/pools/[poolId]/entries/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/debug/news-analysis/page.tsx
-- src/app/pools/[id]/page.tsx
-- src/app/survivor/[id]/page.tsx
-- src/app/test-badge/page.tsx
-- src/components/ui/tabs.tsx
-- src/features/picks/components/WeeklyPickScreen.tsx
-- src/features/pools/components/PoolConfigurationForm.tsx
-- src/features/survivor/components/MultiEntryManager.tsx
-- src/features/survivor/components/SurvivorPoolManager.tsx
-- src/features/survivor/components/WeekMatchupGrid.tsx
-- src/features/uploads/components/ProfileSelector.tsx
-- src/lib/models/survivor-recommendations.ts
-
-**Created:**
-- .dockerignore
-- .env.production.example
-- .env.staging.example
-- .github/
-- Dockerfile
-- docker-compose.prod.yml
-- docs/API_KEYS_SETUP.md
-- docs/DEPLOYMENT_GUIDE.md
-- docs/PRODUCTION_MIGRATION_PLAN.md
-- prisma/migrations/20250823_add_data_source_tracking/
-- prisma/migrations/20250823_optimize_indexes/
-- scripts/migrate-production.ts
-- src/app/api/debug/injury-providers/
-- src/app/api/survivor/pools/[poolId]/entries/[entryId]/route.ts
-- src/components/ui/data-source-indicator.tsx
-- src/components/ui/injury-data-source-indicator.tsx
-- src/lib/data-sources/providers/espn-injury-provider.ts
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/data-sources/providers/mysportsfeeds-injury-provider.ts
-- src/lib/models/real-injury-analysis.ts
-- src/lib/models/real-schedule-analysis.ts
-- src/lib/models/real-team-analysis.ts
-- unraid-template.xml
-
-### Git Statistics
-```
- .gitignore                                         |    1 +
- .../document_symbols_cache_v23-06-25.pkl           |  Bin 119996337 -> 120517604 bytes
- SESSION.md                                         | 3308 +++++++++-----------
- next.config.js                                     |    2 +
- package-lock.json                                  |  127 +-
- package.json                                       |    3 +
- prisma/schema.prisma                               |    1 +
- .../api/survivor/pools/[poolId]/entries/route.ts   |    8 +
- src/app/api/survivor/recommendations/route.ts      |   12 +-
- src/app/debug/news-analysis/page.tsx               |    4 +-
- src/app/pools/[id]/page.tsx                        |    7 +-
- src/app/survivor/[id]/page.tsx                     |   68 +-
- src/app/test-badge/page.tsx                        |    2 +-
- src/components/ui/tabs.tsx                         |   23 +-
- src/features/picks/components/WeeklyPickScreen.tsx |    2 +-
- .../pools/components/PoolConfigurationForm.tsx     |    2 +-
- .../survivor/components/MultiEntryManager.tsx      |  109 +-
- .../survivor/components/SurvivorPoolManager.tsx    |    2 +-
- .../survivor/components/WeekMatchupGrid.tsx        |    2 +-
- .../uploads/components/ProfileSelector.tsx         |    5 +-
- src/lib/models/survivor-recommendations.ts         |   74 +-
- 21 files changed, 1837 insertions(+), 1925 deletions(-)
-
-```
-
-### Recent Commits
-```
-79a8915 survivor
-cec0cd6 feat(models): implement travel/scheduling analysis factor
-ec28e12 working
-2da9bcc initial
-ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-23 00:21
-
-### Files Changed
-**Modified:**
-- .gitignore
-- .serena/cache/typescript/document_symbols_cache_v23-06-25.pkl
-- SESSION.md
-- next.config.js
-- package-lock.json
-- package.json
-- prisma/schema.prisma
-- src/app/api/survivor/pools/[poolId]/entries/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/debug/news-analysis/page.tsx
-- src/app/pools/[id]/page.tsx
-- src/app/survivor/[id]/page.tsx
-- src/app/test-badge/page.tsx
-- src/components/ui/tabs.tsx
-- src/features/picks/components/WeeklyPickScreen.tsx
-- src/features/pools/components/PoolConfigurationForm.tsx
-- src/features/survivor/components/MultiEntryManager.tsx
-- src/features/survivor/components/SurvivorPoolManager.tsx
-- src/features/survivor/components/WeekMatchupGrid.tsx
-- src/features/uploads/components/ProfileSelector.tsx
-- src/lib/models/survivor-recommendations.ts
-
-**Created:**
-- .dockerignore
-- .env.production.example
-- .env.staging.example
-- .github/
-- Dockerfile
-- docker-compose.prod.yml
-- docs/API_KEYS_SETUP.md
-- docs/DEPLOYMENT_GUIDE.md
-- docs/PRODUCTION_MIGRATION_PLAN.md
-- prisma/migrations/20250823_add_data_source_tracking/
-- prisma/migrations/20250823_optimize_indexes/
-- scripts/migrate-production.ts
-- src/app/api/debug/injury-providers/
-- src/app/api/survivor/pools/[poolId]/entries/[entryId]/route.ts
-- src/components/ui/data-source-indicator.tsx
-- src/components/ui/injury-data-source-indicator.tsx
-- src/lib/data-sources/providers/espn-injury-provider.ts
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/data-sources/providers/mysportsfeeds-injury-provider.ts
-- src/lib/models/real-injury-analysis.ts
-- src/lib/models/real-schedule-analysis.ts
-- src/lib/models/real-team-analysis.ts
-- unraid-template.xml
-
-### Git Statistics
-```
- .gitignore                                         |    1 +
- .../document_symbols_cache_v23-06-25.pkl           |  Bin 119996337 -> 120517604 bytes
- SESSION.md                                         | 3399 +++++++++-----------
- next.config.js                                     |    2 +
- package-lock.json                                  |  127 +-
- package.json                                       |    3 +
- prisma/schema.prisma                               |    1 +
- .../api/survivor/pools/[poolId]/entries/route.ts   |    8 +
- src/app/api/survivor/recommendations/route.ts      |   12 +-
- src/app/debug/news-analysis/page.tsx               |    4 +-
- src/app/pools/[id]/page.tsx                        |    7 +-
- src/app/survivor/[id]/page.tsx                     |   68 +-
- src/app/test-badge/page.tsx                        |    2 +-
- src/components/ui/tabs.tsx                         |   23 +-
- src/features/picks/components/WeeklyPickScreen.tsx |    2 +-
- .../pools/components/PoolConfigurationForm.tsx     |    2 +-
- .../survivor/components/MultiEntryManager.tsx      |  109 +-
- .../survivor/components/SurvivorPoolManager.tsx    |    2 +-
- .../survivor/components/WeekMatchupGrid.tsx        |    2 +-
- .../uploads/components/ProfileSelector.tsx         |    5 +-
- src/lib/models/survivor-recommendations.ts         |   74 +-
- 21 files changed, 1929 insertions(+), 1924 deletions(-)
-
-```
-
-### Recent Commits
-```
-79a8915 survivor
-cec0cd6 feat(models): implement travel/scheduling analysis factor
-ec28e12 working
-2da9bcc initial
-ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-23 00:24
-
-### Files Changed
-**Modified:**
-- .gitignore
-- .serena/cache/typescript/document_symbols_cache_v23-06-25.pkl
-- SESSION.md
-- next.config.js
-- package-lock.json
-- package.json
-- prisma/schema.prisma
-- src/app/api/survivor/pools/[poolId]/entries/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/debug/news-analysis/page.tsx
-- src/app/pools/[id]/page.tsx
-- src/app/survivor/[id]/page.tsx
-- src/app/test-badge/page.tsx
-- src/components/ui/tabs.tsx
-- src/features/picks/components/WeeklyPickScreen.tsx
-- src/features/pools/components/PoolConfigurationForm.tsx
-- src/features/survivor/components/MultiEntryManager.tsx
-- src/features/survivor/components/SurvivorPoolManager.tsx
-- src/features/survivor/components/WeekMatchupGrid.tsx
-- src/features/uploads/components/ProfileSelector.tsx
-- src/lib/models/survivor-recommendations.ts
 
 **Created:**
 - .dockerignore
@@ -1935,6 +909,123 @@ cec0cd6 feat(models): implement travel/scheduling analysis factor
 ec28e12 working
 2da9bcc initial
 ba95c57 feat(data-sources): implement milestone 4 odds/weather connectors
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-23 10:26
+
+### Files Changed
+### Git Statistics
+```
+
+```
+
+### Recent Commits
+```
+5c80bfa ignore serena
+d8550d6 main
+a321059 survivor
+cec0cd6 feat(models): implement travel/scheduling analysis factor
+ec28e12 working
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-23 10:35
+
+### Files Changed
+**Modified:**
+- SESSION.md
+
+### Git Statistics
+```
+ SESSION.md | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+```
+
+### Recent Commits
+```
+5c80bfa ignore serena
+d8550d6 main
+a321059 survivor
+cec0cd6 feat(models): implement travel/scheduling analysis factor
+ec28e12 working
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-23 10:41
+
+### Files Changed
+**Modified:**
+- Dockerfile
+- SESSION.md
+
+**Created:**
+- scripts/docker-entrypoint.sh
+
+### Git Statistics
+```
+ Dockerfile | 28 +++++++++++++---------------
+ SESSION.md | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 64 insertions(+), 15 deletions(-)
+
+```
+
+### Recent Commits
+```
+5c80bfa ignore serena
+d8550d6 main
+a321059 survivor
+cec0cd6 feat(models): implement travel/scheduling analysis factor
+ec28e12 working
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-23 10:44
+
+### Files Changed
+**Modified:**
+- Dockerfile
+- SESSION.md
+
+**Created:**
+- scripts/docker-entrypoint.sh
+
+### Git Statistics
+```
+ Dockerfile | 58 ++++++++++++-------------------------------
+ SESSION.md | 84 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 100 insertions(+), 42 deletions(-)
+
+```
+
+### Recent Commits
+```
+5c80bfa ignore serena
+d8550d6 main
+a321059 survivor
+cec0cd6 feat(models): implement travel/scheduling analysis factor
+ec28e12 working
 
 ```
 
