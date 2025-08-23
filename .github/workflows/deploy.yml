@@ -40,13 +40,17 @@ jobs:
           # Install Tailscale
           curl -fsSL https://tailscale.com/install.sh | sh
           
-          # Start tailscaled in background
-          sudo tailscaled &
-          sleep 2
+          # Kill existing tailscaled if running
+          sudo pkill -f tailscaled || true
+          sleep 1
           
-          # Authenticate using OAuth
+          # Start tailscaled fresh
+          sudo tailscaled &
+          sleep 3
+          
+          # Authenticate using auth key (you need to create this in Tailscale admin)
           echo "Authenticating with Tailscale..."
-          sudo tailscale up --authkey oauth:${{ secrets.TS_OAUTH_CLIENT_ID }}:${{ secrets.TS_OAUTH_SECRET }} --accept-routes
+          sudo tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }} --accept-routes
           
           # Show status
           sudo tailscale status
