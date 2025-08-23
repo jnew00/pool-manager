@@ -55,10 +55,17 @@ jobs:
           # Show status
           sudo tailscale status
           
+      - name: Debug Tailscale network
+        run: |
+          echo "📡 Checking Tailscale network..."
+          sudo tailscale status
+          echo "🔍 Testing connectivity to Diun..."
+          timeout 10 nc -zv 100.127.37.80 8042 || echo "❌ Port 8042 not reachable"
+          
       - name: Notify Diun of new image
         run: |
           echo "🚀 Notifying Diun of new PoolManager image..."
-          curl -X POST http://100.127.37.80:8042/webhooks/docker \
+          curl -v -X POST http://100.127.37.80:8042/webhooks/docker \
                -H "Content-Type: application/json" \
                -d '{
                  "push_data": {
@@ -69,7 +76,7 @@ jobs:
                  }
                }' \
           && echo "✅ Diun notification sent successfully" \
-          || echo "❌ Failed to notify Diun (check Tailscale connection)"
+          || echo "❌ Failed to notify Diun - check if container is running with Tailscale"
 
       - name: Build summary
         run: |

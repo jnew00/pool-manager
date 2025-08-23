@@ -1457,3 +1457,31 @@ d575ded workflow
 *[Auto-generated from git history - No LLM used]*
 
 ---
+
+
+## Session - 2025-08-23 13:24
+
+### Files Changed
+**Modified:**
+- .github/workflows/deploy.yml
+
+### Git Statistics
+```
+ .github/workflows/deploy.yml | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+```
+
+### Recent Commits
+```
+b588e6a Updates Diun webhook IP address
+7c95041 Uses auth key for Tailscale authentication
+2bbe889 Replaces Tailscale GitHub Action with manual setup
+1a66e61 Reverts to Tailscale GitHub Action v1
+1541e42 Updates Tailscale action configuration
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
