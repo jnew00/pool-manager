@@ -52,7 +52,7 @@ export default function TestBadgePage() {
 
       <div className="mb-4 p-4 bg-yellow-100 rounded">
         <p>
-          <strong>Expected:</strong> Should see a blue "News" badge with hover
+          <strong>Expected:</strong> Should see a blue &quot;News&quot; badge with hover
           tooltip
         </p>
         <p>

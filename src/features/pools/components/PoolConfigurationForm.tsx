@@ -211,7 +211,7 @@ export function PoolConfigurationForm({
                 htmlFor="allowPickEm"
                 className="ml-2 block text-sm text-gray-700"
               >
-                Allow Pick'em Games
+                Allow Pick&apos;em Games
               </label>
             </div>
           </>

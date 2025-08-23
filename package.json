@@ -89,6 +89,9 @@
   "engines": {
     "node": ">=22 <23"
   },
+  "overrides": {
+    "zod": "^4.0.17"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC"

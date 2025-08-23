@@ -43,6 +43,27 @@ export default function PoolsPage() {
     }
   }
 
+  const handleDeletePool = async (poolId: string, poolName: string) => {
+    if (!confirm(`Are you sure you want to delete "${poolName}"? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/pools/${poolId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete pool')
+      }
+
+      // Refresh the pools list
+      await fetchPools()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete pool')
+    }
+  }
+
   const handlePoolCreated = (pool: Pool) => {
     setCreatedPool(pool)
     setShowSuccess(true)
@@ -262,32 +283,55 @@ export default function PoolsPage() {
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {pools.map((pool) => (
-                    <Link
+                    <div
                       key={pool.id}
-                      href={`/pools/${pool.id}`}
-                      className="group bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
+                      className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl"
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div>
-                          <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                             {pool.name}
                           </h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {pool.type} Pool
                           </p>
                         </div>
-                        <div
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            pool.isActive
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                          }`}
-                        >
-                          {pool.isActive ? 'Active' : 'Inactive'}
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              pool.isActive
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                            }`}
+                          >
+                            {pool.isActive ? 'Active' : 'Inactive'}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault()
+                              handleDeletePool(pool.id, pool.name)
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                            title="Delete pool"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
                         </div>
                       </div>
 
-                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300 mb-4">
                         <div className="flex justify-between">
                           <span>Season:</span>
                           <span className="font-medium">{pool.season}</span>
@@ -302,8 +346,11 @@ export default function PoolsPage() {
                         </div>
                       </div>
 
-                      <div className="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-                        <div className="flex items-center text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+                      <div className="pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+                        <Link
+                          href={`/pools/${pool.id}`}
+                          className="group flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                        >
                           <span className="text-sm font-medium">
                             Manage Pool
                           </span>
@@ -320,9 +367,9 @@ export default function PoolsPage() {
                               d="M9 5l7 7-7 7"
                             />
                           </svg>
-                        </div>
+                        </Link>
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               )}

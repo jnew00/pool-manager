@@ -609,8 +609,8 @@ export default function PoolDetailPage() {
                   </svg>
                   <p>No games found for Week {selectedWeek}</p>
                   <p className="text-sm mt-1">
-                    Use "Update Odds & Weather" to fetch ESPN game schedule
-                    first
+                    Use &quot;Update Odds &amp; Weather&quot; to fetch ESPN game
+                    schedule first
                   </p>
                 </div>
               ) : (
@@ -833,7 +833,8 @@ export default function PoolDetailPage() {
                                       {game.venue}
                                     </div>
                                     <div className="text-xs text-gray-400 mt-1">
-                                      Weather conditions don't affect gameplay
+                                      Weather conditions don&apos;t affect
+                                      gameplay
                                     </div>
                                   </div>
                                 }

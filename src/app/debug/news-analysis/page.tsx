@@ -100,7 +100,9 @@ export default function NewsAnalysisDebugPage() {
       <div className="bg-yellow-50 border border-yellow-200 p-4 rounded">
         <h3 className="font-medium text-yellow-800">Expected Behavior:</h3>
         <ul className="text-sm text-yellow-700 mt-1 list-disc list-inside">
-          <li>Should see a "News" badge next to the confidence level</li>
+          <li>
+            Should see a &quot;News&quot; badge next to the confidence level
+          </li>
           <li>Badge should be blue (home), green (away), or gray (neutral)</li>
           <li>Hovering should show news analysis details</li>
           <li>If no badge appears, check the service test result above</li>

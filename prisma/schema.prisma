@@ -259,6 +259,7 @@ model SurvivorEntry {
   poolId         String
   userId         String?   // Optional user identifier
   entryName      String?   // Optional name for the entry
+  entryUrl       String?   // Optional URL link for the entry
   eliminatedWeek Int?      // Week when eliminated (null if still active)
   strikes        Int       @default(0) // Number of strikes/mulligans used
   isActive       Boolean   @default(true)

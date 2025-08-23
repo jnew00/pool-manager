@@ -107,7 +107,7 @@ export function WeeklyPickScreen({
           No games available for Week {week}
         </h2>
         <p className="text-gray-600">
-          Games for this week haven't been scheduled yet.
+          Games for this week haven&apos;t been scheduled yet.
         </p>
       </div>
     )

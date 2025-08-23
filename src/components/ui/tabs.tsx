@@ -15,18 +15,19 @@ interface TabsProps {
   className?: string
 }
 
-export function Tabs({ 
-  defaultValue, 
-  value: controlledValue, 
-  onValueChange, 
-  children, 
-  className = '' 
+export function Tabs({
+  defaultValue,
+  value: controlledValue,
+  onValueChange,
+  children,
+  className = '',
 }: TabsProps) {
   const [internalValue, setInternalValue] = useState(defaultValue || '')
-  
+
   // Use controlled value if provided, otherwise use internal state
-  const currentValue = controlledValue !== undefined ? controlledValue : internalValue
-  
+  const currentValue =
+    controlledValue !== undefined ? controlledValue : internalValue
+
   const handleChange = (newValue: string) => {
     if (controlledValue !== undefined) {
       // Controlled mode - call external handler
@@ -38,7 +39,9 @@ export function Tabs({
   }
 
   return (
-    <TabsContext.Provider value={{ value: currentValue, onChange: handleChange }}>
+    <TabsContext.Provider
+      value={{ value: currentValue, onChange: handleChange }}
+    >
       <div className={className}>{children}</div>
     </TabsContext.Provider>
   )

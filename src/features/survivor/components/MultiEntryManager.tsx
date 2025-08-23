@@ -38,7 +38,6 @@ import {
   X,
   Plus,
   Eye,
-  EyeOff,
   Lock,
   Unlock,
   BarChart3,
@@ -54,6 +53,7 @@ import { cn } from '@/lib/utils'
 interface Entry {
   id: string
   entryName: string
+  entryUrl?: string
   userId: string | null
   isActive: boolean
   eliminatedWeek?: number
@@ -137,7 +137,7 @@ export default function MultiEntryManager({
   const [entryRecommendations, setEntryRecommendations] = useState<
     Record<string, DiversificationRecommendation>
   >({})
-  const [showComparison, setShowComparison] = useState(false)
+  const [showComparison, setShowComparison] = useState(true)
   const [loading, setLoading] = useState(true)
   const [bulkAction, setBulkAction] = useState<
     'copy' | 'diversify' | 'lock' | null
@@ -366,7 +366,25 @@ export default function MultiEntryManager({
     if (!editingEntry) return
 
     try {
-      const response = await fetch(
+      // Update basic entry info (name and URL)
+      const entryUpdateResponse = await fetch(
+        `/api/survivor/pools/${poolId}/entries/${editingEntry.id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            entryName: editingEntry.entryName,
+            entryUrl: editingEntry.entryUrl,
+          }),
+        }
+      )
+
+      if (!entryUpdateResponse.ok) {
+        throw new Error('Failed to update entry info')
+      }
+
+      // Update entry settings (pool-specific settings)
+      const settingsResponse = await fetch(
         `/api/survivor/pools/${poolId}/entries/${editingEntry.id}/settings`,
         {
           method: 'PUT',
@@ -375,14 +393,14 @@ export default function MultiEntryManager({
         }
       )
 
-      if (response.ok) {
-        await fetchEntries()
-        setEditingEntry(null)
-        alert('Settings saved successfully')
-      }
+      // Always refresh entries and close modal after successful entry update
+      await fetchEntries()
+      setEditingEntry(null)
     } catch (error) {
       console.error('Error saving entry settings:', error)
-      alert('Failed to save settings')
+      alert('Failed to save entry: ' + error.message)
+      // Close modal even on error so user isn't stuck
+      setEditingEntry(null)
     }
   }
 
@@ -469,18 +487,6 @@ export default function MultiEntryManager({
                 <Plus className="h-4 w-4 mr-1" />
                 New Entry
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowComparison(!showComparison)}
-              >
-                {showComparison ? (
-                  <EyeOff className="h-4 w-4 mr-1" />
-                ) : (
-                  <Eye className="h-4 w-4 mr-1" />
-                )}
-                {showComparison ? 'Hide' : 'Show'} Comparison
-              </Button>
             </div>
           </CardTitle>
         </CardHeader>
@@ -561,7 +567,7 @@ export default function MultiEntryManager({
       </Card>
 
       {/* Entry Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {entries.map((entry) => (
           <Card
             key={entry.id}
@@ -571,7 +577,7 @@ export default function MultiEntryManager({
               !entry.isActive && 'opacity-60'
             )}
           >
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2 pt-3 px-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <input
@@ -581,7 +587,18 @@ export default function MultiEntryManager({
                     className="h-4 w-4"
                     disabled={!entry.isActive}
                   />
-                  <span className="font-semibold">{entry.entryName}</span>
+                  {entry.entryUrl ? (
+                    <a
+                      href={entry.entryUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    >
+                      {entry.entryName}
+                    </a>
+                  ) : (
+                    <span className="font-semibold">{entry.entryName}</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -604,10 +621,10 @@ export default function MultiEntryManager({
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 px-3 py-2">
               {/* Current Week Pick */}
               {entry.currentPick ? (
-                <div className="p-3 bg-blue-50 rounded-lg">
+                <div className="p-2 bg-blue-50 rounded-lg">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium">
                       Week {currentWeek} Pick
@@ -632,7 +649,7 @@ export default function MultiEntryManager({
                   </div>
                 </div>
               ) : entry.isActive ? (
-                <div className="p-3 bg-yellow-50 rounded-lg">
+                <div className="p-2 bg-yellow-50 rounded-lg">
                   <AlertTriangle className="h-4 w-4 text-yellow-600 mb-1" />
                   <p className="text-sm text-yellow-800">
                     No pick for Week {currentWeek}
@@ -643,7 +660,7 @@ export default function MultiEntryManager({
               {/* Diversification Recommendation */}
               {entryRecommendations[entry.id] &&
                 selectedEntries.has(entry.id) && (
-                  <div className="p-3 bg-purple-50 border-2 border-purple-200 rounded-lg">
+                  <div className="p-2 bg-purple-50 border-2 border-purple-200 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-purple-800">
                         {entryRecommendations[entry.id].strategyType}{' '}
@@ -952,7 +969,7 @@ export default function MultiEntryManager({
 
               {/* Actions */}
               {entry.isActive && (
-                <div className="flex gap-2 pt-2 border-t">
+                <div className="flex gap-1 pt-2 border-t">
                   <Button
                     variant="outline"
                     size="sm"
@@ -1025,7 +1042,20 @@ export default function MultiEntryManager({
                     .filter((e) => e.isActive)
                     .map((entry) => (
                       <tr key={entry.id} className="border-b hover:bg-gray-50">
-                        <td className="p-2 font-medium">{entry.entryName}</td>
+                        <td className="p-2 font-medium">
+                          {entry.entryUrl ? (
+                            <a
+                              href={entry.entryUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                            >
+                              {entry.entryName}
+                            </a>
+                          ) : (
+                            entry.entryName
+                          )}
+                        </td>
                         <td className="text-center p-2">
                           {entry.currentPick ? (
                             <Badge>{entry.currentPick.teamAbbr}</Badge>
@@ -1716,6 +1746,25 @@ export default function MultiEntryManager({
                   }
                 }}
                 placeholder="Enter entry name"
+              />
+            </div>
+
+            {/* Entry URL */}
+            <div className="space-y-2">
+              <Label htmlFor="entryUrl">Entry URL (optional)</Label>
+              <Input
+                id="entryUrl"
+                type="url"
+                value={editingEntry?.entryUrl || ''}
+                onChange={(e) => {
+                  if (editingEntry) {
+                    setEditingEntry({
+                      ...editingEntry,
+                      entryUrl: e.target.value,
+                    })
+                  }
+                }}
+                placeholder="https://example.com"
               />
             </div>
           </div>

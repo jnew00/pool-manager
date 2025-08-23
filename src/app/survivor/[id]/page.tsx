@@ -1,6 +1,7 @@
 'use client'
 
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -191,7 +192,48 @@ export default function SurvivorPoolPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">PM</span>
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="text-white"
+                >
+                  {/* Trophy/Cup shape */}
+                  <path
+                    d="M8 2h8v4c0 2.21-1.79 4-4 4s-4-1.79-4-4V2z"
+                    fill="currentColor"
+                  />
+                  {/* Trophy handles */}
+                  <path
+                    d="M4 6h2v2c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2z"
+                    fill="currentColor"
+                    opacity="0.8"
+                  />
+                  <path
+                    d="M18 6h2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2V6z"
+                    fill="currentColor"
+                    opacity="0.8"
+                  />
+                  {/* Trophy base */}
+                  <rect
+                    x="10"
+                    y="10"
+                    width="4"
+                    height="8"
+                    fill="currentColor"
+                  />
+                  <rect
+                    x="7"
+                    y="18"
+                    width="10"
+                    height="2"
+                    rx="1"
+                    fill="currentColor"
+                  />
+                  {/* Small star accent */}
+                  <circle cx="12" cy="4" r="1" fill="white" opacity="0.9" />
+                </svg>
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">PoolManager</h1>
@@ -199,12 +241,12 @@ export default function SurvivorPoolPage() {
               </div>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
-              <a
+              <Link
                 href="/pools"
                 className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
               >
                 Pools
-              </a>
+              </Link>
               <a
                 href="/picks"
                 className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
@@ -316,7 +358,9 @@ export default function SurvivorPoolPage() {
               }}
               onViewEntry={(entryId: string) => {
                 // Use smooth tab switching instead of page reload
-                console.log('=== onViewEntry called - using smooth tab switch ===')
+                console.log(
+                  '=== onViewEntry called - using smooth tab switch ==='
+                )
                 console.log('Switching to entry:', entryId)
                 console.log('Current tab:', currentTab)
 
@@ -336,7 +380,21 @@ export default function SurvivorPoolPage() {
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <Shield className="h-5 w-5 text-blue-600" />
-                      <span>Making Picks for: {currentEntry.entryName}</span>
+                      <span>
+                        Making Picks for:{' '}
+                        {currentEntry.entryUrl ? (
+                          <a
+                            href={currentEntry.entryUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                          >
+                            {currentEntry.entryName}
+                          </a>
+                        ) : (
+                          currentEntry.entryName
+                        )}
+                      </span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge

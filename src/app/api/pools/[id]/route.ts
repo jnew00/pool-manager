@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { PoolService } from '@/server/services/pool.service'
+import { handleServiceError, validateMethod } from '@/lib/api/response'
+
+const poolService = new PoolService()
 
 // Simple GET /api/pools/[id] - Get pool by ID
 export async function GET(
@@ -44,5 +48,31 @@ export async function GET(
       { error: 'Internal server error' },
       { status: 500 }
     )
+  }
+}
+
+// DELETE /api/pools/[id] - Delete pool by ID
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const methodError = validateMethod(request, ['DELETE'])
+  if (methodError) return methodError
+
+  try {
+    const { id } = await params
+
+    const deleted = await poolService.deletePool(id)
+    
+    if (!deleted) {
+      return NextResponse.json({ error: 'Pool not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Pool deleted successfully',
+    })
+  } catch (error) {
+    return handleServiceError(error)
   }
 }

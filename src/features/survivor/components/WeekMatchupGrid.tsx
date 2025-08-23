@@ -219,7 +219,7 @@ export default function WeekMatchupGrid({
       {selectedPick && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
           <div>
-            You've selected{' '}
+            You&apos;ve selected{' '}
             <strong>
               {games.find(
                 (g) =>

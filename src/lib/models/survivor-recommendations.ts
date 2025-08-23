@@ -17,6 +17,7 @@ import {
   SurvivorWeatherService,
   WeatherImpact,
 } from '@/server/services/survivor-weather-service'
+import { realTeamAnalysis } from './real-team-analysis'
 
 export interface EnhancedTeamRecommendation extends TeamRecommendation {
   narrativeFactors: {
@@ -366,45 +367,41 @@ export class SurvivorRecommendations {
   }
 
   /**
-   * Analyze narrative factors for a team
+   * Analyze narrative factors for a team using REAL data
    */
   private async analyzeNarrativeFactors(
     teamId: string,
     gameId: string,
     week: number
   ): Promise<EnhancedTeamRecommendation['narrativeFactors']> {
-    // In production, would analyze real data
-    // For now, return mock analysis
+    // Use real team analysis service
+    const realFactors = await realTeamAnalysis.generateRealNarrativeFactors(
+      teamId,
+      gameId,
+      week
+    )
 
-    const factors: EnhancedTeamRecommendation['narrativeFactors'] = {}
-
-    // Random momentum (simplified)
-    const rand = Math.random()
-    if (rand > 0.7) {
-      factors.momentum = 'Team on 2-game winning streak'
-    } else if (rand < 0.3) {
-      factors.momentum = 'Lost 2 of last 3 games'
+    // Still add some placeholder logic for factors not yet implemented with real data
+    const factors: EnhancedTeamRecommendation['narrativeFactors'] = {
+      ...realFactors,
     }
 
-    // Check for primetime
-    const primetimeGames = ['TNF', 'SNF', 'MNF']
+    // TODO: Implement with real data sources
+    // Check for primetime (would check actual game schedule)
     if (Math.random() > 0.8) {
-      factors.primetime = 'Sunday Night Football - national spotlight'
+      factors.primetime = 'Primetime game - enhanced focus required'
     }
 
-    // Revenge game (played last year)
+    // TODO: Revenge game analysis (would check previous season matchups)
     if (Math.random() > 0.9) {
-      factors.revenge = 'Lost to opponent in playoffs last year'
+      factors.revenge =
+        'Note: Revenge game analysis not yet implemented with real data'
     }
 
-    // Lookahead spot
+    // TODO: Lookahead spot (would check next week's schedule)
     if (week < 17 && Math.random() > 0.85) {
-      factors.lookahead = 'Potential lookahead to division rival next week'
-    }
-
-    // Historical performance
-    if (Math.random() > 0.5) {
-      factors.historical = '4-1 in last 5 meetings with opponent'
+      factors.lookahead =
+        'Note: Lookahead analysis not yet implemented with real data'
     }
 
     return factors
@@ -624,12 +621,31 @@ export class SurvivorRecommendations {
       .filter((t) => !usedTeams.has(t.id))
 
     const teamRatings = new Map<string, number>()
-    teams.forEach((team) => {
-      // Mock ratings
-      const topTeams = ['KC', 'BUF', 'PHI', 'SF', 'DAL', 'BAL']
-      const rating = topTeams.includes(team.nflAbbr) ? 1700 : 1500
-      teamRatings.set(team.id, rating)
-    })
+
+    // Get real team ratings or fall back to estimated ratings
+    for (const team of teams) {
+      try {
+        const powerRating = await realTeamAnalysis.getTeamPowerRating(team.id)
+        teamRatings.set(team.id, powerRating.rating)
+      } catch (error) {
+        console.warn(
+          `Failed to get real rating for team ${team.nflAbbr}, using estimated rating`
+        )
+        // Fallback to basic estimated rating based on common strong teams
+        const strongTeams = [
+          'KC',
+          'BUF',
+          'PHI',
+          'SF',
+          'DAL',
+          'BAL',
+          'MIA',
+          'CIN',
+        ]
+        const rating = strongTeams.includes(team.nflAbbr) ? 1650 : 1500
+        teamRatings.set(team.id, rating)
+      }
+    }
 
     // Mock schedule (would fetch real schedule)
     const schedule: any[] = []

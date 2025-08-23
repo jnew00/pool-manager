@@ -588,7 +588,7 @@ export default function SurvivorPoolManager({
                 <div>
                   <Label htmlFor="publicPicks">Public Picks</Label>
                   <p className="text-sm text-gray-500">
-                    Show other entries' picks
+                    Show other entries&apos; picks
                   </p>
                 </div>
                 <Switch

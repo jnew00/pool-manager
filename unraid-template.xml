@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>PoolManager</Name>
+  <Repository>poolmanager-prod</Repository>
+  <Registry>https://hub.docker.com/</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/yourusername/poolmanager</Support>
+  <Project>https://pm.jnew.us</Project>
+  <Overview>NFL Pool Management System with survivor pools, picks, and AI-powered recommendations. Features real-time odds, weather data, and intelligent analysis.</Overview>
+  <Category>Sports:</Category>
+  <WebUI>http://[IP]:[PORT:3000]</WebUI>
+  <TemplateURL/>
+  <Icon>https://raw.githubusercontent.com/yourusername/poolmanager/main/public/icon.png</Icon>
+  <ExtraParams>--restart=unless-stopped</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires>PostgreSQL container (recommended: postgresql16)</Requires>
+  <Config Name="WebUI Port" Target="3000" Default="3000" Mode="tcp" Description="Web interface port" Type="Port" Display="always" Required="true" Mask="false"/>
+  
+  <!-- Core Application -->
+  <Config Name="Node Environment" Target="NODE_ENV" Default="production" Mode="" Description="Application environment" Type="Variable" Display="advanced" Required="true" Mask="false"/>
+  
+  <!-- Database -->
+  <Config Name="Database URL" Target="DATABASE_URL" Default="postgresql://poolmanager:yourpassword@postgresql16:5432/poolmanager" Mode="" Description="PostgreSQL connection string. Format: postgresql://username:password@host:port/database" Type="Variable" Display="always" Required="true" Mask="true"/>
+  
+  <!-- Authentication -->
+  <Config Name="NextAuth Secret" Target="NEXTAUTH_SECRET" Default="" Mode="" Description="32-character random secret for NextAuth.js (generate with: openssl rand -base64 32)" Type="Variable" Display="always" Required="true" Mask="true"/>
+  <Config Name="NextAuth URL" Target="NEXTAUTH_URL" Default="https://pm.jnew.us" Mode="" Description="Public URL where your app will be accessible" Type="Variable" Display="always" Required="true" Mask="false"/>
+  
+  <!-- AI Services -->
+  <Config Name="OpenAI API Key" Target="OPENAI_API_KEY" Default="" Mode="" Description="OpenAI API key for AI analysis features" Type="Variable" Display="always" Required="true" Mask="true"/>
+  <Config Name="Anthropic API Key" Target="ANTHROPIC_API_KEY" Default="" Mode="" Description="Anthropic (Claude) API key for enhanced AI analysis" Type="Variable" Display="always" Required="true" Mask="true"/>
+  
+  <!-- Sports Data APIs -->
+  <Config Name="MySportsFeeds API Key" Target="MYSPORTSFEEDS_API_KEY" Default="" Mode="" Description="MySportsFeeds API key for premium injury data (optional - leave blank to use ESPN free data)" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="MySportsFeeds Password" Target="MYSPORTSFEEDS_PASSWORD" Default="" Mode="" Description="MySportsFeeds API password (optional)" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="OpenWeather API Key" Target="OPENWEATHER_API_KEY" Default="" Mode="" Description="OpenWeather API key for weather data" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="News API Key" Target="NEWS_API_KEY" Default="" Mode="" Description="NewsAPI.org key for real NFL news analysis" Type="Variable" Display="always" Required="false" Mask="true"/>
+  
+  <!-- Redis Cache -->
+  <Config Name="Redis URL" Target="REDIS_URL" Default="redis://Redis:6379" Mode="" Description="Redis connection URL for caching (use container name 'Redis' if running Redis container)" Type="Variable" Display="always" Required="false" Mask="false"/>
+  
+  <!-- Security -->
+  <Config Name="CORS Origin" Target="CORS_ORIGIN" Default="https://pm.jnew.us" Mode="" Description="Allowed CORS origin (should match your domain)" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Rate Limit Max" Target="RATE_LIMIT_MAX" Default="100" Mode="" Description="Maximum API requests per window" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Rate Limit Window" Target="RATE_LIMIT_WINDOW_MS" Default="900000" Mode="" Description="Rate limit window in milliseconds (15 minutes = 900000)" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  
+  <!-- Optional Email -->
+  <Config Name="SMTP Host" Target="SMTP_HOST" Default="" Mode="" Description="SMTP server for notifications (optional)" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="SMTP Port" Target="SMTP_PORT" Default="587" Mode="" Description="SMTP port" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="SMTP User" Target="SMTP_USER" Default="" Mode="" Description="SMTP username" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="SMTP Password" Target="SMTP_PASS" Default="" Mode="" Description="SMTP password or app password" Type="Variable" Display="advanced" Required="false" Mask="true"/>
+  <Config Name="Email From" Target="EMAIL_FROM" Default="" Mode="" Description="From address for outgoing emails" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  
+  <!-- Logging -->
+  <Config Name="Log Level" Target="LOG_LEVEL" Default="info" Mode="" Description="Application log level (debug, info, warn, error)" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Debug Mode" Target="DEBUG" Default="false" Mode="" Description="Enable debug mode (true/false)" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  
+  <!-- Storage Volumes -->
+  <Config Name="App Data" Target="/app/data" Default="/mnt/user/appdata/poolmanager/data" Mode="rw" Description="Application data storage" Type="Path" Display="always" Required="true" Mask="false"/>
+  <Config Name="Backups" Target="/app/backups" Default="/mnt/user/appdata/poolmanager/backups" Mode="rw" Description="Database backup storage" Type="Path" Display="always" Required="true" Mask="false"/>
+  <Config Name="Logs" Target="/app/logs" Default="/mnt/user/appdata/poolmanager/logs" Mode="rw" Description="Application logs" Type="Path" Display="advanced" Required="false" Mask="false"/>
+</Container>

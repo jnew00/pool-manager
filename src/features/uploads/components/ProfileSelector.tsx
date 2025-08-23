@@ -204,8 +204,9 @@ export function ProfileSelector({
 
             <div className="space-y-4">
               <p className="text-gray-600">
-                Are you sure you want to delete the profile "
-                {selectedProfileForDelete.name}"? This action cannot be undone.
+                Are you sure you want to delete the profile &quot;
+                {selectedProfileForDelete.name}&quot;? This action cannot be
+                undone.
               </p>
 
               <div className="flex space-x-3">

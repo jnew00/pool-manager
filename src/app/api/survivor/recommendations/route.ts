@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { SurvivorRecommendations } from '@/lib/models/survivor-recommendations'
+import { realTeamAnalysis } from '@/lib/models/real-team-analysis'
 import { z } from 'zod'
 
 // Mock auth until next-auth is configured
@@ -104,6 +105,9 @@ export async function GET(request: NextRequest) {
     const poolSize = poolStats.length
     const survivorsRemaining = poolStats.filter((e) => e.isActive).length
 
+    // Check data availability first
+    const dataAvailability = await realTeamAnalysis.checkRealDataAvailability()
+
     // Generate recommendations
     const recommender = new SurvivorRecommendations()
     const recommendations = await recommender.generateWeekRecommendations(
@@ -115,7 +119,7 @@ export async function GET(request: NextRequest) {
       survivorsRemaining
     )
 
-    // Add metadata
+    // Add metadata with data source information
     const response = {
       ...recommendations,
       entry: {
@@ -132,6 +136,12 @@ export async function GET(request: NextRequest) {
         totalEntries: poolSize,
         survivorsRemaining,
         survivalRate: ((survivorsRemaining / poolSize) * 100).toFixed(1),
+      },
+      dataSource: {
+        available: dataAvailability.available,
+        seasonActive: dataAvailability.seasonActive,
+        currentWeek: dataAvailability.currentWeek,
+        message: dataAvailability.message,
       },
       generatedAt: new Date().toISOString(),
     }

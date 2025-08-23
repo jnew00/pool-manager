@@ -9,6 +9,9 @@ async function getServerSession() {
 
 const createEntrySchema = z.object({
   name: z.string().min(1).max(50),
+  url: z
+    .union([z.string().url(), z.literal(''), z.null(), z.undefined()])
+    .optional(),
 })
 
 // GET /api/survivor/pools/[poolId]/entries - Get all entries for a pool
@@ -109,6 +112,7 @@ export async function GET(
         return {
           id: entry.id,
           entryName: entry.entryName || `Entry ${entries.indexOf(entry) + 1}`,
+          entryUrl: entry.entryUrl,
           userId: entry.userId,
           isActive: entry.isActive,
           eliminatedWeek: entry.eliminatedWeek,
@@ -214,6 +218,10 @@ export async function POST(
         poolId,
         userId: session.user.id,
         entryName: validated.name,
+        entryUrl:
+          validated.url && validated.url !== '' && validated.url !== null
+            ? validated.url
+            : null,
         strikes: 0,
         isActive: true,
       },
