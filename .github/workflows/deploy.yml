@@ -35,48 +35,27 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Setup Tailscale manually
+          
+      - name: Notify Discord of new image
         run: |
-          # Install Tailscale
-          curl -fsSL https://tailscale.com/install.sh | sh
-          
-          # Kill existing tailscaled if running
-          sudo pkill -f tailscaled || true
-          sleep 1
-          
-          # Start tailscaled fresh
-          sudo tailscaled &
-          sleep 3
-          
-          # Authenticate using auth key (you need to create this in Tailscale admin)
-          echo "Authenticating with Tailscale..."
-          sudo tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }} --accept-routes
-          
-          # Show status
-          sudo tailscale status
-          
-      - name: Debug Tailscale network
-        run: |
-          echo "📡 Checking Tailscale network..."
-          sudo tailscale status
-          echo "🔍 Testing connectivity to Diun..."
-          timeout 10 nc -zv 100.127.37.80 8042 || echo "❌ Port 8042 not reachable"
-          
-      - name: Notify Diun of new image
-        run: |
-          echo "🚀 Notifying Diun of new PoolManager image..."
-          curl -v -X POST http://100.127.37.80:8042/webhooks/docker \
+          echo "🚀 Sending Discord notification..."
+          curl -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
                -H "Content-Type: application/json" \
                -d '{
-                 "push_data": {
-                   "tag": "latest"
-                 },
-                 "repository": {
-                   "repo_name": "${{ vars.DOCKER_REPO }}/${{ vars.DOCKER_IMAGE }}"
-                 }
+                 "embeds": [{
+                   "title": "🐳 PoolManager Image Updated!",
+                   "description": "New Docker image is ready to deploy",
+                   "color": 65280,
+                   "fields": [
+                     {"name": "Repository", "value": "`${{ vars.DOCKER_REPO }}/${{ vars.DOCKER_IMAGE }}`", "inline": true},
+                     {"name": "Tag", "value": "`latest`", "inline": true},
+                     {"name": "Registry", "value": "Docker Hub", "inline": true}
+                   ],
+                   "footer": {"text": "Ready to pull and deploy! 🚀"}
+                 }]
                }' \
-          && echo "✅ Diun notification sent successfully" \
-          || echo "❌ Failed to notify Diun - check if container is running with Tailscale"
+          && echo "✅ Discord notification sent successfully" \
+          || echo "❌ Failed to send Discord notification"
 
       - name: Build summary
         run: |
