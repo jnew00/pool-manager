@@ -23,8 +23,8 @@ RUN npx prisma generate && npm run build
 
 # Copy standalone build with required files
 RUN cp -r .next/standalone/. . && \
-    mkdir -p ./.next/static && \
-    cp -r .next/static ./.next/static
+    cp -r .next/static ./standalone_static && \
+    mv ./standalone_static ./.next/static
 
 # Copy entrypoint script and set permissions
 COPY scripts/docker-entrypoint.sh ./
