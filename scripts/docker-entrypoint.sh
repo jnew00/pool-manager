@@ -26,10 +26,16 @@ npx prisma migrate deploy
 
 if [ $? -ne 0 ]; then
   echo "⚠️  Migration failed, attempting to baseline existing database..."
-  # Try to baseline with the first migration
-  npx prisma migrate resolve --applied "20250816213427_init"
   
-  # Run migrations again
+  # Mark all existing migrations as applied
+  npx prisma migrate resolve --applied "20250816213427_init"
+  npx prisma migrate resolve --applied "20250816214312_add_game_status" 
+  npx prisma migrate resolve --applied "20250817172155_add_grade_overrides"
+  npx prisma migrate resolve --applied "20250820_add_survivor_models"
+  npx prisma migrate resolve --applied "20250823_add_data_source_tracking"
+  npx prisma migrate resolve --applied "20250823_optimize_indexes"
+  
+  # Run migrations again to catch any new ones
   npx prisma migrate deploy
   
   if [ $? -eq 0 ]; then
