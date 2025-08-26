@@ -21,11 +21,16 @@ COPY . .
 # Generate Prisma client and build
 RUN npx prisma generate && npm run build
 
+# Copy standalone build with required files
+RUN cp -r .next/standalone/. . && \
+    mkdir -p ./.next/static && \
+    cp -r .next/static ./.next/static
+
 # Copy entrypoint script and set permissions
 COPY scripts/docker-entrypoint.sh ./
 RUN chmod +x ./docker-entrypoint.sh && \
     mkdir -p ./backups ./logs && \
-    chown -R nextjs:nodejs ./backups ./logs ./node_modules ./prisma ./.next
+    chown -R nextjs:nodejs ./backups ./logs ./.next ./node_modules ./prisma ./public ./server.js
 
 # Environment
 ENV NODE_ENV=production

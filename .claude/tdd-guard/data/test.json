@@ -1,0 +1,16 @@
+{
+  "testModules": [
+    {
+      "moduleId": "/Users/Jason/Documents/Development/PoolManager/src/example/sum.test.ts",
+      "tests": [
+        {
+          "name": "adds two numbers",
+          "fullName": "sum > adds two numbers",
+          "state": "passed"
+        }
+      ]
+    }
+  ],
+  "unhandledErrors": [],
+  "reason": "passed"
+}
