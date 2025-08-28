@@ -5,7 +5,7 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Install system dependencies and create user
-RUN apk add --no-cache curl postgresql-client libc6-compat openssl && \
+RUN apk add --no-cache curl postgresql-client libc6-compat openssl tesseract-ocr tesseract-ocr-data-eng && \
     rm -rf /var/cache/apk/* && \
     addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
