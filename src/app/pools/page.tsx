@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { PoolSetup } from '@/features/pools/components/PoolSetup'
+import { PoolEdit } from '@/features/pools/components/PoolEdit'
 
 interface Pool {
   id: string
@@ -13,12 +14,15 @@ interface Pool {
   maxEntries: number
   isActive: boolean
   description?: string
+  url?: string
 }
 
 export default function PoolsPage() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [createdPool, setCreatedPool] = useState<Pool | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [editingPool, setEditingPool] = useState<Pool | null>(null)
   const [pools, setPools] = useState<Pool[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -64,10 +68,23 @@ export default function PoolsPage() {
     }
   }
 
+  const handleEditPool = (pool: Pool) => {
+    setEditingPool(pool)
+    setShowEditForm(true)
+    setShowCreateForm(false)
+    setShowSuccess(false)
+  }
+
   const handlePoolCreated = (pool: Pool) => {
     setCreatedPool(pool)
     setShowSuccess(true)
     setShowCreateForm(false)
+    fetchPools() // Refresh the list
+  }
+
+  const handlePoolUpdated = (pool: Pool) => {
+    setEditingPool(null)
+    setShowEditForm(false)
     fetchPools() // Refresh the list
   }
 
@@ -85,7 +102,16 @@ export default function PoolsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">PM</span>
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  {/* Pool/Water waves */}
+                  <path d="M2 18c1.5-1.5 3-1.5 4.5 0S9 19.5 10.5 18s3-1.5 4.5 0 3 1.5 4.5 0 3-1.5 4.5 0" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                  <path d="M2 15c1.5-1.5 3-1.5 4.5 0S9 16.5 10.5 15s3-1.5 4.5 0 3 1.5 4.5 0 3-1.5 4.5 0" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                  {/* Chart/Management bars */}
+                  <rect x="4" y="8" width="2" height="6" rx="1" />
+                  <rect x="8" y="5" width="2" height="9" rx="1" />
+                  <rect x="12" y="6" width="2" height="8" rx="1" />
+                  <rect x="16" y="3" width="2" height="11" rx="1" />
+                </svg>
               </div>
               <div>
                 <Link
@@ -112,26 +138,13 @@ export default function PoolsPage() {
               >
                 Picks
               </Link>
-              <Link
-                href="/standings"
-                className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors font-medium"
-              >
-                Standings
-              </Link>
             </nav>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-4">
-            Pool Management
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300">
-            Create and manage your NFL pools
-          </p>
-        </div>
+
 
         {showSuccess && createdPool ? (
           <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
@@ -185,6 +198,43 @@ export default function PoolsPage() {
                 </Link>
               </div>
             </div>
+          </div>
+        ) : showEditForm && editingPool ? (
+          <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Edit Pool: {editingPool.name}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowEditForm(false)
+                  setEditingPool(null)
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <PoolEdit 
+              pool={editingPool} 
+              onPoolUpdated={handlePoolUpdated}
+              onCancel={() => {
+                setShowEditForm(false)
+                setEditingPool(null)
+              }}
+            />
           </div>
         ) : showCreateForm ? (
           <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
@@ -289,9 +339,20 @@ export default function PoolsPage() {
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div>
-                          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                            {pool.name}
-                          </h3>
+                          {pool.url ? (
+                            <a
+                              href={pool.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-lg font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                            >
+                              {pool.name}
+                            </a>
+                          ) : (
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                              {pool.name}
+                            </h3>
+                          )}
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {pool.type} Pool
                           </p>
@@ -306,6 +367,28 @@ export default function PoolsPage() {
                           >
                             {pool.isActive ? 'Active' : 'Inactive'}
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault()
+                              handleEditPool(pool)
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            title="Edit pool"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
                           <button
                             onClick={(e) => {
                               e.preventDefault()

@@ -221,11 +221,9 @@ export async function POST(request: NextRequest) {
 // Helper functions
 async function getCurrentWeek(): Promise<number> {
   const now = new Date()
-  const seasonStart = new Date('2024-09-05') // NFL season start
-  const weeksSinceStart = Math.floor(
-    (now.getTime() - seasonStart.getTime()) / (7 * 24 * 60 * 60 * 1000)
-  )
-  return Math.min(Math.max(1, weeksSinceStart + 1), 18)
+  const seasonStart = new Date(2025, 8, 2) // September 2, 2025 - NFL season start
+  const daysSinceStart = Math.floor((now.getTime() - seasonStart.getTime()) / (1000 * 60 * 60 * 24))
+  return Math.min(Math.max(1, Math.floor(daysSinceStart / 7) + 1), 18)
 }
 
 async function getWinProbability(

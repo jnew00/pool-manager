@@ -1,0 +1,663 @@
+
+> poolmanager@1.0.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use by process 91150, using available port 3001 instead.
+   ▲ Next.js 15.5.0
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.2.36:3001
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 2s
+ ○ Compiling /pools/[id] ...
+ ✓ Compiled /pools/[id] in 1231ms (823 modules)
+[Error: Unknown system error -11: Unknown system error -11, write] {
+  errno: -11,
+  code: 'Unknown system error -11',
+  syscall: 'write'
+}
+ ⨯ uncaughtException: [Error: Unknown system error -11: Unknown system error -11, write] {
+  errno: -11,
+  code: 'Unknown system error -11',
+  syscall: 'write'
+}
+ ⨯ uncaughtException:  [Error: Unknown system error -11: Unknown system error -11, write] {
+  errno: -11,
+  code: 'Unknown system error -11',
+  syscall: 'write'
+}
+ GET /pools/cmet8fzqh0000p1ydb56cuhgi 200 in 2096ms
+ ✓ Compiled /api/pools/[id] in 459ms (848 modules)
+ GET /pools/cmet8fzqh0000p1ydb56cuhgi 200 in 137ms
+ GET /api/pools/cmet8fzqh0000p1ydb56cuhgi 200 in 1057ms
+ ✓ Compiled /api/lines in 289ms (850 modules)
+ GET /api/games?season=2025&week=1 200 in 372ms
+ GET /api/lines?season=2025&week=1 200 in 374ms
+[Recommendations] Game PHI vs DAL: spread=-3.5, total=N/A, ML=N/A/N/A
+[Recommendations] marketData: {
+  spread: -3.5,
+  total: undefined,
+  moneylineHome: undefined,
+  moneylineAway: undefined
+}
+[Divisional Factor] PHI vs DAL: divisional=true, rivalry=1.8, adjustment=2.7
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.95 (2.7 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.6670818000804238, totalWeight=1.01, result=0.6604770297825978
+[Confidence Engine] Raw calculation: marketProb=0.7625419716560975, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.6604770297825978
+[Confidence Engine] Final newsAnalysis for UI: undefined
+[Recommendations] Game cmekvak8q0013p1a9mu6wia8e: confidence=66.04770297825978 (number), adjusted=66.04770297825978
+[Recommendations] Game SEA vs SF: spread=-2.5, total=N/A, ML=N/A/N/A
+[Recommendations] marketData: {
+  spread: -2.5,
+  total: undefined,
+  moneylineHome: undefined,
+  moneylineAway: undefined
+}
+[Divisional Factor] SEA vs SF: divisional=true, rivalry=1.8, adjustment=2.7
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1.2000000000000002, rest=0.5, divisional=0.95 (2.7 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.6551450997040427, totalWeight=1.01, result=0.6486585145584581
+[Confidence Engine] Raw calculation: marketProb=0.6970592839654074, eloProb=0.5924662305843318, homeAdv=4.2, rawConfidence=0.6486585145584581
+[Confidence Engine] Final newsAnalysis for UI: undefined
+[Recommendations] Game cmekvak80000zp1a9ancoiz1j: confidence=64.86585145584581 (number), adjusted=64.86585145584581
+[Recommendations] Game LAC vs KC: spread=3.5, total=N/A, ML=N/A/N/A
+[Recommendations] marketData: {
+  spread: 3.5,
+  total: undefined,
+  moneylineHome: undefined,
+  moneylineAway: undefined
+}
+[Divisional Factor] LAC vs KC: divisional=true, rivalry=0, adjustment=1.5
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.75 (1.5 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.4781786790708387, totalWeight=1.01, result=0.4734442367038007
+[Confidence Engine] Raw calculation: marketProb=0.2374580283439025, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.4734442367038007
+[Confidence Engine] Close game detected (47.34442367038007%), applying news analysis tie-breaker
+[Confidence Engine] Teams found: Home=Los Angeles Chargers, Away=Kansas City Chiefs
+[Confidence Engine] Creating NewsAnalysisService and analyzing game
+[News Analysis] Service initialized with provider: openai, enabled: true, hasNewsApiKey: true, hasLLMKey: true
+[News Analysis] Starting analysis for Los Angeles Chargers vs Kansas City Chiefs using openai
+[News Analysis] Fetching news for Los Angeles Chargers vs Kansas City Chiefs
+[News Analysis] Found 3 articles for Los Angeles Chargers, 2 articles for Kansas City Chiefs
+[Confidence Engine] News analysis result: {
+  analysisConfidence: 34,
+  recommendedTeam: 'AWAY',
+  keyFactors: 2,
+  summary: 'Key factors: Los Angeles Chargers defensive coordinator suspended for one...; Los Angeles Chargers quarterback listed as questionable with...'
+}
+[Confidence Engine] News analysis applied: AWAY (-1.7 pts), new confidence: 45.6%
+[Confidence Engine] Final newsAnalysis for UI: {
+  confidence: 34,
+  recommendedTeam: 'AWAY',
+  summary: 'Key factors: Los Angeles Chargers defensive coordinator suspended for one...; Los Angeles Chargers quarterback listed as questionable with...',
+  adjustment: -1.7000000000000002
+}
+[Recommendations] Game cmete6fxq0000p1vtka6ewsmu: confidence=45.644423670380064 (number), adjusted=45.644423670380064
+[Recommendations] Game NO vs ARI: spread=6.5, total=42.5, ML=230/-280
+[Recommendations] marketData: { spread: 6.5, total: 42.5, moneylineHome: 230, moneylineAway: -280 }
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.5 (0 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.4800029389621344, totalWeight=1.01, result=0.47525043461597466
+[Confidence Engine] Raw calculation: marketProb=0.29141104294478526, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.47525043461597466
+[Confidence Engine] Close game detected (47.52504346159746%), applying news analysis tie-breaker
+[Confidence Engine] Teams found: Home=New Orleans Saints, Away=Arizona Cardinals
+[Confidence Engine] Creating NewsAnalysisService and analyzing game
+[News Analysis] Service initialized with provider: openai, enabled: true, hasNewsApiKey: true, hasLLMKey: true
+[News Analysis] Starting analysis for New Orleans Saints vs Arizona Cardinals using openai
+[News Analysis] Fetching news for New Orleans Saints vs Arizona Cardinals
+[News Analysis] Found 2 articles for New Orleans Saints, 3 articles for Arizona Cardinals
+[Confidence Engine] News analysis result: {
+  analysisConfidence: 15,
+  recommendedTeam: 'HOME',
+  keyFactors: 3,
+  summary: 'Key factors: Arizona Cardinals star wide receiver cleared to play after h...; New Orleans Saints star wide receiver cleared to play after ...; New Orleans Saints quarterback listed as questionable with a...'
+}
+[Confidence Engine] News analysis applied: HOME (+0.8 pts), new confidence: 48.3%
+[Confidence Engine] Final newsAnalysis for UI: {
+  confidence: 15,
+  recommendedTeam: 'HOME',
+  summary: 'Key factors: Arizona Cardinals star wide receiver cleared to play after h...; New Orleans Saints star wide receiver cleared to play after ...; New Orleans Saints quarterback listed as questionable with a...',
+  adjustment: 0.75
+}
+[Recommendations] Game cmekvavn10005p1oqh178fr05: confidence=48.27504346159746 (number), adjusted=48.27504346159746
+[Recommendations] Game NE vs LVR: spread=-4.5, total=N/A, ML=N/A/N/A
+[Recommendations] marketData: {
+  spread: -4.5,
+  total: undefined,
+  moneylineHome: undefined,
+  moneylineAway: undefined
+}
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.5 (0 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.6562676891005018, totalWeight=1.01, result=0.6497699892084177
+[Confidence Engine] Raw calculation: marketProb=0.8175744761936437, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.6497699892084177
+[Confidence Engine] Final newsAnalysis for UI: undefined
+[Recommendations] Game cmekvavn10004p1oq3edkgihw: confidence=64.97699892084177 (number), adjusted=64.97699892084177
+[Recommendations] Game NYJ vs PIT: spread=2.5, total=38.5, ML=130/-150
+[Recommendations] marketData: { spread: 2.5, total: 38.5, moneylineHome: 130, moneylineAway: -150 }
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.5 (0 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.5231365420966395, totalWeight=1.01, result=0.5179569723729104
+[Confidence Engine] Raw calculation: marketProb=0.42016806722689076, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.5179569723729104
+[Confidence Engine] Close game detected (51.79569723729104%), applying news analysis tie-breaker
+[Confidence Engine] Teams found: Home=New York Jets, Away=Pittsburgh Steelers
+[Confidence Engine] Creating NewsAnalysisService and analyzing game
+[News Analysis] Service initialized with provider: openai, enabled: true, hasNewsApiKey: true, hasLLMKey: true
+[News Analysis] Starting analysis for New York Jets vs Pittsburgh Steelers using openai
+[News Analysis] Fetching news for New York Jets vs Pittsburgh Steelers
+[News Analysis] Found 1 articles for New York Jets, 3 articles for Pittsburgh Steelers
+[Confidence Engine] News analysis result: {
+  analysisConfidence: 28,
+  recommendedTeam: 'AWAY',
+  keyFactors: 2,
+  summary: 'Key factors: Player injury concern reported; Staff member suspended for violation'
+}
+[Confidence Engine] News analysis applied: AWAY (-1.4 pts), new confidence: 50.4%
+[Confidence Engine] Final newsAnalysis for UI: {
+  confidence: 28,
+  recommendedTeam: 'AWAY',
+  summary: 'Key factors: Player injury concern reported; Staff member suspended for violation',
+  adjustment: -1.4000000000000001
+}
+[Recommendations] Game cmekvavn10006p1oq0fv0axvc: confidence=50.39569723729104 (number), adjusted=50.39569723729104
+[Recommendations] Game ATL vs TB: spread=2.5, total=47.5, ML=115/-135
+[Recommendations] marketData: { spread: 2.5, total: 47.5, moneylineHome: 115, moneylineAway: -135 }
+[Divisional Factor] ATL vs TB: divisional=true, rivalry=0, adjustment=1.5
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.75 (1.5 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.5485112486189438, totalWeight=1.01, result=0.5430804441771722
+[Confidence Engine] Raw calculation: marketProb=0.447405997144217, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.5430804441771722
+[Confidence Engine] Close game detected (54.30804441771721%), applying news analysis tie-breaker
+[Confidence Engine] Teams found: Home=Atlanta Falcons, Away=Tampa Bay Buccaneers
+[Confidence Engine] Creating NewsAnalysisService and analyzing game
+[News Analysis] Service initialized with provider: openai, enabled: true, hasNewsApiKey: true, hasLLMKey: true
+[News Analysis] Starting analysis for Atlanta Falcons vs Tampa Bay Buccaneers using openai
+[News Analysis] Fetching news for Atlanta Falcons vs Tampa Bay Buccaneers
+[News Analysis] Found 1 articles for Atlanta Falcons, 3 articles for Tampa Bay Buccaneers
+[Confidence Engine] News analysis result: {
+  analysisConfidence: 10,
+  recommendedTeam: undefined,
+  keyFactors: 3,
+  summary: 'Key factors: Atlanta Falcons acquire veteran linebacker in trade deadline...; Player injury concern reported; Tampa Bay Buccaneers acquire veteran linebacker in trade dea...'
+}
+[Confidence Engine] Final newsAnalysis for UI: {
+  confidence: 10,
+  recommendedTeam: undefined,
+  summary: 'Key factors: Atlanta Falcons acquire veteran linebacker in trade deadline...; Player injury concern reported; Tampa Bay Buccaneers acquire veteran linebacker in trade dea...',
+  adjustment: 0
+}
+[Recommendations] Game cmete6fxq0001p1vt2x2r243z: confidence=54.30804441771721 (number), adjusted=54.30804441771721
+[Recommendations] Game IND vs MIA: spread=-1.5, total=46.5, ML=-125/105
+[Recommendations] marketData: { spread: -1.5, total: 46.5, moneylineHome: -125, moneylineAway: 105 }
+ ✓ Compiled /api/pools/[id]/spreads in 143ms (852 modules)
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.5 (0 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.5607568629522546, totalWeight=1.01, result=0.5552048148042125
+[Confidence Engine] Raw calculation: marketProb=0.5324675324675325, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.5552048148042125
+[Confidence Engine] Close game detected (55.520481480421246%), applying news analysis tie-breaker
+[Confidence Engine] Teams found: Home=Indianapolis Colts, Away=Miami Dolphins
+[Confidence Engine] Creating NewsAnalysisService and analyzing game
+[News Analysis] Service initialized with provider: openai, enabled: true, hasNewsApiKey: true, hasLLMKey: true
+[News Analysis] Starting analysis for Indianapolis Colts vs Miami Dolphins using openai
+[News Analysis] Fetching news for Indianapolis Colts vs Miami Dolphins
+[News Analysis] Found 2 articles for Indianapolis Colts, 3 articles for Miami Dolphins
+[Confidence Engine] News analysis result: {
+  analysisConfidence: 17,
+  recommendedTeam: 'AWAY',
+  keyFactors: 3,
+  summary: 'Key factors: Staff member suspended for violation; Indianapolis Colts quarterback listed as questionable with a...; Key player questionable with injury'
+}
+[Confidence Engine] News analysis applied: AWAY (-0.9 pts), new confidence: 54.7%
+[Confidence Engine] Final newsAnalysis for UI: {
+  confidence: 17,
+  recommendedTeam: 'AWAY',
+  summary: 'Key factors: Staff member suspended for violation; Indianapolis Colts quarterback listed as questionable with a...; Key player questionable with injury',
+  adjustment: -0.8500000000000001
+}
+[Recommendations] Game cmekvavn10003p1oqdgs86zcp: confidence=54.670481480421245 (number), adjusted=54.670481480421245
+[Recommendations] Game JAX vs CAR: spread=-3.5, total=46.5, ML=-155/135
+[Recommendations] marketData: { spread: -3.5, total: 46.5, moneylineHome: -155, moneylineAway: 135 }
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.5 (0 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.5794311075610974, totalWeight=1.01, result=0.5736941659020767
+[Confidence Engine] Raw calculation: marketProb=0.5882115462252725, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.5736941659020767
+[Confidence Engine] Close game detected (57.36941659020766%), applying news analysis tie-breaker
+[Confidence Engine] Teams found: Home=Jacksonville Jaguars, Away=Carolina Panthers
+[Confidence Engine] Creating NewsAnalysisService and analyzing game
+[News Analysis] Service initialized with provider: openai, enabled: true, hasNewsApiKey: true, hasLLMKey: true
+[News Analysis] Starting analysis for Jacksonville Jaguars vs Carolina Panthers using openai
+[News Analysis] Fetching news for Jacksonville Jaguars vs Carolina Panthers
+[News Analysis] Found 3 articles for Jacksonville Jaguars, 2 articles for Carolina Panthers
+[Confidence Engine] News analysis result: {
+  analysisConfidence: 1,
+  recommendedTeam: undefined,
+  keyFactors: 2,
+  summary: 'Key factors: Jacksonville Jaguars defensive coordinator suspended for one...; Jacksonville Jaguars star wide receiver cleared to play afte...'
+}
+[Confidence Engine] Final newsAnalysis for UI: {
+  confidence: 1,
+  recommendedTeam: undefined,
+  summary: 'Key factors: Jacksonville Jaguars defensive coordinator suspended for one...; Jacksonville Jaguars star wide receiver cleared to play afte...',
+  adjustment: 0
+}
+[Recommendations] Game cmete6fxq0004p1vtj1k8z7cf: confidence=57.36941659020766 (number), adjusted=57.36941659020766
+[Recommendations] Game CLE vs CIN: spread=5.5, total=46.5, ML=225/-275
+[Recommendations] marketData: { spread: 5.5, total: 46.5, moneylineHome: 225, moneylineAway: -275 }
+[Divisional Factor] CLE vs CIN: divisional=true, rivalry=0, adjustment=1.5
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.75 (1.5 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.49764501790075455, totalWeight=1.01, result=0.4927178395056976
+[Confidence Engine] Raw calculation: marketProb=0.29556650246305427, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.4927178395056976
+[Confidence Engine] Close game detected (49.271783950569755%), applying news analysis tie-breaker
+[Confidence Engine] Teams found: Home=Cleveland Browns, Away=Cincinnati Bengals
+[Confidence Engine] Creating NewsAnalysisService and analyzing game
+[News Analysis] Service initialized with provider: openai, enabled: true, hasNewsApiKey: true, hasLLMKey: true
+[News Analysis] Starting analysis for Cleveland Browns vs Cincinnati Bengals using openai
+[News Analysis] Fetching news for Cleveland Browns vs Cincinnati Bengals
+[News Analysis] Found 1 articles for Cleveland Browns, 1 articles for Cincinnati Bengals
+[Confidence Engine] News analysis result: {
+  analysisConfidence: 26,
+  recommendedTeam: 'AWAY',
+  keyFactors: 2,
+  summary: 'Key factors: Cincinnati Bengals quarterback listed as questionable with a...; Cleveland Browns star wide receiver cleared to play after ha...'
+}
+[Confidence Engine] News analysis applied: AWAY (-1.3 pts), new confidence: 48.0%
+[Confidence Engine] Final newsAnalysis for UI: {
+  confidence: 26,
+  recommendedTeam: 'AWAY',
+  summary: 'Key factors: Cincinnati Bengals quarterback listed as questionable with a...; Cleveland Browns star wide receiver cleared to play after ha...',
+  adjustment: -1.3
+}
+[Recommendations] Game cmete6fxq0002p1vthrpj8npo: confidence=47.97178395056976 (number), adjusted=47.97178395056976
+[Recommendations] Game DEN vs TEN: spread=-7.5, total=42.5, ML=-400/300
+[Recommendations] marketData: { spread: -7.5, total: 42.5, moneylineHome: -400, moneylineAway: 300 }
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.5 (0 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.6376183348137264, totalWeight=1.01, result=0.6313052819937885
+[Confidence Engine] Raw calculation: marketProb=0.7619047619047619, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.6313052819937885
+[Confidence Engine] Final newsAnalysis for UI: undefined
+[Recommendations] Game cmete6fxq0005p1vtccrrlbd0: confidence=63.13052819937886 (number), adjusted=63.13052819937886
+[Recommendations] Game GB vs DET: spread=-1.5, total=49.5, ML=-125/105
+[Recommendations] marketData: { spread: -1.5, total: 49.5, moneylineHome: -125, moneylineAway: 105 }
+[Divisional Factor] GB vs DET: divisional=true, rivalry=0, adjustment=1.5
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1.1666666666666665, rest=0.5, divisional=0.75 (1.5 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.5853401962855879, totalWeight=1.01, result=0.5795447487976118
+[Confidence Engine] Raw calculation: marketProb=0.5324675324675325, eloProb=0.5924662305843318, homeAdv=4, rawConfidence=0.5795447487976118
+[Confidence Engine] Close game detected (57.95447487976118%), applying news analysis tie-breaker
+[Confidence Engine] Teams found: Home=Green Bay Packers, Away=Detroit Lions
+[Confidence Engine] Creating NewsAnalysisService and analyzing game
+[News Analysis] Service initialized with provider: openai, enabled: true, hasNewsApiKey: true, hasLLMKey: true
+[News Analysis] Starting analysis for Green Bay Packers vs Detroit Lions using openai
+[News Analysis] Fetching news for Green Bay Packers vs Detroit Lions
+[News Analysis] Found 3 articles for Green Bay Packers, 1 articles for Detroit Lions
+[Confidence Engine] News analysis result: {
+  analysisConfidence: 27,
+  recommendedTeam: 'HOME',
+  keyFactors: 1,
+  summary: 'Key factors: Green Bay Packers acquire veteran linebacker in trade deadli...'
+}
+[Confidence Engine] News analysis applied: HOME (+1.4 pts), new confidence: 59.3%
+[Confidence Engine] Final newsAnalysis for UI: {
+  confidence: 27,
+  recommendedTeam: 'HOME',
+  summary: 'Key factors: Green Bay Packers acquire veteran linebacker in trade deadli...',
+  adjustment: 1.35
+}
+[Recommendations] Game cmekvavn1000ap1oqrqnm3pv9: confidence=59.30447487976118 (number), adjusted=59.30447487976118
+[Recommendations] Game LAR vs HOU: spread=-2.5, total=44.5, ML=-140/120
+[Recommendations] marketData: { spread: -2.5, total: 44.5, moneylineHome: -140, moneylineAway: 120 }
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.5 (0 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.5706649111084778, totalWeight=1.01, result=0.5650147634737405
+[Confidence Engine] Raw calculation: marketProb=0.562043795620438, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.5650147634737405
+[Confidence Engine] Close game detected (56.501476347374044%), applying news analysis tie-breaker
+[Confidence Engine] Teams found: Home=Los Angeles Rams, Away=Houston Texans
+[Confidence Engine] Creating NewsAnalysisService and analyzing game
+[News Analysis] Service initialized with provider: openai, enabled: true, hasNewsApiKey: true, hasLLMKey: true
+[News Analysis] Starting analysis for Los Angeles Rams vs Houston Texans using openai
+[News Analysis] Fetching news for Los Angeles Rams vs Houston Texans
+[News Analysis] Found 2 articles for Los Angeles Rams, 1 articles for Houston Texans
+[Confidence Engine] News analysis result: {
+  analysisConfidence: 31,
+  recommendedTeam: 'HOME',
+  keyFactors: 3,
+  summary: 'Key factors: Los Angeles Rams defensive coordinator suspended for one gam...; Houston Texans star wide receiver cleared to play after hams...; Los Angeles Rams acquire veteran linebacker in trade deadlin...'
+}
+[Confidence Engine] News analysis applied: HOME (+1.6 pts), new confidence: 58.1%
+[Confidence Engine] Final newsAnalysis for UI: {
+  confidence: 31,
+  recommendedTeam: 'HOME',
+  summary: 'Key factors: Los Angeles Rams defensive coordinator suspended for one gam...; Houston Texans star wide receiver cleared to play after hams...; Los Angeles Rams acquire veteran linebacker in trade deadlin...',
+  adjustment: 1.55
+}
+[Recommendations] Game cmekvavn1000bp1oqjszc76yy: confidence=58.05147634737404 (number), adjusted=58.05147634737404
+[Recommendations] Game BUF vs BAL: spread=-1.5, total=51.5, ML=-120/100
+[Recommendations] marketData: { spread: -1.5, total: 51.5, moneylineHome: -120, moneylineAway: 100 }
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.5 (0 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.5571628482712833, totalWeight=1.01, result=0.5516463844270131
+[Confidence Engine] Raw calculation: marketProb=0.5217391304347826, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.5516463844270131
+[Confidence Engine] Close game detected (55.16463844270131%), applying news analysis tie-breaker
+[Confidence Engine] Teams found: Home=Buffalo Bills, Away=Baltimore Ravens
+[Confidence Engine] Creating NewsAnalysisService and analyzing game
+[News Analysis] Service initialized with provider: openai, enabled: true, hasNewsApiKey: true, hasLLMKey: true
+[News Analysis] Starting analysis for Buffalo Bills vs Baltimore Ravens using openai
+[News Analysis] Fetching news for Buffalo Bills vs Baltimore Ravens
+[News Analysis] Found 3 articles for Buffalo Bills, 3 articles for Baltimore Ravens
+[Confidence Engine] News analysis result: {
+  analysisConfidence: 23,
+  recommendedTeam: 'HOME',
+  keyFactors: 3,
+  summary: 'Key factors: Buffalo Bills quarterback listed as questionable with ankle ...; Staff member suspended for violation; Buffalo Bills acquire veteran linebacker in trade deadline d...'
+}
+[Confidence Engine] News analysis applied: HOME (+1.2 pts), new confidence: 56.3%
+[Confidence Engine] Final newsAnalysis for UI: {
+  confidence: 23,
+  recommendedTeam: 'HOME',
+  summary: 'Key factors: Buffalo Bills quarterback listed as questionable with ankle ...; Staff member suspended for violation; Buffalo Bills acquire veteran linebacker in trade deadline d...',
+  adjustment: 1.1500000000000001
+}
+[Recommendations] Game cmete6fxq0006p1vt2vn42u3i: confidence=56.31463844270131 (number), adjusted=56.31463844270131
+[Recommendations] Game CHI vs MIN: spread=1.5, total=42.5, ML=110/-130
+[Recommendations] marketData: { spread: 1.5, total: 42.5, moneylineHome: 110, moneylineAway: -130 }
+[Divisional Factor] CHI vs MIN: divisional=true, rivalry=0, adjustment=1.5
+[Recent Form] Home: 0.0 (neutral), Away: 0.0 (neutral), Adjustment: 0.0 points
+[Playoff Implications] Home motivation: 70.0%, Away motivation: 70.0%, Factor: 0.00 points
+[Travel/Schedule] Team location data unavailable, advantage: 0 points
+[Confidence Engine] Weights: {
+  k_elo: 24,
+  elo_weight: 0.3,
+  rest_weight: 0.03,
+  qb_out_penalty: 12,
+  home_adv_weight: 0.07,
+  db_cluster_penalty: 3,
+  market_prob_weight: 0.5,
+  ol_cluster_penalty: 3,
+  wind_threshold_mph: 15,
+  injury_penalty_weight: 0.03,
+  precip_prob_threshold: 0.3,
+  weather_penalty_weight: 0.07
+}
+[Confidence Engine] Probability conversions: homeAdv=1, rest=0.5, divisional=0.75 (1.5 pts), revenge=0.5 (0 pts), recentForm=0.5 (0 pts), lineValue=0.5 (0 pts)
+[Confidence Engine] weightedProb=0.5518111540885536, totalWeight=1.01, result=0.5463476773153997
+[Confidence Engine] Raw calculation: marketProb=0.4572564612326044, eloProb=0.5924662305843318, homeAdv=3, rawConfidence=0.5463476773153997
+[Confidence Engine] Close game detected (54.63476773153997%), applying news analysis tie-breaker
+[Confidence Engine] Teams found: Home=Chicago Bears, Away=Minnesota Vikings
+[Confidence Engine] Creating NewsAnalysisService and analyzing game
+[News Analysis] Service initialized with provider: openai, enabled: true, hasNewsApiKey: true, hasLLMKey: true
+[News Analysis] Starting analysis for Chicago Bears vs Minnesota Vikings using openai
+[News Analysis] Fetching news for Chicago Bears vs Minnesota Vikings
+[News Analysis] Found 3 articles for Chicago Bears, 1 articles for Minnesota Vikings
+[Confidence Engine] News analysis result: {
+  analysisConfidence: 38,
+  recommendedTeam: 'AWAY',
+  keyFactors: 1,
+  summary: 'Key factors: Chicago Bears star wide receiver cleared to play after hamst...'
+}
+[Confidence Engine] News analysis applied: AWAY (-1.9 pts), new confidence: 52.7%
+[Confidence Engine] Final newsAnalysis for UI: {
+  confidence: 38,
+  recommendedTeam: 'AWAY',
+  summary: 'Key factors: Chicago Bears star wide receiver cleared to play after hamst...',
+  adjustment: -1.9
+}
+[Recommendations] Game cmekvavn1000dp1oq4iptdpz7: confidence=52.73476773153997 (number), adjusted=52.73476773153997
+ GET /api/recommendations?poolId=cmet8fzqh0000p1ydb56cuhgi&season=2025&week=1 200 in 1038ms
+ GET /api/pools/cmet8fzqh0000p1ydb56cuhgi/spreads?season=2025&week=1 200 in 734ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/Jason/Documents/Development/PoolManager/.next/server/app-paths-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/Jason/Documents/Development/PoolManager/.next/server/app-paths-manifest.json',
+  page: '/pools/cmet8fzqh0000p1ydb56cuhgi'
+}
+ ✓ Compiled /_error in 391ms (1191 modules)
+ GET /pools/cmet8fzqh0000p1ydb56cuhgi 500 in 838ms
+ GET /pools/cmet8fzqh0000p1ydb56cuhgi 200 in 213ms
+ GET /pools/cmet8fzqh0000p1ydb56cuhgi 200 in 62ms
+ GET /pools/cmet8fzqh0000p1ydb56cuhgi 200 in 62ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled /_not-found in 471ms (1178 modules)
+ GET /api/pools/cmet8fzqh0000p1ydb56cuhgi 404 in 1012ms
+ GET /pools/cmet8fzqh0000p1ydb56cuhgi 200 in 500ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/Jason/Documents/Development/PoolManager/.next/server/app/api/pools/[id]/route.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/Jason/Documents/Development/PoolManager/.next/server/app/api/pools/[id]/route.js',
+  page: '/api/pools/cmet8fzqh0000p1ydb56cuhgi'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/Jason/Documents/Development/PoolManager/.next/server/pages/_document.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/Jason/Documents/Development/PoolManager/.next/server/pages/_document.js'
+}
+ GET /api/pools/cmet8fzqh0000p1ydb56cuhgi 500 in 539ms

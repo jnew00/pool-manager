@@ -38,13 +38,14 @@ export async function GET(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const methodError = validateMethod(request, ['DELETE'])
   if (methodError) return methodError
 
   try {
-    const success = await entryService.deleteEntry(params.id)
+    const { id } = await params
+    const success = await entryService.deleteEntry(id)
 
     if (!success) {
       throw new NotFoundError('Entry not found')

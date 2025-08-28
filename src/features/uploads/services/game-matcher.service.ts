@@ -108,6 +108,8 @@ export class GameMatcherService {
     spread: NormalizedSpreadData,
     games: any[]
   ): any | null {
+    console.log(`[GameMatcher] Trying to match: "${spread.away_team}" @ "${spread.home_team}"`)
+    
     // Try exact match first
     let match = games.find(
       (game) =>
@@ -116,9 +118,12 @@ export class GameMatcherService {
     )
 
     if (match) {
+      console.log(`[GameMatcher] ✓ Exact match found: ${match.awayTeam.nflAbbr} @ ${match.homeTeam.nflAbbr}`)
       return match
     }
 
+    console.log(`[GameMatcher] No exact match, trying fuzzy matching...`)
+    
     // Try with team abbreviation variations
     match = games.find((game) => {
       const homeMatch = this.teamMatches(
@@ -129,8 +134,23 @@ export class GameMatcherService {
         game.awayTeam.nflAbbr,
         spread.away_team
       )
+      
+      console.log(`[GameMatcher]   Testing ${game.awayTeam.nflAbbr} @ ${game.homeTeam.nflAbbr}:`)
+      console.log(`[GameMatcher]     Away: "${spread.away_team}" vs "${game.awayTeam.nflAbbr}" = ${awayMatch}`)
+      console.log(`[GameMatcher]     Home: "${spread.home_team}" vs "${game.homeTeam.nflAbbr}" = ${homeMatch}`)
+      
       return homeMatch && awayMatch
     })
+
+    if (match) {
+      console.log(`[GameMatcher] ✓ Fuzzy match found: ${match.awayTeam.nflAbbr} @ ${match.homeTeam.nflAbbr}`)
+    } else {
+      console.log(`[GameMatcher] ✗ No match found for "${spread.away_team}" @ "${spread.home_team}"`)
+      console.log(`[GameMatcher] Available games:`)
+      games.forEach((game, i) => {
+        console.log(`[GameMatcher]   ${i + 1}. ${game.awayTeam.nflAbbr} @ ${game.homeTeam.nflAbbr}`)
+      })
+    }
 
     return match || null
   }
@@ -140,6 +160,11 @@ export class GameMatcherService {
    * Handles variations, abbreviations, nicknames, and fuzzy matching
    */
   private teamMatches(dbTeam: string, uploadTeam: string): boolean {
+    // Debug log for team matching
+    if (dbTeam === 'LVR' || uploadTeam === 'LV' || uploadTeam === 'LVR') {
+      console.log(`[TeamMatcher DEBUG] Checking LVR match: DB="${dbTeam}" vs Upload="${uploadTeam}"`)
+    }
+    
     // Comprehensive team name variations for NFL teams
     const variations: Record<string, string[]> = {
       ARI: ['Arizona', 'Cardinals', 'AZ', 'ARIZ', 'Card', 'Cards', 'Cardinal'],
@@ -166,19 +191,21 @@ export class GameMatcherService {
       IND: ['Indianapolis', 'Colts', 'IN', 'Colt', 'Horseshoe'],
       JAX: ['Jacksonville', 'Jaguars', 'FL', 'JAC', 'Jaguar', 'Jags', 'Duval'],
       KC: ['Kansas City', 'Chiefs', 'MO', 'KAN', 'Chief', 'Kingdom'],
-      LV: [
+      LVR: [
         'Las Vegas',
         'Raiders',
         'NV',
         'LVR',
+        'LV',  // This should match when upload has LV
         'Oakland',
         'Raider',
-        'LV',
         'Vegas',
         'OAK',
         'Silver and Black',
         'Nation',
       ],
+      // Add explicit LV mapping for backward compatibility
+      LV: ['LVR', 'Las Vegas', 'Raiders', 'NV', 'LV', 'Oakland', 'Raider', 'Vegas', 'OAK'],
       LAC: [
         'Los Angeles',
         'Chargers',
@@ -288,6 +315,9 @@ export class GameMatcherService {
         (variation) => normalize(variation) === normalizedUpload
       )
     ) {
+      if (dbTeam === 'LVR' || uploadTeam === 'LV') {
+        console.log(`[TeamMatcher DEBUG] Match found via DB variations: ${dbTeam} has variation matching ${uploadTeam}`)
+      }
       return true
     }
 

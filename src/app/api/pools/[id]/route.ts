@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { PoolService } from '@/server/services/pool.service'
-import { handleServiceError, validateMethod } from '@/lib/api/response'
+import { handleServiceError, validateMethod, parseRequestBody } from '@/lib/api/response'
 
 const poolService = new PoolService()
 
@@ -48,6 +48,36 @@ export async function GET(
       { error: 'Internal server error' },
       { status: 500 }
     )
+  }
+}
+
+// PATCH /api/pools/[id] - Update pool by ID
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const methodError = validateMethod(request, ['PATCH'])
+  if (methodError) return methodError
+
+  try {
+    const { id } = await params
+    const body = await parseRequestBody<{
+      name?: string
+      buyIn?: number
+      maxEntries?: number
+      isActive?: boolean
+      description?: string
+      url?: string
+    }>(request)
+
+    const pool = await poolService.updatePool(id, body)
+    
+    return NextResponse.json({
+      success: true,
+      data: pool,
+    })
+  } catch (error) {
+    return handleServiceError(error)
   }
 }
 

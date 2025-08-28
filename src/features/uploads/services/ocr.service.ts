@@ -13,12 +13,10 @@ export class OCRService {
     if (this.worker) return
 
     try {
-      console.log('[OCR] Creating worker with minimal config...')
-      // Try with minimal configuration first
-      this.worker = await createWorker('eng', 1, {
-        logger: (m) => console.log('[OCR]', m.status, m.progress),
-        errorHandler: (err) => console.error('[OCR Error]', err),
-      })
+      console.log('[OCR] Creating worker with default config...')
+      // Use default configuration - let Tesseract.js handle the paths
+      // It will automatically use the correct paths for the environment
+      this.worker = await createWorker('eng')
       console.log('[OCR] Worker created successfully')
     } catch (error) {
       throw new Error(

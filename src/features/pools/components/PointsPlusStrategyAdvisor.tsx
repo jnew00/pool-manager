@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import Tippy from '@tippyjs/react'
+import 'tippy.js/dist/tippy.css'
 import {
   AlertCircle,
   TrendingUp,
@@ -340,62 +342,86 @@ export function PointsPlusStrategyAdvisor({
     <div className="space-y-6">
       {/* Strategy Configuration */}
       <div
-        className={`bg-white rounded-lg shadow p-4 transition-opacity duration-300 ${configLoading ? 'opacity-75' : 'opacity-100'}`}
+        className={`bg-white rounded-lg shadow p-3 transition-opacity duration-300 ${configLoading ? 'opacity-75' : 'opacity-100'}`}
       >
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold">Strategy Configuration</h3>
+        <div className="flex items-center justify-between mb-2">
           {configLoading && (
-            <div className="flex items-center text-sm text-gray-600">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-              Updating strategy...
+            <div className="flex items-center text-xs text-gray-600">
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-1"></div>
+              Updating...
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-          <button
-            onClick={() => handleStrategyModeChange('conservative')}
-            disabled={configLoading}
-            className={`p-3 rounded-lg border-2 transition-colors ${
-              config.mode === 'conservative'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-            } ${configLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+          <Tippy
+            content="Big favorites, small dogs - Lower risk approach with safer picks"
+            placement="bottom"
+            delay={[300, 100]}
+            arrow={true}
+            theme="light"
           >
-            <Shield className="w-5 h-5 mb-1 mx-auto" />
-            <div className="font-medium text-sm">Conservative</div>
-            <div className="text-xs text-gray-600">
-              Big favorites, small dogs
+            <div>
+              <button
+                onClick={() => handleStrategyModeChange('conservative')}
+                disabled={configLoading}
+                className={`w-full p-2 rounded-lg border-2 transition-colors ${
+                  config.mode === 'conservative'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                } ${configLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Shield className="w-4 h-4 mx-auto mb-1" />
+                <div className="font-medium text-xs">Conservative</div>
+              </button>
             </div>
-          </button>
+          </Tippy>
 
-          <button
-            onClick={() => handleStrategyModeChange('balanced')}
-            disabled={configLoading}
-            className={`p-3 rounded-lg border-2 transition-colors ${
-              config.mode === 'balanced'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-            } ${configLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          <Tippy
+            content="Mix of value picks - Balanced approach using moderate favorites and underdogs"
+            placement="bottom"
+            delay={[300, 100]}
+            arrow={true}
+            theme="light"
           >
-            <Target className="w-5 h-5 mb-1 mx-auto" />
-            <div className="font-medium text-sm">Balanced</div>
-            <div className="text-xs text-gray-600">Mix of value picks</div>
-          </button>
+            <div>
+              <button
+                onClick={() => handleStrategyModeChange('balanced')}
+                disabled={configLoading}
+                className={`w-full p-2 rounded-lg border-2 transition-colors ${
+                  config.mode === 'balanced'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                } ${configLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Target className="w-4 h-4 mx-auto mb-1" />
+                <div className="font-medium text-xs">Balanced</div>
+              </button>
+            </div>
+          </Tippy>
 
-          <button
-            onClick={() => handleStrategyModeChange('aggressive')}
-            disabled={configLoading}
-            className={`p-3 rounded-lg border-2 transition-colors ${
-              config.mode === 'aggressive'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-            } ${configLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          <Tippy
+            content="More games, wider range - Higher risk with more picks and bigger underdogs"
+            placement="bottom"
+            delay={[300, 100]}
+            arrow={true}
+            theme="light"
           >
-            <Zap className="w-5 h-5 mb-1 mx-auto" />
-            <div className="font-medium text-sm">Aggressive</div>
-            <div className="text-xs text-gray-600">More games, wider range</div>
-          </button>
+            <div>
+              <button
+                onClick={() => handleStrategyModeChange('aggressive')}
+                disabled={configLoading}
+                className={`w-full p-2 rounded-lg border-2 transition-colors ${
+                  config.mode === 'aggressive'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                } ${configLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Zap className="w-4 h-4 mx-auto mb-1" />
+                <div className="font-medium text-xs">Aggressive</div>
+              </button>
+            </div>
+          </Tippy>
         </div>
 
         {/* Advanced Settings and Debug Info on same line */}
@@ -471,39 +497,33 @@ export function PointsPlusStrategyAdvisor({
       </div>
 
       {/* Pick Status */}
-      <div className="bg-white rounded-lg shadow p-1">
-        <h3 className="text-lg font-semibold mb-2">Pick Status</h3>
-
-        <div className="grid grid-cols-3 gap-3 mb-1">
-          <div className="text-center">
-            <div className="text-2xl font-bold">{favoriteCount}</div>
-            <div className="text-sm text-gray-600">Favorites</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold">{underdogCount}</div>
-            <div className="text-sm text-gray-600">Underdogs</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold">
-              {currentExpectedPoints > 0 ? '+' : ''}
-              {currentExpectedPoints.toFixed(1)}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold">Pick Status</h3>
+          <div className="flex items-center space-x-8 text-base">
+            <div className="text-center">
+              <span className="text-2xl font-bold">{favoriteCount}</span>
+              <span className="text-gray-600 ml-2">Favorites</span>
             </div>
-            <div className="text-sm text-gray-600">
-              Expected Points
-              <br />
-              <span className="text-xs text-gray-500">
-                Original:{' '}
-                {strategy.recommendations.totalExpectedPoints?.toFixed(1) ||
-                  '0.0'}
+            <div className="text-center">
+              <span className="text-2xl font-bold">{underdogCount}</span>
+              <span className="text-gray-600 ml-2">Underdogs</span>
+            </div>
+            <div className="text-center">
+              <span className="text-2xl font-bold text-green-600">
+                {currentExpectedPoints > 0 ? '+' : ''}
+                {currentExpectedPoints.toFixed(1)}
               </span>
+              <span className="text-gray-600 ml-2">Expected Points</span>
+            </div>
+            <div className="text-center text-sm text-gray-500">
+              Original: {strategy.recommendations.totalExpectedPoints?.toFixed(1) || '0.0'}
               {previousExpectedPoints != null &&
-                Math.abs(currentExpectedPoints - previousExpectedPoints) >
-                  0.05 && (
-                  <span className="ml-1 text-xs text-blue-600">
-                    <br />
+                Math.abs(currentExpectedPoints - previousExpectedPoints) > 0.05 && (
+                  <div className="text-blue-600">
                     (was {previousExpectedPoints > 0 ? '+' : ''}
                     {previousExpectedPoints.toFixed(1)})
-                  </span>
+                  </div>
                 )}
             </div>
           </div>

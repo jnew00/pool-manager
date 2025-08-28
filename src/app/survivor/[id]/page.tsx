@@ -185,92 +185,86 @@ export default function SurvivorPoolPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800">
       {/* Main PoolManager Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm">
+      <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-gray-900/80 dark:border-gray-800">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <svg
-                  width="24"
-                  height="24"
+                  className="w-6 h-6 text-white"
+                  fill="currentColor"
                   viewBox="0 0 24 24"
-                  fill="none"
-                  className="text-white"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  {/* Trophy/Cup shape */}
+                  {/* Pool/Water waves */}
                   <path
-                    d="M8 2h8v4c0 2.21-1.79 4-4 4s-4-1.79-4-4V2z"
-                    fill="currentColor"
-                  />
-                  {/* Trophy handles */}
-                  <path
-                    d="M4 6h2v2c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2z"
-                    fill="currentColor"
-                    opacity="0.8"
+                    d="M2 18c1.5-1.5 3-1.5 4.5 0S9 19.5 10.5 18 13 16.5 14.5 18 17 19.5 18.5 18 21 16.5 22.5 18"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    fill="none"
+                    strokeLinecap="round"
                   />
                   <path
-                    d="M18 6h2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2V6z"
-                    fill="currentColor"
-                    opacity="0.8"
+                    d="M2 21c1.5-1.5 3-1.5 4.5 0S9 22.5 10.5 21 13 19.5 14.5 21 17 22.5 18.5 21 21 19.5 22.5 21"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    fill="none"
+                    strokeLinecap="round"
                   />
-                  {/* Trophy base */}
-                  <rect
-                    x="10"
-                    y="10"
-                    width="4"
-                    height="8"
-                    fill="currentColor"
-                  />
-                  <rect
-                    x="7"
-                    y="18"
-                    width="10"
-                    height="2"
-                    rx="1"
-                    fill="currentColor"
-                  />
-                  {/* Small star accent */}
-                  <circle cx="12" cy="4" r="1" fill="white" opacity="0.9" />
+                  {/* Chart/Management bars */}
+                  <rect x="4" y="8" width="2" height="6" rx="1" />
+                  <rect x="8" y="5" width="2" height="9" rx="1" />
+                  <rect x="12" y="3" width="2" height="11" rx="1" />
+                  <rect x="16" y="6" width="2" height="8" rx="1" />
+                  <rect x="20" y="4" width="2" height="10" rx="1" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">PoolManager</h1>
-                <p className="text-xs text-gray-500">NFL Pool System</p>
+                <Link
+                  href="/"
+                  className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600"
+                >
+                  PoolManager
+                </Link>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  NFL Pool System
+                </p>
               </div>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
               <Link
                 href="/pools"
-                className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
+                className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors font-medium"
               >
                 Pools
               </Link>
-              <a
+              <Link
                 href="/picks"
-                className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
+                className="text-blue-600 dark:text-blue-400 transition-colors font-medium"
               >
                 Picks
-              </a>
-              <a
-                href="/standings"
-                className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
-              >
-                Standings
-              </a>
+              </Link>
             </nav>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto p-4 space-y-6 w-full max-w-none">
+        {/* Breadcrumb */}
+        <div className="mb-6">
+          <Link
+            href="/picks"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            ← Back to Picks
+          </Link>
+        </div>
         {/* Main Interface */}
         <Tabs
           value={currentTab}
           onValueChange={(value) => {
-            console.log('=== Tab onValueChange called ===')
-            console.log('New tab value:', value)
             setCurrentTab(value)
           }}
           className="space-y-4"
@@ -357,17 +351,8 @@ export default function SurvivorPoolPage() {
                 }
               }}
               onViewEntry={(entryId: string) => {
-                // Use smooth tab switching instead of page reload
-                console.log(
-                  '=== onViewEntry called - using smooth tab switch ==='
-                )
-                console.log('Switching to entry:', entryId)
-                console.log('Current tab:', currentTab)
-
                 setSelectedEntryId(entryId)
                 setCurrentTab('picks')
-
-                console.log('State updated - should switch to picks tab')
               }}
             />
           </TabsContent>
@@ -474,12 +459,6 @@ export default function SurvivorPoolPage() {
               recommendations={recommendations}
               onSelect={async (teamId, gameId) => {
                 try {
-                  console.log('Submitting pick:', {
-                    teamId,
-                    gameId,
-                    entryId: selectedEntryId,
-                    isUpdate: !!existingPick,
-                  })
 
                   // If there's an existing pick, we need to use PUT to update it
                   const method = existingPick ? 'PUT' : 'POST'
@@ -502,7 +481,6 @@ export default function SurvivorPoolPage() {
                   const result = await response.json()
 
                   if (response.ok) {
-                    console.log('Pick submitted successfully:', result)
                     // Refresh pick data without leaving the picks tab
                     const picksResponse = await fetch(
                       `/api/survivor/pools/${poolId}/entries/${selectedEntryId}/picks`
@@ -548,12 +526,6 @@ export default function SurvivorPoolPage() {
               canPick={true}
               onPickSelect={async (teamId, gameId) => {
                 try {
-                  console.log('Submitting recommendation pick:', {
-                    teamId,
-                    gameId,
-                    entryId: selectedEntryId,
-                    isUpdate: !!existingPick,
-                  })
 
                   // If there's an existing pick, we need to use PUT to update it
                   const method = existingPick ? 'PUT' : 'POST'
@@ -576,10 +548,6 @@ export default function SurvivorPoolPage() {
                   const result = await response.json()
 
                   if (response.ok) {
-                    console.log(
-                      'Recommendation pick submitted successfully:',
-                      result
-                    )
                     // Refresh pick data and switch to picks tab to show the result
                     const picksResponse = await fetch(
                       `/api/survivor/pools/${poolId}/entries/${selectedEntryId}/picks`
@@ -625,7 +593,6 @@ export default function SurvivorPoolPage() {
               poolId={poolId}
               usedTeams={new Set(currentEntry?.usedTeams || [])}
               onPickSelect={(teamId, gameId) => {
-                console.log('Matchup pick:', teamId, gameId)
               }}
               selectedEntry={currentEntry}
               canPick={false}

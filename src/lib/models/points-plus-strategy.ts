@@ -101,7 +101,8 @@ export class PointsPlusStrategyEngine {
     poolId?: string
   ): Promise<PointsPlusWeekStrategy> {
     // Get all games for the week with spreads
-    const games = await prisma.game.findMany({
+    // First try to get pool-specific lines, then fall back to general lines
+    let games = await prisma.game.findMany({
       where: { season, week },
       include: {
         homeTeam: true,
@@ -111,6 +112,35 @@ export class PointsPlusStrategyEngine {
           : { where: { source: 'user_provided' } },
       },
     })
+
+    // If we have a poolId but found no lines, try getting games with any lines
+    if (poolId) {
+      const gamesWithPoolLines = games.filter(g => g.lines.length > 0)
+      if (gamesWithPoolLines.length === 0) {
+        console.log(`No pool-specific lines found for pool ${poolId}, falling back to general lines`)
+        games = await prisma.game.findMany({
+          where: { season, week },
+          include: {
+            homeTeam: true,
+            awayTeam: true,
+            lines: {
+              where: {
+                OR: [
+                  { poolId: null },
+                  { source: 'ESPN' },
+                  { source: 'user_provided' }
+                ]
+              },
+              take: 1, // Just take the first available line
+              orderBy: [
+                { poolId: 'desc' }, // Prefer pool-specific if any exist
+                { capturedAt: 'desc' } // Otherwise use most recent
+              ]
+            },
+          },
+        })
+      }
+    }
 
     const analyses: PointsPlusGameAnalysis[] = []
 
@@ -905,10 +935,14 @@ export class PointsPlusStrategyEngine {
     const favorites: PointsPlusGameAnalysis[] = []
     const underdogs: PointsPlusGameAnalysis[] = []
 
+    // Points Plus pool requirements: minimum 4 favorites and 4 underdogs
+    const minFavorites = 4
+    const minUnderdogs = 4
+    const minTotalPicks = 8
+
     // Determine pick count
     const idealPickCount = this.determinePickCount(analyses.length)
-    const minPickCount = 4
-    const actualPickCount = Math.max(idealPickCount, minPickCount)
+    const actualPickCount = Math.max(idealPickCount, minTotalPicks)
     const maxPerSide = Math.ceil(actualPickCount / 2)
 
     // Select the best picks while maintaining balance
@@ -933,8 +967,8 @@ export class PointsPlusStrategyEngine {
 
       // Early exit if we have balanced picks and minimum requirement
       if (
-        favorites.length >= 2 &&
-        underdogs.length >= 2 &&
+        favorites.length >= minFavorites &&
+        underdogs.length >= minUnderdogs &&
         Math.abs(favorites.length - underdogs.length) <= 1 &&
         favorites.length + underdogs.length >= actualPickCount
       ) {
@@ -942,11 +976,11 @@ export class PointsPlusStrategyEngine {
       }
     }
 
-    // Ensure we meet minimum requirements (2 favorites, 2 underdogs, 4 total)
+    // Ensure we meet minimum requirements (4 favorites, 4 underdogs, 8 total)
     if (
-      favorites.length < 2 ||
-      underdogs.length < 2 ||
-      favorites.length + underdogs.length < 4
+      favorites.length < minFavorites ||
+      underdogs.length < minUnderdogs ||
+      favorites.length + underdogs.length < minTotalPicks
     ) {
       // Emergency fallback: balance the picks by adding more from the best available
       const remainingPicks = allPossiblePicks.filter(
@@ -954,7 +988,7 @@ export class PointsPlusStrategyEngine {
       )
 
       // Add more favorites if needed
-      while (favorites.length < 2 && remainingPicks.length > 0) {
+      while (favorites.length < minFavorites && remainingPicks.length > 0) {
         const bestFavorite = remainingPicks.find(
           (pick) =>
             pick.side === 'favorite' && !selectedGameIds.has(pick.game.gameId)
@@ -970,7 +1004,7 @@ export class PointsPlusStrategyEngine {
       }
 
       // Add more underdogs if needed
-      while (underdogs.length < 2 && remainingPicks.length > 0) {
+      while (underdogs.length < minUnderdogs && remainingPicks.length > 0) {
         const bestUnderdog = remainingPicks.find(
           (pick) =>
             pick.side === 'underdog' && !selectedGameIds.has(pick.game.gameId)

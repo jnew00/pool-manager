@@ -129,12 +129,14 @@ model Pool {
   description String?
   rules       Json?
   creatorId   String?  // User who created the pool
+  url         String?  // External URL to the actual pool website
 
   // Relations
   entries          Entry[]
   lines            Line[]
   survivorEntries  SurvivorEntry[]
   survivorWeekData SurvivorWeekData[]
+  completions      PoolCompletion[]
 
   @@index([season])
   @@map("pools")
@@ -314,4 +316,24 @@ model SurvivorWeekData {
   @@unique([poolId, week])
   @@index([week])
   @@map("survivor_week_data")
+}
+
+model PoolCompletion {
+  id          String   @id @default(cuid())
+  poolId      String
+  userId      String   // User identifier (could be session ID or actual user ID)
+  week        Int
+  season      Int
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  pool Pool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, userId, week, season])
+  @@index([userId, week, season])
+  @@index([poolId])
+  @@map("pool_completions")
 }

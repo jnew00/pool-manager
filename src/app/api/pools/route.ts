@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
       maxEntries: number
       isActive: boolean
       description?: string
+      url?: string
     }>(request)
 
     validateRequiredFields(body, [
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
       maxEntries: body.maxEntries,
       isActive: body.isActive,
       description: body.description,
+      url: body.url,
     })
 
     return new Response(

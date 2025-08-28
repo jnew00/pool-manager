@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from 'react'
 import { defaultModelWeights } from '@/lib/models/confidence-engine'
+import Tippy from '@tippyjs/react'
+import 'tippy.js/dist/tippy.css'
 import {
   Shield,
   Zap,
@@ -190,37 +192,33 @@ export default function ControlPanel({
 
       {/* Preset Selector */}
       <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Strategy Presets
-          </h4>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {currentPreset === 'custom'
-              ? 'Custom'
-              : presetConfigurations[
-                  currentPreset as keyof typeof presetConfigurations
-                ]?.name}
-          </span>
-        </div>
+
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
           {Object.entries(presetConfigurations).map(([key, preset]) => (
-            <button
+            <Tippy
               key={key}
-              onClick={() => applyPreset(key)}
-              className={`p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
-                currentPreset === key
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-300'
-                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
-              }`}
+              content={preset.description}
+              placement="bottom"
+              delay={[300, 100]}
+              arrow={true}
+              theme="light"
             >
-              <div className="flex items-center space-x-2 mb-1">
-                <preset.icon className="w-4 h-4 text-current" />
-                <span className="font-medium text-sm">{preset.name}</span>
+              <div>
+                <button
+                  onClick={() => applyPreset(key)}
+                  className={`w-full p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
+                    currentPreset === key
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-300'
+                      : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <preset.icon className="w-4 h-4 text-current" />
+                    <span className="font-medium text-sm">{preset.name}</span>
+                  </div>
+                </button>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight">
-                {preset.description}
-              </p>
-            </button>
+            </Tippy>
           ))}
         </div>
         {currentPreset === 'custom' && (

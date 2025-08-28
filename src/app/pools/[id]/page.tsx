@@ -23,6 +23,7 @@ import {
 import ControlPanel from './control-panel'
 import { GameProjection } from '@/features/projections/components/GameProjection'
 import { PointsPlusStrategyAdvisor } from '@/features/pools/components/PointsPlusStrategyAdvisor'
+import { EditableSpreadsTable } from '@/components/spreads/EditableSpreadsTable'
 import type { ModelOutput } from '@/lib/models/types'
 
 interface Pool {
@@ -73,6 +74,11 @@ export default function PoolDetailPage() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [customWeights, setCustomWeights] = useState<any>(null)
   const [expandedGameId, setExpandedGameId] = useState<string | null>(null)
+  const [uploadedSpreads, setUploadedSpreads] = useState<any[]>([])
+  const [espnSpreads, setEspnSpreads] = useState<any[]>([])
+  const [loadingUploadedSpreads, setLoadingUploadedSpreads] = useState(false)
+  const [editableSpreads, setEditableSpreads] = useState<any[] | null>(null)
+  const [showEditableSpreads, setShowEditableSpreads] = useState(false)
 
   useEffect(() => {
     if (poolId) {
@@ -84,6 +90,9 @@ export default function PoolDetailPage() {
     if (pool) {
       fetchGames()
       fetchRecommendations(customWeights)
+      if (pool.type === 'ATS') {
+        fetchSpreadsData()
+      }
     }
   }, [pool, selectedWeek])
 
@@ -92,6 +101,102 @@ export default function PoolDetailPage() {
     // Immediately fetch new recommendations with updated weights
     if (pool) {
       fetchRecommendations(newWeights)
+    }
+  }
+
+  const handleSaveEditedSpreads = async (spreads: any[]) => {
+    if (!pool) return
+    
+    try {
+      // Filter only matched spreads for saving
+      const matchedSpreads = spreads.filter(s => s.matched)
+      
+      // Create lines for matched games
+      const response = await fetch('/api/lines/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          poolId: pool.id,
+          spreads: matchedSpreads,
+          source: 'Pool Upload'
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to save spreads')
+      }
+      
+      const result = await response.json()
+      
+      // Success message
+      alert(`Successfully saved ${matchedSpreads.length} spreads!`)
+      
+      // Close modal and refresh
+      setShowEditableSpreads(false)
+      setEditableSpreads(null)
+      
+      // Refresh data
+      fetchGames()
+      fetchRecommendations(customWeights)
+      fetchSpreadsData()
+      
+    } catch (error) {
+      console.error('Error saving spreads:', error)
+      alert('Failed to save spreads. Please try again.')
+    }
+  }
+
+  const handleCancelEditSpreads = () => {
+    setShowEditableSpreads(false)
+    setEditableSpreads(null)
+  }
+
+  const handleEditExistingSpreads = async () => {
+    if (!pool) return
+
+    try {
+      
+      // Fetch all games for the current week to get complete game information
+      const gamesResponse = await fetch(`/api/games?season=${pool.season}&week=${selectedWeek}`)
+      const gamesData = await gamesResponse.json()
+      const allGames = gamesData.data || []
+
+      // Create a map of gameId to full game info
+      const gameMap = new Map()
+      allGames.forEach((game: any) => {
+        gameMap.set(game.id, game)
+      })
+
+      // Convert uploaded spreads to editable format
+      const editableSpreadData = uploadedSpreads.map((spread: any) => {
+        const game = gameMap.get(spread.gameId)
+        if (!game) {
+          // If we can't find the game, create a minimal representation
+          return {
+            gameId: spread.gameId,
+            homeTeam: 'Unknown',
+            awayTeam: 'Unknown', 
+            spread: spread.spread,
+            matched: false
+          }
+        }
+
+        return {
+          gameId: spread.gameId,
+          homeTeam: game.homeTeam.nflAbbr,
+          awayTeam: game.awayTeam.nflAbbr,
+          spread: spread.spread,
+          matched: true
+        }
+      })
+
+      
+      setEditableSpreads(editableSpreadData)
+      setShowEditableSpreads(true)
+
+    } catch (error) {
+      console.error('[Edit Spreads] Error loading existing spreads:', error)
+      alert('Failed to load existing spreads for editing')
     }
   }
 
@@ -168,6 +273,32 @@ export default function PoolDetailPage() {
     }
   }
 
+  const fetchSpreadsData = async () => {
+    if (!pool) return
+
+    try {
+      setLoadingUploadedSpreads(true)
+      
+      // Fetch ESPN spreads (general lines)
+      const espnResponse = await fetch(`/api/lines?season=${pool.season}&week=${selectedWeek}`)
+      if (espnResponse.ok) {
+        const espnData = await espnResponse.json()
+        setEspnSpreads(espnData.lines || [])
+      }
+
+      // Fetch pool-specific spreads (uploaded)
+      const uploadedResponse = await fetch(`/api/pools/${pool.id}/spreads?season=${pool.season}&week=${selectedWeek}`)
+      if (uploadedResponse.ok) {
+        const uploadedData = await uploadedResponse.json()
+        setUploadedSpreads(uploadedData.spreads || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch spreads data:', err)
+    } finally {
+      setLoadingUploadedSpreads(false)
+    }
+  }
+
   const handleFetchExternalData = async () => {
     if (!pool) return
 
@@ -227,6 +358,7 @@ export default function PoolDetailPage() {
     const file = event.target.files?.[0]
     if (!file || !pool) return
 
+
     setUploadingImage(true)
     setError(null)
 
@@ -237,11 +369,13 @@ export default function PoolDetailPage() {
       formData.append('week', selectedWeek.toString())
       formData.append('poolId', pool.id)
 
+      
       const response = await fetch('/api/upload/spreads', {
         method: 'POST',
         body: formData,
       })
 
+      
       const result = await response.json()
 
       if (!response.ok) {
@@ -263,7 +397,33 @@ export default function PoolDetailPage() {
       const linesCreated = result.data.linesCreated || 0
       const gamesUnmatched = result.data.gamesUnmatched || 0
 
-      console.log('Spread upload result:', result.data)
+      
+      // Show editable spreads for review instead of immediate save
+      if (result.data.matches || result.data.unmatched) {
+        const allSpreads = [
+          ...(result.data.matches || []).map((m: any) => ({
+            gameId: m.gameId,
+            homeTeam: m.homeTeam,
+            awayTeam: m.awayTeam,
+            spread: m.spread,
+            matched: true
+          })),
+          ...(result.data.unmatched || []).map((u: any) => ({
+            homeTeam: u.home_team,
+            awayTeam: u.away_team,
+            spread: u.spread_for_home,
+            matched: false
+          }))
+        ]
+        
+        setEditableSpreads(allSpreads)
+        setShowEditableSpreads(true)
+        return
+      }
+
+      // Log unmatched spreads for debugging
+      if (result.data.unmatched && result.data.unmatched.length > 0) {
+      }
 
       // Show success message with details
       const successMessage = [
@@ -280,15 +440,26 @@ export default function PoolDetailPage() {
         ...(result.data.estimatedCostUSD
           ? [`Cost: $${result.data.estimatedCostUSD.toFixed(4)}`]
           : []),
+        ...(result.data.unmatched && result.data.unmatched.length > 0
+          ? ['', 'Unmatched spreads:'].concat(
+              result.data.unmatched.map((spread: any) => 
+                `  ${spread.away_team} @ ${spread.home_team} (${spread.spread_for_home})`
+              )
+            )
+          : [])
       ].join('\n')
 
       alert(successMessage)
 
-      // Refresh games list and recommendations
+      // Refresh games list, recommendations, and spreads data
       fetchGames()
       fetchRecommendations(customWeights)
+      fetchSpreadsData()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to process image')
+      console.error('[Image Upload] Error occurred:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to process image'
+      setError(`Image upload failed: ${errorMessage}`)
+      alert(`Error uploading image: ${errorMessage}`)
     } finally {
       setUploadingImage(false)
       setShowImageUpload(false)
@@ -353,10 +524,10 @@ export default function PoolDetailPage() {
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 max-w-md">
           <p className="text-red-800 dark:text-red-200">{error}</p>
           <Link
-            href="/pools"
+            href="/picks"
             className="mt-4 inline-block text-blue-600 hover:text-blue-800"
           >
-            ← Back to Pools
+            ← Back to Picks
           </Link>
         </div>
       </div>
@@ -367,11 +538,38 @@ export default function PoolDetailPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-gray-900/80 dark:border-gray-800">
-        <div className="container mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">PM</span>
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  {/* Pool/Water waves */}
+                  <path
+                    d="M2 18c1.5-1.5 3-1.5 4.5 0S9 19.5 10.5 18 13 16.5 14.5 18 17 19.5 18.5 18 21 16.5 22.5 18"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M2 21c1.5-1.5 3-1.5 4.5 0S9 22.5 10.5 21 13 19.5 14.5 21 17 22.5 18.5 21 21 19.5 22.5 21"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  {/* Chart/Management bars */}
+                  <rect x="4" y="8" width="2" height="6" rx="1" />
+                  <rect x="8" y="5" width="2" height="9" rx="1" />
+                  <rect x="12" y="3" width="2" height="11" rx="1" />
+                  <rect x="16" y="6" width="2" height="8" rx="1" />
+                  <rect x="20" y="4" width="2" height="10" rx="1" />
+                </svg>
               </div>
               <div>
                 <Link
@@ -388,58 +586,65 @@ export default function PoolDetailPage() {
             <nav className="hidden md:flex items-center space-x-8">
               <Link
                 href="/pools"
-                className="text-blue-600 dark:text-blue-400 transition-colors font-medium"
+                className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors font-medium"
               >
                 Pools
               </Link>
               <Link
                 href="/picks"
-                className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors font-medium"
+                className="text-blue-600 dark:text-blue-400 transition-colors font-medium"
               >
                 Picks
-              </Link>
-              <Link
-                href="/standings"
-                className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors font-medium"
-              >
-                Standings
               </Link>
             </nav>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Editable Spreads Modal */}
+        {showEditableSpreads && editableSpreads && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+              <EditableSpreadsTable
+                spreads={editableSpreads}
+                onSave={handleSaveEditedSpreads}
+                onCancel={handleCancelEditSpreads}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Breadcrumb */}
         <div className="mb-6">
           <Link
-            href="/pools"
+            href="/picks"
             className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
           >
-            ← Back to Pools
+            ← Back to Picks
           </Link>
         </div>
 
         {/* Pool Header */}
         {pool && (
-          <div className="mb-8">
-            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <div className="mb-6">
+            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                     {pool.name}
                   </h1>
-                  <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
-                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded-full font-medium">
+                  <div className="flex items-center space-x-3 text-xs text-gray-600 dark:text-gray-300">
+                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded-full font-medium text-xs">
                       {pool.type}
                     </span>
-                    <span>Season: {pool.season}</span>
-                    <span>Buy-in: ${pool.buyIn}</span>
-                    <span>Max Entries: {pool.maxEntries}</span>
+                    <span>S{pool.season}</span>
+                    <span>${pool.buyIn}</span>
+                    <span>{pool.maxEntries} max</span>
                   </div>
                 </div>
                 <div
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${
                     pool.isActive
                       ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
                       : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
@@ -449,7 +654,7 @@ export default function PoolDetailPage() {
                 </div>
               </div>
               {pool.description && (
-                <p className="mt-4 text-gray-600 dark:text-gray-300">
+                <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">
                   {pool.description}
                 </p>
               )}
@@ -457,180 +662,72 @@ export default function PoolDetailPage() {
           </div>
         )}
 
-        {/* Week Selection and Upload */}
-        <div className="mb-8">
-          <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {pool?.type === 'SU'
-                  ? 'Week Selection'
-                  : pool?.type === 'POINTS_PLUS'
-                    ? 'Week Selection & Points Plus Strategy'
-                    : 'Week Selection & Spread Upload'}
-              </h2>
-              <div className="flex items-center space-x-4">
-                <select
-                  value={selectedWeek}
-                  onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
-                  className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {weeks.map((week) => (
-                    <option key={week} value={week}>
-                      Week {week}
-                    </option>
-                  ))}
-                </select>
-                {pool?.type !== 'SU' && pool?.type !== 'POINTS_PLUS' && (
-                  <button
-                    onClick={() => setShowImageUpload(true)}
-                    disabled={uploadingImage}
-                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg
-                      className="w-5 h-5 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
-                    </svg>
-                    {uploadingImage ? 'Processing...' : 'Upload Spreads'}
-                  </button>
-                )}
-                <button
-                  onClick={handleFetchExternalData}
-                  disabled={fetchingExternalData || games.length === 0}
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
-                  {fetchingExternalData
-                    ? 'Fetching...'
-                    : 'Update Odds & Weather'}
-                </button>
-              </div>
-            </div>
+        {/* Error Display */}
+        {error && (
+          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+            <p className="text-red-800 dark:text-red-200 whitespace-pre-line">
+              {error}
+            </p>
+          </div>
+        )}
 
-            {/* Error Display */}
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
-                <p className="text-red-800 dark:text-red-200 whitespace-pre-line">
-                  {error}
+        {/* File Upload Modal */}
+        {showImageUpload && (
+          <div className="mb-6 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+            <div className="p-4 border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-xl bg-blue-50 dark:bg-blue-900/20">
+              <div className="text-center">
+                <svg
+                  className="w-12 h-12 text-blue-400 mx-auto mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Upload Week {selectedWeek} Pool Spreads
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Upload an image containing betting spreads for this pool.
+                  The system will match them to existing games and create
+                  pool-specific betting lines.
+                </p>
+                <div className="flex items-center justify-center space-x-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {uploadingImage ? 'Processing...' : 'Choose Image'}
+                  </label>
+                  <button
+                    onClick={() => setShowImageUpload(false)}
+                    className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                  Supported formats: PNG, JPG, JPEG (max 10MB)
                 </p>
               </div>
-            )}
-
-            {/* File Upload Modal */}
-            {showImageUpload && (
-              <div className="mb-6 p-4 border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-xl bg-blue-50 dark:bg-blue-900/20">
-                <div className="text-center">
-                  <svg
-                    className="w-12 h-12 text-blue-400 mx-auto mb-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                    />
-                  </svg>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    Upload Week {selectedWeek} Pool Spreads
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    Upload an image containing betting spreads for this pool.
-                    The system will match them to existing games and create
-                    pool-specific betting lines.
-                  </p>
-                  <div className="flex items-center justify-center space-x-3">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      disabled={uploadingImage}
-                      className="hidden"
-                      id="image-upload"
-                    />
-                    <label
-                      htmlFor="image-upload"
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {uploadingImage ? 'Processing...' : 'Choose Image'}
-                    </label>
-                    <button
-                      onClick={() => setShowImageUpload(false)}
-                      className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-                    Supported formats: PNG, JPG, JPEG (max 10MB)
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Quick Status */}
-            <div className="text-center">
-              {games.length === 0 ? (
-                <div className="py-8 text-gray-500 dark:text-gray-400">
-                  <svg
-                    className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                  </svg>
-                  <p>No games found for Week {selectedWeek}</p>
-                  <p className="text-sm mt-1">
-                    Use &quot;Update Odds &amp; Weather&quot; to fetch ESPN game
-                    schedule first
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-                  <p className="text-sm text-blue-800 dark:text-blue-400">
-                    <span className="font-semibold">{games.length} games</span>{' '}
-                    loaded for Week {selectedWeek}.{' '}
-                    {pool?.type === 'SU'
-                      ? 'Ready for straight-up AI recommendations.'
-                      : pool?.type === 'POINTS_PLUS'
-                        ? 'Use the Points Plus strategy advisor below for optimal picks.'
-                        : 'Upload spreads above to get AI recommendations.'}
-                  </p>
-                </div>
-              )}
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Control Panel or Points Plus Strategy */}
+        {/* Control Panel or Points Plus Strategy or Spread Management */}
         {pool && pool.type === 'POINTS_PLUS' ? (
           <div className="mb-8">
             <PointsPlusStrategyAdvisor
@@ -648,16 +745,131 @@ export default function PoolDetailPage() {
           </div>
         ) : null}
 
+        {/* No Games Message */}
+        {games.length === 0 && pool?.type !== 'POINTS_PLUS' && (
+          <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Games & AI Recommendations
+                </h2>
+                <select
+                  value={selectedWeek}
+                  onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
+                  className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {weeks.map((week) => (
+                    <option key={week} value={week}>
+                      Week {week}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handleFetchExternalData}
+                  disabled={fetchingExternalData}
+                  className="px-3 py-1.5 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {fetchingExternalData ? 'Fetching...' : 'Fetch Games'}
+                </button>
+              </div>
+            </div>
+            
+            <div className="text-center py-8">
+              <svg
+                className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
+              </svg>
+              <p className="text-gray-500 dark:text-gray-400 font-medium">No games found for Week {selectedWeek}</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                Use "Fetch Games" to load ESPN game schedule
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Sortable Games & Recommendations Table */}
         {games.length > 0 && pool?.type !== 'POINTS_PLUS' && (
           <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Week {selectedWeek} Games & AI Recommendations
-              </h2>
-              {loadingRecommendations && (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-              )}
+              <div className="flex items-center space-x-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Games & AI Recommendations
+                </h2>
+                <select
+                  value={selectedWeek}
+                  onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
+                  className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {weeks.map((week) => (
+                    <option key={week} value={week}>
+                      Week {week}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handleFetchExternalData}
+                  disabled={fetchingExternalData || games.length === 0}
+                  className="px-3 py-1.5 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {fetchingExternalData ? 'Fetching...' : 'Update Data'}
+                </button>
+                {pool?.type === 'ATS' && (
+                  <>
+                    {/* Compact CSV Upload */}
+                    <input
+                      type="file"
+                      accept=".csv,.txt"
+                      className="hidden"
+                      id="csv-upload"
+                    />
+                    <label
+                      htmlFor="csv-upload" 
+                      className="px-3 py-1.5 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors cursor-pointer"
+                    >
+                      CSV
+                    </label>
+
+                    {/* Compact Image Upload */}
+                    <button
+                      onClick={() => setShowImageUpload(true)}
+                      disabled={uploadingImage}
+                      className={`px-3 py-1.5 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors ${
+                        uploadingImage ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      {uploadingImage ? 'Processing...' : 'Upload'}
+                    </button>
+
+                    {/* Compact Edit Spreads */}
+                    <button
+                      onClick={handleEditExistingSpreads}
+                      disabled={uploadedSpreads.length === 0}
+                      className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Edit ({uploadedSpreads.length})
+                    </button>
+                  </>
+                )}
+                {loadingRecommendations && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                )}
+                {loadingUploadedSpreads && (
+                  <div className="text-xs text-gray-500">Loading spreads...</div>
+                )}
+              </div>
             </div>
 
             {/* Sortable Table */}
@@ -671,14 +883,22 @@ export default function PoolDetailPage() {
                   })
                 }
 
+                // Create maps for uploaded spreads 
+                const gameUploadedSpreads = new Map()
+                uploadedSpreads.forEach((spread: any) => {
+                  gameUploadedSpreads.set(spread.gameId, spread)
+                })
+
                 // Create sortable data
                 const sortableGames = games.map((game: any) => {
                   const rec = gameRecommendations.get(game.id)
+                  const uploadedSpread = gameUploadedSpreads.get(game.id)
                   return {
                     ...game,
                     recommendation: rec,
                     confidence: rec?.recommendation.confidence || 0,
                     spread: rec?.line?.spread || null,
+                    uploadedSpread: uploadedSpread?.spread || null,
                     strength: rec?.recommendation.strength || null,
                     pickedTeam:
                       rec?.recommendation.pick === 'HOME'
@@ -767,15 +987,20 @@ export default function PoolDetailPage() {
                           Weather
                         </th>
                         {pool?.type !== 'SU' && (
-                          <th
-                            className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                            onClick={() => handleSort('spread')}
-                          >
-                            <div className="flex items-center space-x-1">
-                              <span>Spread</span>
-                              <SortIcon field="spread" />
-                            </div>
-                          </th>
+                          <>
+                            <th
+                              className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                              onClick={() => handleSort('spread')}
+                            >
+                              <div className="flex items-center space-x-1">
+                                <span>ESPN Spread</span>
+                                <SortIcon field="spread" />
+                              </div>
+                            </th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">
+                              <span className="text-green-600 dark:text-green-400">Uploaded Spread</span>
+                            </th>
+                          </>
                         )}
                         <th
                           className="text-center py-3 px-4 font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
@@ -1084,41 +1309,81 @@ export default function PoolDetailPage() {
                                 {getWeatherIcon()}
                               </td>
                               {pool?.type !== 'SU' && (
-                                <td className="py-4 px-4">
-                                  {rec?.line?.spread ? (
-                                    <div className="text-sm">
-                                      {rec.line.spread < 0 ? (
-                                        // Home team favored (negative spread means home is favored)
-                                        <div>
-                                          <div className="font-bold text-blue-600 dark:text-blue-400">
-                                            {game.homeTeam.nflAbbr}{' '}
-                                            {rec.line.spread}
+                                <>
+                                  {/* ESPN Spread Column */}
+                                  <td className="py-4 px-4">
+                                    {rec?.line?.spread ? (
+                                      <div className="text-sm">
+                                        {rec.line.spread < 0 ? (
+                                          // Home team favored (negative spread means home is favored)
+                                          <div>
+                                            <div className="font-bold text-blue-600 dark:text-blue-400">
+                                              {game.homeTeam.nflAbbr}{' '}
+                                              {rec.line.spread}
+                                            </div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                              {game.awayTeam.nflAbbr} +
+                                              {Math.abs(rec.line.spread)}
+                                            </div>
                                           </div>
-                                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                                            {game.awayTeam.nflAbbr} +
-                                            {Math.abs(rec.line.spread)}
+                                        ) : (
+                                          // Away team favored (positive spread means away is favored)
+                                          <div>
+                                            <div className="font-bold text-purple-600 dark:text-purple-400">
+                                              {game.awayTeam.nflAbbr} -
+                                              {rec.line.spread}
+                                            </div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                              {game.homeTeam.nflAbbr} +
+                                              {rec.line.spread}
+                                            </div>
                                           </div>
-                                        </div>
-                                      ) : (
-                                        // Away team favored (positive spread means away is favored)
-                                        <div>
-                                          <div className="font-bold text-purple-600 dark:text-purple-400">
-                                            {game.awayTeam.nflAbbr} -
-                                            {rec.line.spread}
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <div className="text-xs text-gray-400 dark:text-gray-500">
+                                        No line
+                                      </div>
+                                    )}
+                                  </td>
+
+                                  {/* Uploaded Spread Column */}
+                                  <td className="py-4 px-4">
+                                    {game.uploadedSpread !== null ? (
+                                      <div className="text-sm">
+                                        {game.uploadedSpread < 0 ? (
+                                          // Home team favored (negative spread means home is favored)
+                                          <div>
+                                            <div className="font-bold text-green-600 dark:text-green-400">
+                                              {game.homeTeam.nflAbbr}{' '}
+                                              {game.uploadedSpread}
+                                            </div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                              {game.awayTeam.nflAbbr} +
+                                              {Math.abs(game.uploadedSpread)}
+                                            </div>
                                           </div>
-                                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                                            {game.homeTeam.nflAbbr} +
-                                            {rec.line.spread}
+                                        ) : (
+                                          // Away team favored (positive spread means away is favored)
+                                          <div>
+                                            <div className="font-bold text-green-600 dark:text-green-400">
+                                              {game.awayTeam.nflAbbr} -
+                                              {game.uploadedSpread}
+                                            </div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                              {game.homeTeam.nflAbbr} +
+                                              {game.uploadedSpread}
+                                            </div>
                                           </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <div className="text-xs text-gray-400 dark:text-gray-500">
-                                      No line
-                                    </div>
-                                  )}
-                                </td>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <div className="text-xs text-gray-400 dark:text-gray-500">
+                                        -
+                                      </div>
+                                    )}
+                                  </td>
+                                </>
                               )}
                               <td className="py-4 px-4 text-center">
                                 {rec ? (
@@ -1256,8 +1521,8 @@ export default function PoolDetailPage() {
                 <p className="font-medium">No AI recommendations yet</p>
                 <p className="text-sm mt-1">
                   {pool?.type === 'SU'
-                    ? 'Fetch odds & weather data above to get straight-up AI pick suggestions'
-                    : 'Upload pool spreads above to get AI-powered pick suggestions with confidence ratings'}
+                    ? 'Fetch odds & weather data to get straight-up AI pick suggestions'
+                    : 'Upload pool spreads to get AI-powered pick suggestions with confidence ratings'}
                 </p>
               </div>
             )}

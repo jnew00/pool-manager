@@ -13,6 +13,7 @@ export interface CreatePoolData {
   maxEntries: number
   isActive: boolean
   description?: string
+  url?: string
 }
 
 export interface UpdatePoolData {
@@ -21,6 +22,7 @@ export interface UpdatePoolData {
   maxEntries?: number
   isActive?: boolean
   description?: string
+  url?: string
 }
 
 export class PoolService extends BaseService {

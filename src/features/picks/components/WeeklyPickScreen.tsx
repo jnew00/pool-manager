@@ -56,7 +56,6 @@ export function WeeklyPickScreen({
       }
     } catch (err) {
       // Silently handle picks loading error - not critical
-      console.warn('Failed to load existing picks:', err)
     } finally {
       setIsLoadingPicks(false)
     }

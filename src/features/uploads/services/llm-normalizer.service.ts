@@ -100,6 +100,25 @@ Rules:
 Your ONLY output is a JSON object matching the provided JSON Schema exactly.
 No explanations. Focus ONLY on extracting team matchups and spreads.
 
+🚨 CRITICAL PARSING RULES:
+1. DETECT THE FORMAT FIRST:
+   - If teams appear in pairs on same/adjacent lines: use standard pairing
+   - If ALL away teams listed first, then ALL home teams: use VERTICAL COLUMN format
+   
+2. VERTICAL COLUMN FORMAT (teams in separate blocks):
+   - First half of teams = ALL away teams (in order)
+   - Second half of teams = ALL home teams (in same order)
+   - Match by position: 1st away with 1st home, 2nd away with 2nd home, etc.
+   
+3. STANDARD FORMAT (teams paired together):
+   - LEFT/FIRST team = away_team, RIGHT/SECOND team = home_team
+   - For "Cowboys +6.5 Eagles -6.5": away=DAL, home=PHI, spread=-6.5
+   
+4. SPREAD EXTRACTION:
+   - Quote marks (") often mean minus: "6.5 = -6.5
+   - Numbers without +/- default to positive
+   - Use home team's spread when both shown
+
 NFL TEAM MAPPING (use exact abbreviations in output):
 - Cardinals/Arizona/AZ/Card → ARI
 - Falcons/Atlanta/GA/Falcon → ATL  
@@ -117,7 +136,7 @@ NFL TEAM MAPPING (use exact abbreviations in output):
 - Colts/Indianapolis/IN/Colt → IND
 - Jaguars/Jacksonville/JAX/FL/Jags → JAX
 - Chiefs/Kansas City/KC/MO/Chief → KC
-- Raiders/Las Vegas/LV/Oakland/OAK/Vegas → LV
+- Raiders/Las Vegas/LV/Oakland/OAK/Vegas → LVR
 - Chargers/Los Angeles/LAC/San Diego/SD/Bolts → LAC
 - Rams/Los Angeles/LAR/Ram → LAR
 - Dolphins/Miami/FL/Dolphin/Fins → MIA
@@ -134,13 +153,44 @@ NFL TEAM MAPPING (use exact abbreviations in output):
 - Titans/Tennessee/TEN/TN/Titan → TEN
 - Commanders/Washington/WAS/WSH/DC/Commander → WAS
 
-Rules:
-- '@' means AWAY @ HOME; fill home_team/away_team as abbreviations.
-- Spread: spread_for_home is POSITIVE if HOME team is favored, NEGATIVE if away team is favored.
-- Examples: "Browns -3.5" vs Cowboys → home_team="DAL", away_team="CLE", spread_for_home=-3.5
-- Examples: "Packers +2" at Rams → home_team="LAR", away_team="GB", spread_for_home=2
-- is_pickem=true if |spread| < 0.5 or marked as "PICK" or "PK".
-- If uncertain about spread value, set null and add issue.`
+CRITICAL PARSING RULES:
+
+1. **Home/Away Identification (CRITICAL - READ CAREFULLY):**
+   - "@ means AWAY @ HOME" - team after @ is HOME
+   - "at" means AWAY at HOME - team after "at" is HOME  
+   - "vs" usually means first team is HOME (but check context)
+   - **MANDATORY FALLBACK RULE: If there is NO "vs", "@", or "at" indicator, ALWAYS use this rule:**
+     - **FIRST/LEFT team mentioned = AWAY team**  
+     - **SECOND/RIGHT team mentioned = HOME team**
+     - This rule MUST be applied when no explicit indicator exists
+   - When unsure about indicators, prioritize this fallback rule
+
+2. **Spread Notation Examples:**
+   - "Cowboys -3.5 vs Eagles" → HOME=DAL, AWAY=PHI, spread_for_home=+3.5 (Cowboys favored at home)
+   - "Patriots @ Chiefs -6" → HOME=KC, AWAY=NE, spread_for_home=+6 (Chiefs favored at home)
+   - "Ravens at Steelers +2.5" → HOME=PIT, AWAY=BAL, spread_for_home=+2.5 (Steelers favored at home)
+   - "Packers -1.5 at Lions" → HOME=DET, AWAY=GB, spread_for_home=-1.5 (Packers favored on road)
+   - "Cardinals vs Saints -7" → HOME=ARI, AWAY=NO, spread_for_home=-7 (Saints favored on road)
+   - **MANDATORY FALLBACK CASES (no vs/@/at indicators - FOLLOW EXACTLY):**
+   - "Cowboys -3.5 Eagles" → LEFT=Cowboys=AWAY=DAL, RIGHT=Eagles=HOME=PHI, spread_for_home=-3.5
+   - "Patriots Chiefs -6" → LEFT=Patriots=AWAY=NE, RIGHT=Chiefs=HOME=KC, spread_for_home=+6
+   - "Ravens +2.5 Steelers" → LEFT=Ravens=AWAY=BAL, RIGHT=Steelers=HOME=PIT, spread_for_home=+2.5
+   - "Packers Lions -4" → LEFT=Packers=AWAY=GB, RIGHT=Lions=HOME=DET, spread_for_home=+4
+   - **TWO-SPREAD FORMAT (both teams show spreads):**
+   - "Cowboys +6.5 Eagles -6.5" → AWAY=DAL, HOME=PHI, use HOME spread=-6.5
+   - "Chiefs +2.5 Chargers +2.5" → AWAY=KC, HOME=LAC, spread_for_home=+2.5 (use right/home spread)
+   - "Raiders +3.5 Patriots -3.5" → AWAY=LVR, HOME=NE, use HOME spread=-3.5
+
+3. **Spread Direction:**
+   - spread_for_home is POSITIVE if HOME team is favored
+   - spread_for_home is NEGATIVE if AWAY team is favored
+   - The team with the minus (-) sign is the favorite
+   - Convert all spreads to home team perspective
+
+4. **Edge Cases:**
+   - is_pickem=true if |spread| < 0.5 or marked as "PICK" or "PK"
+   - If notation is ambiguous, add issue and make best guess
+   - Never create fictional matchups - only extract real games mentioned`
   }
 
   private getUserPrompt(rawText: string, season: number, week: number): string {
@@ -502,7 +552,10 @@ Return ONLY the JSON object with team matchups and spreads.`
       throw new Error('No response from OpenAI')
     }
 
+    console.log('[LLM] OpenAI raw response content:', content.substring(0, 500) + (content.length > 500 ? '...' : ''))
     const parsed = JSON.parse(content)
+    console.log('[LLM] OpenAI parsed spreads:', parsed.spreads?.length || 0)
+    console.log('[LLM] OpenAI full parsed object keys:', Object.keys(parsed))
     const tokensUsed = response.usage?.total_tokens || 0
     const costUSD = this.estimateOpenAICost(
       tokensUsed,

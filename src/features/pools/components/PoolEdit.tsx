@@ -14,20 +14,20 @@ interface Pool {
   url?: string
 }
 
-interface PoolSetupProps {
-  onPoolCreated: (pool: Pool) => void
+interface PoolEditProps {
+  pool: Pool
+  onPoolUpdated: (pool: Pool) => void
+  onCancel: () => void
 }
 
-export function PoolSetup({ onPoolCreated }: PoolSetupProps) {
+export function PoolEdit({ pool, onPoolUpdated, onCancel }: PoolEditProps) {
   const [formData, setFormData] = useState({
-    name: '',
-    type: 'ATS' as const,
-    season: new Date().getFullYear().toString(),
-    buyIn: '0',
-    maxEntries: '1',
-    isActive: true,
-    description: '',
-    url: '',
+    name: pool.name,
+    buyIn: pool.buyIn.toString(),
+    maxEntries: pool.maxEntries.toString(),
+    isActive: pool.isActive,
+    description: pool.description || '',
+    url: pool.url || '',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -73,17 +73,15 @@ export function PoolSetup({ onPoolCreated }: PoolSetupProps) {
     try {
       const submitData = {
         name: formData.name,
-        type: formData.type,
-        season: parseInt(formData.season),
         buyIn: parseFloat(formData.buyIn),
         maxEntries: parseInt(formData.maxEntries),
         isActive: formData.isActive,
-        description: formData.description,
+        description: formData.description || null,
         url: formData.url || null,
       }
 
-      const response = await fetch('/api/pools', {
-        method: 'POST',
+      const response = await fetch(`/api/pools/${pool.id}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -92,18 +90,16 @@ export function PoolSetup({ onPoolCreated }: PoolSetupProps) {
 
       if (!response.ok) {
         const errorData = await response.json()
-        // Handle API error response format
         const errorMessage =
           typeof errorData.error === 'string'
             ? errorData.error
-            : errorData.error?.message || 'Failed to create pool'
+            : errorData.error?.message || 'Failed to update pool'
         setErrors({ submit: errorMessage })
         return
       }
 
       const responseData = await response.json()
-      // Extract the pool data from the API response
-      onPoolCreated(responseData.data)
+      onPoolUpdated(responseData.data)
     } catch (error) {
       setErrors({ submit: 'Network error. Please try again.' })
     } finally {
@@ -111,7 +107,7 @@ export function PoolSetup({ onPoolCreated }: PoolSetupProps) {
     }
   }
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
     // Clear error when user starts typing
     if (errors[field]) {
@@ -128,7 +124,7 @@ export function PoolSetup({ onPoolCreated }: PoolSetupProps) {
       <div>
         <label
           htmlFor="pool-name"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           Pool Name
         </label>
@@ -137,53 +133,17 @@ export function PoolSetup({ onPoolCreated }: PoolSetupProps) {
           id="pool-name"
           value={formData.name}
           onChange={(e) => handleInputChange('name', e.target.value)}
-          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         {errors.name && (
-          <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name}</p>
         )}
       </div>
 
       <div>
         <label
-          htmlFor="pool-type"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Pool Type
-        </label>
-        <select
-          id="pool-type"
-          value={formData.type}
-          onChange={(e) => handleInputChange('type', e.target.value)}
-          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="ATS">Against the Spread</option>
-          <option value="SU">Straight Up</option>
-          <option value="POINTS_PLUS">Points Plus</option>
-          <option value="SURVIVOR">Survivor</option>
-        </select>
-      </div>
-
-      <div>
-        <label
-          htmlFor="season"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Season
-        </label>
-        <input
-          type="number"
-          id="season"
-          value={formData.season}
-          onChange={(e) => handleInputChange('season', e.target.value)}
-          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
-
-      <div>
-        <label
           htmlFor="buy-in"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           Buy-in Amount
         </label>
@@ -194,17 +154,17 @@ export function PoolSetup({ onPoolCreated }: PoolSetupProps) {
           onChange={(e) => handleInputChange('buyIn', e.target.value)}
           step="0.01"
           min="0"
-          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         {errors.buyIn && (
-          <p className="mt-1 text-sm text-red-600">{errors.buyIn}</p>
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.buyIn}</p>
         )}
       </div>
 
       <div>
         <label
           htmlFor="max-entries"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           Max Entries
         </label>
@@ -214,17 +174,17 @@ export function PoolSetup({ onPoolCreated }: PoolSetupProps) {
           value={formData.maxEntries}
           onChange={(e) => handleInputChange('maxEntries', e.target.value)}
           min="1"
-          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         {errors.maxEntries && (
-          <p className="mt-1 text-sm text-red-600">{errors.maxEntries}</p>
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.maxEntries}</p>
         )}
       </div>
 
       <div>
         <label
           htmlFor="pool-url"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           Pool Website URL (Optional)
         </label>
@@ -234,17 +194,17 @@ export function PoolSetup({ onPoolCreated }: PoolSetupProps) {
           value={formData.url}
           onChange={(e) => handleInputChange('url', e.target.value)}
           placeholder="https://example.com/pool"
-          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         {errors.url && (
-          <p className="mt-1 text-sm text-red-600">{errors.url}</p>
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.url}</p>
         )}
       </div>
 
       <div>
         <label
           htmlFor="description"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           Description (Optional)
         </label>
@@ -253,23 +213,49 @@ export function PoolSetup({ onPoolCreated }: PoolSetupProps) {
           value={formData.description}
           onChange={(e) => handleInputChange('description', e.target.value)}
           rows={3}
-          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
 
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          id="is-active"
+          checked={formData.isActive}
+          onChange={(e) => handleInputChange('isActive', e.target.checked)}
+          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+        />
+        <label
+          htmlFor="is-active"
+          className="ml-2 block text-sm text-gray-900 dark:text-white"
+        >
+          Pool is active
+        </label>
+      </div>
+
       {errors.submit && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-3">
-          <p className="text-sm text-red-600">{errors.submit}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
+          <p className="text-sm text-red-600 dark:text-red-400">{errors.submit}</p>
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isLoading ? 'Creating Pool...' : 'Create Pool'}
-      </button>
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? 'Updating Pool...' : 'Update Pool'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isLoading}
+          className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Cancel
+        </button>
+      </div>
     </form>
   )
 }
