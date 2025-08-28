@@ -21,9 +21,7 @@ CREATE INDEX IF NOT EXISTS "idx_teams_nfl_abbr" ON "teams"("nflAbbr");
 
 -- Composite indexes for complex queries
 CREATE INDEX IF NOT EXISTS "idx_games_season_week_team" ON "games"("season", "week", "homeTeamId", "awayTeamId");
-CREATE INDEX IF NOT EXISTS "idx_survivor_complex" ON "survivor_entries"("poolId", "isActive", "currentWeek");
 
 -- Partial indexes for frequently filtered data
 CREATE INDEX IF NOT EXISTS "idx_active_pools" ON "pools"("id") WHERE "isActive" = true;
 CREATE INDEX IF NOT EXISTS "idx_active_entries" ON "survivor_entries"("id") WHERE "isActive" = true;
-CREATE INDEX IF NOT EXISTS "idx_current_season_games" ON "games"("id") WHERE "season" >= EXTRACT(YEAR FROM CURRENT_DATE);

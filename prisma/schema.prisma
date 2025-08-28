@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,7 +7,331 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enums
+model Team {
+  id            String         @id @default(cuid())
+  nflAbbr       String         @unique
+  name          String
+  awayGames     Game[]         @relation("AwayTeam")
+  homeGames     Game[]         @relation("HomeTeam")
+  picks         Pick[]
+  survivorPicks SurvivorPick[]
+  eloRating     TeamRating?
+
+  @@index([nflAbbr], map: "idx_teams_nfl_abbr")
+  @@map("teams")
+}
+
+model TeamRating {
+  id          String   @id @default(cuid())
+  teamId      String   @unique
+  rating      Float    @default(1500)
+  gamesPlayed Int      @default(0)
+  season      Int      @default(2025)
+  lastUpdated DateTime @default(now())
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([season])
+  @@index([rating])
+  @@map("team_ratings")
+}
+
+model Game {
+  id            String         @id @default(cuid())
+  season        Int
+  week          Int
+  kickoff       DateTime
+  homeTeamId    String
+  awayTeamId    String
+  venue         String?
+  lat           Decimal?
+  lon           Decimal?
+  apiRefs       Json?
+  status        GameStatus     @default(SCHEDULED)
+  awayTeam      Team           @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  homeTeam      Team           @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  lines         Line[]
+  picks         Pick[]
+  result        Result?
+  survivorPicks SurvivorPick[]
+
+  @@unique([season, week, homeTeamId, awayTeamId])
+  @@index([season, week])
+  @@index([kickoff])
+  @@index([awayTeamId], map: "idx_games_away_team")
+  @@index([homeTeamId], map: "idx_games_home_team")
+  @@index([kickoff], map: "idx_games_kickoff")
+  @@index([season, week, homeTeamId, awayTeamId], map: "idx_games_season_week_team")
+  @@index([week, season], map: "idx_games_week_season")
+  @@map("games")
+}
+
+model Line {
+  id             String   @id @default(cuid())
+  gameId         String
+  poolId         String?
+  source         String
+  spread         Decimal?
+  total          Decimal?
+  moneylineHome  Int?
+  moneylineAway  Int?
+  capturedAt     DateTime @default(now())
+  isUserProvided Boolean  @default(false)
+  game           Game     @relation(fields: [gameId], references: [id])
+  pool           Pool?    @relation(fields: [poolId], references: [id])
+
+  @@index([gameId])
+  @@index([capturedAt])
+  @@map("lines")
+}
+
+model Pool {
+  id               String             @id @default(cuid())
+  name             String             @unique
+  type             PoolType
+  rules            Json?
+  season           Int                @default(2025)
+  buyIn            Decimal            @default(0)
+  maxEntries       Int                @default(100)
+  isActive         Boolean            @default(true)
+  description      String?
+  creatorId        String?
+  url              String?
+  entries          Entry[]
+  lines            Line[]
+  completions      PoolCompletion[]
+  survivorEntries  SurvivorEntry[]
+  survivorWeekData SurvivorWeekData[]
+
+  @@index([season])
+  @@index([season, isActive], map: "idx_pools_season_active")
+  @@index([type, season], map: "idx_pools_type_season")
+  @@map("pools")
+}
+
+model Entry {
+  id     String @id @default(cuid())
+  poolId String
+  season Int
+  pool   Pool   @relation(fields: [poolId], references: [id])
+  picks  Pick[]
+
+  @@unique([poolId, season])
+  @@map("entries")
+}
+
+model Pick {
+  id             String          @id @default(cuid())
+  entryId        String
+  gameId         String
+  teamId         String
+  lockedAt       DateTime?
+  confidence     Decimal
+  sourceUploadId String?
+  gradeOverrides GradeOverride[]
+  grade          Grade?
+  entry          Entry           @relation(fields: [entryId], references: [id])
+  game           Game            @relation(fields: [gameId], references: [id])
+  sourceUpload   Upload?         @relation(fields: [sourceUploadId], references: [id])
+  team           Team            @relation(fields: [teamId], references: [id])
+
+  @@unique([entryId, gameId])
+  @@index([gameId])
+  @@index([teamId])
+  @@map("picks")
+}
+
+model Result {
+  id        String     @id @default(cuid())
+  gameId    String     @unique
+  homeScore Int?
+  awayScore Int?
+  status    GameStatus @default(SCHEDULED)
+  game      Game       @relation(fields: [gameId], references: [id])
+
+  @@map("results")
+}
+
+model Grade {
+  id      String      @id @default(cuid())
+  pickId  String      @unique
+  outcome PickOutcome
+  points  Decimal
+  details Json?
+  pick    Pick        @relation(fields: [pickId], references: [id])
+
+  @@map("grades")
+}
+
+model Upload {
+  id               String          @id @default(cuid())
+  kind             UploadKind
+  path             String
+  parsed           Json?
+  mappingProfileId String?
+  picks            Pick[]
+  mappingProfile   MappingProfile? @relation(fields: [mappingProfileId], references: [id])
+
+  @@map("uploads")
+}
+
+model MappingProfile {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  columnMap Json
+  uploads   Upload[]
+
+  @@map("mapping_profiles")
+}
+
+model ModelWeights {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  weights   Json
+  createdAt DateTime @default(now())
+
+  @@map("model_weights")
+}
+
+model GradeOverride {
+  id              String      @id @default(cuid())
+  pickId          String
+  originalOutcome PickOutcome
+  originalPoints  Decimal
+  newOutcome      PickOutcome
+  newPoints       Decimal
+  reason          String
+  overriddenAt    DateTime    @default(now())
+  overriddenBy    String?
+  pick            Pick        @relation(fields: [pickId], references: [id])
+
+  @@map("grade_overrides")
+}
+
+model SurvivorEntry {
+  id                  String          @id @default(cuid())
+  poolId              String
+  userId              String?
+  entryName           String?
+  eliminatedWeek      Int?
+  strikes             Int             @default(0)
+  isActive            Boolean         @default(true)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  data_source_type    DataSourceType? @default(MOCK)
+  data_last_updated   DateTime?
+  data_source_message String?
+  entryUrl            String?
+  pool                Pool            @relation(fields: [poolId], references: [id])
+  picks               SurvivorPick[]
+
+  @@unique([poolId, userId, entryName])
+  @@index([poolId])
+  @@index([isActive])
+  @@index([data_source_type], map: "idx_survivor_entries_data_source")
+  @@index([poolId, isActive], map: "idx_survivor_entries_pool_active")
+  @@index([userId, poolId], map: "idx_survivor_entries_user_pool")
+  @@map("survivor_entries")
+}
+
+model SurvivorPick {
+  id              String        @id @default(cuid())
+  entryId         String
+  week            Int
+  teamId          String
+  gameId          String
+  result          PickOutcome?
+  marginOfVictory Int?
+  pickedAt        DateTime      @default(now())
+  lockedAt        DateTime?
+  entry           SurvivorEntry @relation(fields: [entryId], references: [id])
+  game            Game          @relation(fields: [gameId], references: [id])
+  team            Team          @relation(fields: [teamId], references: [id])
+
+  @@unique([entryId, week])
+  @@unique([entryId, teamId])
+  @@index([week])
+  @@index([teamId])
+  @@index([entryId, week], map: "idx_survivor_picks_entry_week")
+  @@index([gameId, teamId], map: "idx_survivor_picks_game_team")
+  @@map("survivor_picks")
+}
+
+model SurvivorWeekData {
+  id               String   @id @default(cuid())
+  poolId           String
+  week             Int
+  totalEntries     Int
+  survivingEntries Int
+  publicPickData   Json?
+  capturedAt       DateTime @default(now())
+  pool             Pool     @relation(fields: [poolId], references: [id])
+
+  @@unique([poolId, week])
+  @@index([week])
+  @@map("survivor_week_data")
+}
+
+model PoolCompletion {
+  id          String    @id @default(cuid())
+  poolId      String
+  userId      String
+  week        Int
+  season      Int
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  pool        Pool      @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, userId, week, season])
+  @@index([userId, week, season])
+  @@index([poolId])
+  @@map("pool_completions")
+}
+
+model api_configurations {
+  id                    String      @id
+  provider              ApiProvider
+  name                  String
+  base_url              String
+  api_key               String?
+  enabled               Boolean     @default(true)
+  rate_limit_per_minute Int?        @default(60)
+  timeout_ms            Int?        @default(10000)
+  created_at            DateTime    @default(now())
+  updated_at            DateTime
+
+  @@unique([provider, name], map: "idx_api_configurations_provider_name")
+}
+
+model data_availability {
+  id           String      @id
+  season       Int
+  week         Int
+  data_type    String
+  provider     ApiProvider
+  available    Boolean
+  last_checked DateTime    @default(now())
+  message      String?
+
+  @@unique([season, week, data_type, provider], map: "idx_data_availability_unique")
+  @@index([season, week], map: "idx_data_availability_season_week")
+}
+
+model data_source_logs {
+  id                   String      @id
+  provider             ApiProvider
+  endpoint             String
+  request_type         String
+  success              Boolean
+  response_time_ms     Int?
+  error_message        String?
+  rate_limit_remaining Int?
+  timestamp            DateTime    @default(now())
+
+  @@index([provider, timestamp], map: "idx_data_source_logs_provider_timestamp")
+}
+
 enum PoolType {
   ATS
   SU
@@ -20,8 +341,8 @@ enum PoolType {
 
 enum GameStatus {
   SCHEDULED
-  IN_PROGRESS
   FINAL
+  IN_PROGRESS
   CANCELLED
 }
 
@@ -38,302 +359,15 @@ enum UploadKind {
   IMAGE
 }
 
-// Core entities
-model Team {
-  id      String @id @default(cuid())
-  nflAbbr String @unique
-  name    String
-
-  // Relations
-  homeGames     Game[] @relation("HomeTeam")
-  awayGames     Game[] @relation("AwayTeam")
-  picks         Pick[]
-  survivorPicks SurvivorPick[]
-  eloRating     TeamRating?
-
-  @@map("teams")
+enum ApiProvider {
+  ESPN
+  MYSPORTSFEEDS
+  INTERNAL
 }
 
-model TeamRating {
-  id          String   @id @default(cuid())
-  teamId      String   @unique
-  rating      Float    @default(1500)
-  gamesPlayed Int      @default(0)
-  season      Int      @default(2025)
-  lastUpdated DateTime @default(now())
-
-  // Relations
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  @@map("team_ratings")
-  @@index([season])
-  @@index([rating])
-}
-
-model Game {
-  id         String    @id @default(cuid())
-  season     Int
-  week       Int
-  kickoff    DateTime
-  status     GameStatus @default(SCHEDULED)
-  homeTeamId String
-  awayTeamId String
-  venue      String?
-  lat        Decimal?
-  lon        Decimal?
-  apiRefs    Json?
-
-  // Relations
-  homeTeam      Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  awayTeam      Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
-  lines         Line[]
-  picks         Pick[]
-  survivorPicks SurvivorPick[]
-  result        Result?
-
-  @@unique([season, week, homeTeamId, awayTeamId])
-  @@index([season, week])
-  @@index([kickoff])
-  @@map("games")
-}
-
-model Line {
-  id             String   @id @default(cuid())
-  gameId         String
-  poolId         String?
-  source         String
-  spread         Decimal?
-  total          Decimal?
-  moneylineHome  Int?
-  moneylineAway  Int?
-  capturedAt     DateTime @default(now())
-  isUserProvided Boolean  @default(false)
-
-  // Relations
-  game Game  @relation(fields: [gameId], references: [id])
-  pool Pool? @relation(fields: [poolId], references: [id])
-
-  @@index([gameId])
-  @@index([capturedAt])
-  @@map("lines")
-}
-
-model Pool {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  type        PoolType
-  season      Int
-  buyIn       Decimal
-  maxEntries  Int
-  isActive    Boolean  @default(true)
-  description String?
-  rules       Json?
-  creatorId   String?  // User who created the pool
-  url         String?  // External URL to the actual pool website
-
-  // Relations
-  entries          Entry[]
-  lines            Line[]
-  survivorEntries  SurvivorEntry[]
-  survivorWeekData SurvivorWeekData[]
-  completions      PoolCompletion[]
-
-  @@index([season])
-  @@map("pools")
-}
-
-model Entry {
-  id     String @id @default(cuid())
-  poolId String
-  season Int
-
-  // Relations
-  pool  Pool   @relation(fields: [poolId], references: [id])
-  picks Pick[]
-
-  @@unique([poolId, season])
-  @@map("entries")
-}
-
-model Pick {
-  id             String    @id @default(cuid())
-  entryId        String
-  gameId         String
-  teamId         String
-  lockedAt       DateTime?
-  confidence     Decimal
-  sourceUploadId String?
-
-  // Relations
-  entry        Entry   @relation(fields: [entryId], references: [id])
-  game         Game    @relation(fields: [gameId], references: [id])
-  team         Team    @relation(fields: [teamId], references: [id])
-  sourceUpload Upload? @relation(fields: [sourceUploadId], references: [id])
-  grade        Grade?
-  gradeOverrides GradeOverride[]
-
-  @@unique([entryId, gameId])
-  @@index([gameId])
-  @@index([teamId])
-  @@map("picks")
-}
-
-model Result {
-  id        String     @id @default(cuid())
-  gameId    String     @unique
-  homeScore Int?
-  awayScore Int?
-  status    GameStatus @default(SCHEDULED)
-
-  // Relations
-  game Game @relation(fields: [gameId], references: [id])
-
-  @@map("results")
-}
-
-model Grade {
-  id      String      @id @default(cuid())
-  pickId  String      @unique
-  outcome PickOutcome
-  points  Decimal
-  details Json?
-
-  // Relations
-  pick Pick @relation(fields: [pickId], references: [id])
-
-  @@map("grades")
-}
-
-model Upload {
-  id               String @id @default(cuid())
-  kind             UploadKind
-  path             String
-  parsed           Json?
-  mappingProfileId String?
-
-  // Relations
-  mappingProfile MappingProfile? @relation(fields: [mappingProfileId], references: [id])
-  picks          Pick[]
-
-  @@map("uploads")
-}
-
-model MappingProfile {
-  id        String @id @default(cuid())
-  name      String @unique
-  columnMap Json
-
-  // Relations
-  uploads Upload[]
-
-  @@map("mapping_profiles")
-}
-
-model ModelWeights {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  weights   Json
-  createdAt DateTime @default(now())
-
-  @@map("model_weights")
-}
-
-model GradeOverride {
-  id               String      @id @default(cuid())
-  pickId           String
-  originalOutcome  PickOutcome
-  originalPoints   Decimal
-  newOutcome       PickOutcome
-  newPoints        Decimal
-  reason           String
-  overriddenAt     DateTime    @default(now())
-  overriddenBy     String?
-
-  // Relations
-  pick Pick @relation(fields: [pickId], references: [id])
-
-  @@map("grade_overrides")
-}
-
-// Survivor Pool specific models
-model SurvivorEntry {
-  id             String    @id @default(cuid())
-  poolId         String
-  userId         String?   // Optional user identifier
-  entryName      String?   // Optional name for the entry
-  entryUrl       String?   // Optional URL link for the entry
-  eliminatedWeek Int?      // Week when eliminated (null if still active)
-  strikes        Int       @default(0) // Number of strikes/mulligans used
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  // Relations
-  pool           Pool            @relation(fields: [poolId], references: [id])
-  picks          SurvivorPick[]
-
-  @@unique([poolId, userId, entryName])
-  @@index([poolId])
-  @@index([isActive])
-  @@map("survivor_entries")
-}
-
-model SurvivorPick {
-  id              String      @id @default(cuid())
-  entryId         String
-  week            Int
-  teamId          String
-  gameId          String
-  result          PickOutcome?
-  marginOfVictory Int?        // Points won/lost by
-  pickedAt        DateTime    @default(now())
-  lockedAt        DateTime?   // When the pick was locked in
-
-  // Relations
-  entry           SurvivorEntry @relation(fields: [entryId], references: [id])
-  team            Team          @relation(fields: [teamId], references: [id])
-  game            Game          @relation(fields: [gameId], references: [id])
-
-  @@unique([entryId, week])
-  @@unique([entryId, teamId]) // Enforce no team reuse per entry
-  @@index([week])
-  @@index([teamId])
-  @@map("survivor_picks")
-}
-
-model SurvivorWeekData {
-  id                 String   @id @default(cuid())
-  poolId             String
-  week               Int
-  totalEntries       Int      // Total entries at start of week
-  survivingEntries   Int      // Entries that survived the week
-  publicPickData     Json?    // Store public pick percentages per team
-  capturedAt         DateTime @default(now())
-
-  // Relations
-  pool Pool @relation(fields: [poolId], references: [id])
-
-  @@unique([poolId, week])
-  @@index([week])
-  @@map("survivor_week_data")
-}
-
-model PoolCompletion {
-  id          String   @id @default(cuid())
-  poolId      String
-  userId      String   // User identifier (could be session ID or actual user ID)
-  week        Int
-  season      Int
-  isCompleted Boolean  @default(false)
-  completedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  pool Pool @relation(fields: [poolId], references: [id], onDelete: Cascade)
-
-  @@unique([poolId, userId, week, season])
-  @@index([userId, week, season])
-  @@index([poolId])
-  @@map("pool_completions")
+enum DataSourceType {
+  REAL
+  MOCK
+  SIMULATED
+  UNAVAILABLE
 }

@@ -1559,3 +1559,80 @@ e9cbcac dockerfile
 *[Auto-generated from git history - No LLM used]*
 
 ---
+
+
+## Session - 2025-08-28 15:12
+
+### Files Changed
+**Modified:**
+- prisma/schema.prisma
+
+**Created:**
+- prisma/migrations/20250828_add_missing_pool_columns/
+- prisma/migrations/20250829_optimize_indexes/
+- scripts/deploy-production-migrations.sh
+
+**Deleted:**
+- prisma/migrations/20250823_optimize_indexes/migration.sql
+
+### Git Statistics
+```
+ .../20250823_optimize_indexes/migration.sql        |  29 --
+ prisma/schema.prisma                               | 349 +++++++++++----------
+ 2 files changed, 191 insertions(+), 187 deletions(-)
+
+```
+
+### Recent Commits
+```
+f12ed73 mvp
+991bb62 update SESSION.md and docker-entrypoint.sh
+3d3ee28 update SESSION.md and docker-entrypoint.sh
+819d94d update Dockerfile and SESSION.md
+e9cbcac dockerfile
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-08-28 15:16
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- prisma/schema.prisma
+
+**Created:**
+- prisma/migrations/20250828_add_missing_pool_columns/
+- prisma/migrations/20250828_add_pending_outcome/
+- prisma/migrations/20250829_optimize_indexes/
+- scripts/deploy-production-migrations.sh
+
+**Deleted:**
+- prisma/migrations/20250823_optimize_indexes/migration.sql
+
+### Git Statistics
+```
+ SESSION.md                                         |  37 +++
+ .../20250823_optimize_indexes/migration.sql        |  29 --
+ prisma/schema.prisma                               | 350 +++++++++++----------
+ 3 files changed, 229 insertions(+), 187 deletions(-)
+
+```
+
+### Recent Commits
+```
+f12ed73 mvp
+991bb62 update SESSION.md and docker-entrypoint.sh
+3d3ee28 update SESSION.md and docker-entrypoint.sh
+819d94d update Dockerfile and SESSION.md
+e9cbcac dockerfile
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
