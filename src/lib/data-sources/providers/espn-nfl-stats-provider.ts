@@ -199,6 +199,16 @@ export class EspnNFLStatsProvider extends BaseDataProvider {
 
       const allTeams: NFLTeamStats[] = []
 
+      // Check if standings data is available
+      if (!response.data.standings || !Array.isArray(response.data.standings)) {
+        return {
+          success: false,
+          error: 'Standings data not available from ESPN API - likely offseason',
+          rateLimitRemaining: response.rateLimitRemaining,
+          rateLimitReset: response.rateLimitReset,
+        }
+      }
+
       // ESPN returns standings by division/conference
       for (const standing of response.data.standings) {
         for (const entry of standing.entries) {

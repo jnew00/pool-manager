@@ -162,6 +162,14 @@ export class ConfidenceEngine {
         : Math.max(0, Math.min(100, rawConfidence * 100))
     let recommendedPick: 'HOME' | 'AWAY' = rawConfidence > 0.5 ? 'HOME' : 'AWAY'
 
+    // 8.5. Pool-specific confidence adjustments
+    adjustedConfidence = this.applyPoolSpecificAdjustments(
+      adjustedConfidence,
+      input.poolType
+    )
+    // Update pick based on adjusted confidence
+    recommendedPick = adjustedConfidence > 50 ? 'HOME' : 'AWAY'
+
     // 9. News Analysis Tie-Breaking (for close games)
     let newsAnalysis: NewsAnalysisResult | null = null
     let newsAdjustment = 0
@@ -341,7 +349,33 @@ export class ConfidenceEngine {
       return 0.5
     }
 
-    // For ATS and other pools, use original logic
+    // For ATS (Against The Spread) pools, prioritize spread analysis
+    if (poolType === 'ATS') {
+      // For ATS, spread is the most important - it's what we're betting against
+      if (marketData.spread !== undefined) {
+        // Use standard spread probability but adjust for ATS betting dynamics
+        const spreadProb = this.spreadToImpliedProbability(marketData.spread)
+        
+        // ATS betting has more variance than straight spread probability suggests
+        // Adjust closer to 50/50 to reflect the difficulty of beating the spread
+        const atsAdjustment = 0.1 // Bring probabilities closer to center
+        return 0.5 + (spreadProb - 0.5) * (1 - atsAdjustment)
+      }
+      
+      // Fallback to moneyline for ATS if no spread
+      if (marketData.moneylineHome && marketData.moneylineAway) {
+        const mlProb = this.moneylineToImpliedProbability(
+          marketData.moneylineHome,
+          marketData.moneylineAway
+        )
+        // Convert moneyline probability to spread probability estimate
+        return this.moneylineToSpreadProbability(mlProb)
+      }
+      
+      return 0.5 // Neutral for ATS without data
+    }
+
+    // For other pools, use original logic
     // Prefer moneyline if available, otherwise use spread
     if (marketData.moneylineHome && marketData.moneylineAway) {
       return this.moneylineToImpliedProbability(
@@ -420,6 +454,44 @@ export class ConfidenceEngine {
     // If spread is negative (home team favored), return the calculated rate
     // If spread is positive (away team favored), return 1 - rate
     return spread <= 0 ? winRate : 1 - winRate
+  }
+
+  /**
+   * Convert moneyline probability to ATS spread probability
+   * Moneyline favors outright wins, but ATS is about margin of victory
+   */
+  private moneylineToSpreadProbability(mlProbability: number): number {
+    // ATS is generally harder to predict than outright wins
+    // Compress the probability range toward 50/50
+    const compressionFactor = 0.7 // Reduce confidence for spread betting
+    return 0.5 + (mlProbability - 0.5) * compressionFactor
+  }
+
+  /**
+   * Apply pool-specific confidence adjustments based on historical performance
+   */
+  private applyPoolSpecificAdjustments(
+    confidence: number,
+    poolType?: string
+  ): number {
+    if (!poolType) return confidence
+
+    let adjustedConfidence = confidence
+
+    if (poolType === 'SU') {
+      // For SU pools, extreme favorites are slightly more reliable than spread suggests
+      if (confidence > 75) {
+        adjustedConfidence = Math.min(90, confidence + 2) // Boost high confidence slightly
+      } else if (confidence < 25) {
+        adjustedConfidence = Math.max(10, confidence - 2) // Boost away confidence slightly
+      }
+    } else if (poolType === 'ATS') {
+      // For ATS pools, compress confidence toward 50% as spreads are designed to be 50/50
+      const compressionFactor = 0.85 // Compress by 15%
+      adjustedConfidence = 50 + (confidence - 50) * compressionFactor
+    }
+
+    return Math.max(1, Math.min(99, Math.round(adjustedConfidence * 10) / 10))
   }
 
   /**
@@ -838,16 +910,44 @@ export class ConfidenceEngine {
       console.log(
         `[Confidence Engine] SU pool detected - adjusted weights: market=${marketWeight}, elo=${eloWeight}, lineValue=${lineValueWeight}`
       )
+    } else if (input.poolType === 'ATS') {
+      // For ATS pools, line value and situational factors are much more important
+      // Spread betting requires more nuanced analysis than straight-up wins
+      marketWeight = 0.45 // 45% on market spread data
+      eloWeight = 0.2 // 20% on team strength
+      lineValueWeight = 0.15 // 15% on line movement/value (important for ATS)
+
+      console.log(
+        `[Confidence Engine] ATS pool detected - adjusted weights: market=${marketWeight}, elo=${eloWeight}, lineValue=${lineValueWeight}`
+      )
     }
-    const homeAdvWeight = weights.homeAdvWeight || 0.05
-    const restWeight = weights.restWeight || 0.02
-    const divisionalWeight = weights.divisionalWeight || 0.065
-    const revengeGameWeight = weights.revengeGameWeight || 0.05
-    const recentFormWeight = weights.recentFormWeight || 0.025
-    const playoffImplicationsWeight = weights.playoffImplicationsWeight || 0.015
-    const travelScheduleWeight = weights.travelScheduleWeight || 0.01
-    const weatherWeight = weights.weatherPenaltyWeight || 0.005
-    const injuryWeight = weights.injuryPenaltyWeight || 0.005
+    // Set situational factor weights - higher for ATS pools
+    let homeAdvWeight = weights.homeAdvWeight || 0.05
+    let restWeight = weights.restWeight || 0.02
+    let divisionalWeight = weights.divisionalWeight || 0.065
+    let revengeGameWeight = weights.revengeGameWeight || 0.05
+    let recentFormWeight = weights.recentFormWeight || 0.025
+    let playoffImplicationsWeight = weights.playoffImplicationsWeight || 0.015
+    let travelScheduleWeight = weights.travelScheduleWeight || 0.01
+    let weatherWeight = weights.weatherPenaltyWeight || 0.005
+    let injuryWeight = weights.injuryPenaltyWeight || 0.005
+
+    if (input.poolType === 'ATS') {
+      // For ATS, situational factors matter more since margins matter
+      homeAdvWeight = 0.06 // Slightly higher home advantage impact
+      divisionalWeight = 0.08 // Division games are often closer than spread suggests
+      recentFormWeight = 0.04 // Recent performance more predictive for ATS
+      weatherWeight = 0.01 // Weather affects margin more than wins/losses
+      injuryWeight = 0.01 // Injuries affect performance depth
+    } else if (input.poolType === 'SU') {
+      // For SU pools, focus on factors that affect outright wins
+      homeAdvWeight = 0.04 // Home advantage less important with heavy market weighting
+      divisionalWeight = 0.04 // Division games matter but market already factors this
+      recentFormWeight = 0.02 // Form less important when market dominates
+      weatherWeight = 0.015 // Weather can affect close games significantly
+      injuryWeight = 0.015 // Key injuries can flip outcomes
+      playoffImplicationsWeight = 0.02 // Motivation more important in win/loss scenarios
+    }
 
     // Weighted combination
     const weightedProb =
@@ -1041,7 +1141,7 @@ export class ConfidenceEngine {
     factors: GameFactors
   ): Promise<TieBreakerData> {
     // Calculate score prediction based on research findings
-    const scorePrediction = this.calculateScorePrediction(input, factors)
+    const scorePrediction = await this.calculateScorePrediction(input, factors)
 
     // Calculate over/under prediction
     const overUnderPrediction = this.calculateOverUnderPrediction(
@@ -1069,40 +1169,24 @@ export class ConfidenceEngine {
    * Calculate predicted final score using Elo ratings and adjustments
    * Based on research: Uses team strength (Elo), home advantage, and situational factors
    */
-  private calculateScorePrediction(
+  private async calculateScorePrediction(
     input: ModelInput,
     factors: GameFactors
-  ): ScorePrediction {
-    // NFL average team scores ~22.5 points per game (2018-2023 data)
-    const baseScore = 22.5
-
-    // Convert Elo ratings to expected scoring ability
-    const homeEloAdvantage = (factors.homeElo - 1500) / 25 // ~1 point per 25 Elo
-    const awayEloAdvantage = (factors.awayElo - 1500) / 25
-
-    // Start with base scores adjusted for team strength
-    let homeScore = baseScore + homeEloAdvantage
-    let awayScore = baseScore + awayEloAdvantage
-
-    // Apply all situational factors from our confidence engine
-    const totalAdjustment =
-      factors.homeAdvantage +
-      factors.restAdvantage +
-      factors.divisionalFactor +
-      factors.revengeGameFactor +
-      factors.recentFormFactor +
-      factors.playoffImplicationsFactor +
-      factors.travelScheduleFactor -
-      factors.weatherPenalty -
-      factors.injuryPenalty
-
-    // Apply half the adjustment to each team (spread the impact)
-    homeScore += totalAdjustment / 2
-    awayScore -= totalAdjustment / 2
-
-    // Ensure realistic scoring bounds (10-45 points typical NFL range)
-    homeScore = Math.max(10, Math.min(45, Math.round(homeScore * 10) / 10))
-    awayScore = Math.max(10, Math.min(45, Math.round(awayScore * 10) / 10))
+  ): Promise<ScorePrediction> {
+    // Use team-specific scoring baselines instead of generic 22.5 average
+    const homeScore = await this.calculateTeamScoringExpectation(
+      input.homeTeamId,
+      true, // isHome
+      input,
+      factors
+    )
+    
+    const awayScore = await this.calculateTeamScoringExpectation(
+      input.awayTeamId,
+      false, // isHome
+      input,
+      factors
+    )
 
     const totalPoints = homeScore + awayScore
     const margin = homeScore - awayScore
@@ -1119,6 +1203,87 @@ export class ConfidenceEngine {
       margin,
       confidence: Math.round(confidence),
     }
+  }
+
+  /**
+   * Calculate team-specific scoring expectation using multiple data sources
+   */
+  private async calculateTeamScoringExpectation(
+    teamId: string,
+    isHome: boolean,
+    input: ModelInput,
+    factors: GameFactors
+  ): Promise<number> {
+    // Get team info for more sophisticated calculation
+    let baseScore = 22.5 // NFL average
+    
+    // Use team abbreviation to create differentiated scoring profiles
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      select: { nflAbbr: true }
+    })
+    
+    if (team?.nflAbbr) {
+      baseScore = this.getTeamScoringProfile(team.nflAbbr, isHome)
+    }
+
+    // Apply Elo adjustment (even if ratings are similar, small differences matter)
+    const eloRating = isHome ? factors.homeElo : factors.awayElo
+    const eloAdjustment = (eloRating - 1500) / 25 // ~1 point per 25 Elo
+    baseScore += eloAdjustment
+
+    // Apply positional adjustments
+    if (isHome) {
+      baseScore += factors.homeAdvantage * 0.3 // Home scoring boost
+      baseScore += factors.restAdvantage * 0.2
+      baseScore += factors.recentFormFactor * 0.4
+    } else {
+      baseScore -= factors.homeAdvantage * 0.3 // Away scoring penalty  
+      baseScore -= factors.restAdvantage * 0.2
+      baseScore -= factors.recentFormFactor * 0.4
+    }
+
+    // Apply situational factors
+    baseScore += factors.divisionalFactor * 0.1 // Division games slightly lower scoring
+    baseScore += factors.revengeGameFactor * 0.2
+    baseScore += factors.playoffImplicationsFactor * 0.3
+    baseScore -= factors.weatherPenalty * 0.4 // Bad weather reduces scoring
+    baseScore -= factors.injuryPenalty * 0.5 // Injuries reduce scoring
+
+    // Ensure realistic scoring bounds (12-42 points typical range)
+    return Math.max(12, Math.min(42, Math.round(baseScore * 10) / 10))
+  }
+
+  /**
+   * Get team-specific scoring profiles based on NFL team characteristics
+   */
+  private getTeamScoringProfile(teamAbbr: string, isHome: boolean): number {
+    // High-scoring offensive teams (2023-2024 characteristics)
+    const highOffense = ['BUF', 'KC', 'PHI', 'MIA', 'DAL', 'SF', 'DET'] 
+    // Low-scoring defensive teams
+    const strongDefense = ['PIT', 'NE', 'BAL', 'CHI', 'CLE', 'TEN']
+    // Dome/high-scoring environments
+    const domeTeams = ['NO', 'ATL', 'DET', 'IND', 'LVR', 'LAR', 'LAC', 'ARI', 'MIN']
+    
+    let baseScore = 22.5
+    
+    if (highOffense.includes(teamAbbr)) {
+      baseScore += 3.5 // High-powered offenses
+    } else if (strongDefense.includes(teamAbbr)) {
+      baseScore -= 2.0 // Defense-first teams score less but allow less
+    }
+    
+    if (domeTeams.includes(teamAbbr) && isHome) {
+      baseScore += 1.5 // Dome advantage for home teams
+    }
+    
+    // Weather-dependent teams (cold weather teams score less in bad weather)
+    const coldWeatherTeams = ['BUF', 'GB', 'CHI', 'MIN', 'NE', 'PIT', 'CLE']
+    if (coldWeatherTeams.includes(teamAbbr)) {
+      baseScore -= 0.5 // Slight reduction for cold weather adaptations
+    }
+    
+    return baseScore
   }
 
   /**

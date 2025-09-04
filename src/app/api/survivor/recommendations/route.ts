@@ -142,6 +142,10 @@ export async function GET(request: NextRequest) {
         seasonActive: dataAvailability.seasonActive,
         currentWeek: dataAvailability.currentWeek,
         message: dataAvailability.message,
+        analysisType: dataAvailability.available 
+          ? 'Real ESPN data with deterministic fallbacks'
+          : 'Deterministic analysis - ESPN data unavailable',
+        confidence: dataAvailability.available ? 'High' : 'Medium',
       },
       generatedAt: new Date().toISOString(),
     }

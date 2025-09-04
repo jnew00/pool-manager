@@ -20,6 +20,7 @@ import {
 import { realTeamAnalysis } from './real-team-analysis'
 
 export interface EnhancedTeamRecommendation extends TeamRecommendation {
+  opponent: string // Opponent team abbreviation
   narrativeFactors: {
     momentum?: string // Team trending up/down
     injuries?: string // Key injuries impact
@@ -279,9 +280,18 @@ export class SurvivorRecommendations {
         week
       )
 
+      // Get opponent information
+      const gameOdds = weekOdds.games.find(g => g.gameId === rec.gameId)
+      const opponent = gameOdds 
+        ? (gameOdds.homeTeamId === rec.teamId 
+           ? gameOdds.awayTeamAbbr 
+           : gameOdds.homeTeamAbbr)
+        : 'TBD'
+
       // Build enhanced recommendation
       enhanced.push({
         ...rec,
+        opponent,
         narrativeFactors,
         weatherImpact: weather
           ? {
@@ -386,22 +396,38 @@ export class SurvivorRecommendations {
       ...realFactors,
     }
 
-    // TODO: Implement with real data sources
-    // Check for primetime (would check actual game schedule)
-    if (Math.random() > 0.8) {
-      factors.primetime = 'Primetime game - enhanced focus required'
-    }
+    // Deterministic narrative factor analysis based on game data
+    try {
+      const game = await this.getGameDetails(gameId)
+      if (game) {
+        // Check for primetime based on kickoff time
+        const gameHour = new Date(game.kickoff).getHours()
+        if (gameHour >= 19 || gameHour <= 2) { // 7 PM or later, or very early (Monday night)
+          factors.primetime = 'Primetime game - enhanced focus and pressure'
+        }
 
-    // TODO: Revenge game analysis (would check previous season matchups)
-    if (Math.random() > 0.9) {
-      factors.revenge =
-        'Note: Revenge game analysis not yet implemented with real data'
-    }
+        // Revenge game analysis based on previous season results
+        const previousMatchup = await this.getPreviousSeasonMatchup(
+          game.homeTeamId,
+          game.awayTeamId
+        )
+        if (previousMatchup && previousMatchup.wasUpset) {
+          factors.revenge = `Potential revenge spot - team lost unexpectedly last season`
+        }
 
-    // TODO: Lookahead spot (would check next week's schedule)
-    if (week < 17 && Math.random() > 0.85) {
-      factors.lookahead =
-        'Note: Lookahead analysis not yet implemented with real data'
+        // Lookahead analysis based on next week's opponents
+        if (week < 17) {
+          const nextWeekStrength = await this.getNextWeekOpponentStrength(
+            teamId,
+            week + 1
+          )
+          if (nextWeekStrength > 0.7) {
+            factors.lookahead = `Potential lookahead spot with tough opponent next week`
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Error analyzing narrative factors:', error)
     }
 
     return factors
@@ -631,35 +657,14 @@ export class SurvivorRecommendations {
         console.warn(
           `Failed to get real rating for team ${team.nflAbbr}, using estimated rating`
         )
-        // Fallback to basic estimated rating based on common strong teams
-        const strongTeams = [
-          'KC',
-          'BUF',
-          'PHI',
-          'SF',
-          'DAL',
-          'BAL',
-          'MIA',
-          'CIN',
-        ]
-        const rating = strongTeams.includes(team.nflAbbr) ? 1650 : 1500
+        // Use sophisticated tier-based rating system for future value analysis
+        const rating = this.calculateDeterministicTeamRating(team.nflAbbr)
         teamRatings.set(team.id, rating)
       }
     }
 
-    // Mock schedule (would fetch real schedule)
-    const schedule: any[] = []
-    for (let w = currentWeek + 1; w <= 18; w++) {
-      games.forEach((game) => {
-        schedule.push({
-          week: w,
-          homeTeamId: game.homeTeamId,
-          awayTeamId: game.awayTeamId,
-          homeTeamAbbr: game.homeTeam.nflAbbr,
-          awayTeamAbbr: game.awayTeam.nflAbbr,
-        })
-      })
-    }
+    // Fetch real schedule from database
+    const schedule = await this.getRemainingSchedule(currentWeek)
 
     return SurvivorFutureValue.generateSeasonProjection(
       teams,
@@ -669,5 +674,194 @@ export class SurvivorRecommendations {
       currentWeek,
       poolSize
     )
+  }
+
+  /**
+   * Get game details for narrative analysis
+   */
+  private async getGameDetails(gameId: string): Promise<any> {
+    const { prisma } = await import('@/lib/prisma')
+    return await prisma.game.findUnique({
+      where: { id: gameId },
+      include: {
+        homeTeam: true,
+        awayTeam: true,
+      },
+    })
+  }
+
+  /**
+   * Get previous season matchup for revenge game analysis
+   */
+  private async getPreviousSeasonMatchup(
+    homeTeamId: string,
+    awayTeamId: string
+  ): Promise<{ wasUpset: boolean } | null> {
+    const { prisma } = await import('@/lib/prisma')
+    
+    try {
+      // Look for previous season matchup
+      const previousGame = await prisma.game.findFirst({
+        where: {
+          OR: [
+            { homeTeamId, awayTeamId },
+            { homeTeamId: awayTeamId, awayTeamId: homeTeamId },
+          ],
+          season: 2024, // Previous season
+        },
+        include: {
+          result: true,
+          lines: {
+            take: 1,
+            orderBy: { capturedAt: 'asc' },
+          },
+        },
+      })
+
+      if (!previousGame || !previousGame.result || !previousGame.lines[0]) {
+        return null
+      }
+
+      const result = previousGame.result
+      const line = previousGame.lines[0]
+      
+      // Determine if it was an upset (underdog won straight up)
+      const homeWon = (result.homeScore || 0) > (result.awayScore || 0)
+      const homeWasFavored = (line.spread || 0) < 0
+
+      const wasUpset = (homeWon && !homeWasFavored) || (!homeWon && homeWasFavored)
+
+      return { wasUpset }
+    } catch (error) {
+      console.warn('Error fetching previous matchup:', error)
+      return null
+    }
+  }
+
+  /**
+   * Get next week opponent strength for lookahead analysis
+   */
+  private async getNextWeekOpponentStrength(
+    teamId: string,
+    nextWeek: number
+  ): Promise<number> {
+    const { prisma } = await import('@/lib/prisma')
+    
+    try {
+      const nextGame = await prisma.game.findFirst({
+        where: {
+          week: nextWeek,
+          OR: [
+            { homeTeamId: teamId },
+            { awayTeamId: teamId },
+          ],
+        },
+        include: {
+          homeTeam: true,
+          awayTeam: true,
+        },
+      })
+
+      if (!nextGame) return 0
+
+      // Get opponent team
+      const opponent = nextGame.homeTeamId === teamId 
+        ? nextGame.awayTeam 
+        : nextGame.homeTeam
+
+      // Calculate strength based on tier system (same as odds service)
+      const tierA = ['KC', 'BUF', 'PHI', 'SF', 'BAL', 'CIN', 'MIA']
+      const tierB = ['DAL', 'MIN', 'DET', 'LAC', 'TEN', 'NYJ', 'SEA', 'JAX']
+      
+      if (tierA.includes(opponent.nflAbbr)) return 0.9
+      if (tierB.includes(opponent.nflAbbr)) return 0.7
+      return 0.5
+
+    } catch (error) {
+      console.warn('Error fetching next week opponent:', error)
+      return 0.5
+    }
+  }
+
+  /**
+   * Get remaining schedule from database
+   */
+  private async getRemainingSchedule(currentWeek: number): Promise<any[]> {
+    const { prisma } = await import('@/lib/prisma')
+    
+    const games = await prisma.game.findMany({
+      where: {
+        week: {
+          gt: currentWeek,
+        },
+        season: 2025,
+      },
+      include: {
+        homeTeam: true,
+        awayTeam: true,
+      },
+      orderBy: [
+        { week: 'asc' },
+        { kickoff: 'asc' },
+      ],
+    })
+
+    return games.map((game) => ({
+      week: game.week,
+      homeTeamId: game.homeTeamId,
+      awayTeamId: game.awayTeamId,
+      homeTeamAbbr: game.homeTeam.nflAbbr,
+      awayTeamAbbr: game.awayTeam.nflAbbr,
+      kickoff: game.kickoff,
+    }))
+  }
+
+  /**
+   * Calculate sophisticated deterministic team rating based on multiple factors
+   */
+  private calculateDeterministicTeamRating(teamAbbr: string): number {
+    const baseRating = 1500 // NFL average
+
+    // Tier 1: Elite teams (likely playoff contenders)
+    const tier1Teams = ['KC', 'BUF', 'PHI', 'SF'] // Championship-caliber
+    if (tier1Teams.includes(teamAbbr)) {
+      return 1750 + this.getTeamVariance(teamAbbr, 50) // 1750-1800
+    }
+
+    // Tier 2: Strong teams (wild card/division contenders)  
+    const tier2Teams = ['BAL', 'CIN', 'MIA', 'DAL', 'MIN', 'DET']
+    if (tier2Teams.includes(teamAbbr)) {
+      return 1650 + this.getTeamVariance(teamAbbr, 50) // 1650-1700
+    }
+
+    // Tier 3: Competitive teams (bubble teams)
+    const tier3Teams = ['LAC', 'NYJ', 'SEA', 'JAX', 'TEN', 'NO', 'ATL', 'GB', 'TB']
+    if (tier3Teams.includes(teamAbbr)) {
+      return 1550 + this.getTeamVariance(teamAbbr, 50) // 1550-1600
+    }
+
+    // Tier 4: Inconsistent teams 
+    const tier4Teams = ['LAR', 'PIT', 'CLE', 'IND', 'WAS', 'LVR']
+    if (tier4Teams.includes(teamAbbr)) {
+      return 1450 + this.getTeamVariance(teamAbbr, 50) // 1450-1500
+    }
+
+    // Tier 5: Rebuilding/struggling teams
+    const tier5Teams = ['DEN', 'NE', 'CHI', 'NYG', 'CAR', 'HOU', 'ARI']
+    if (tier5Teams.includes(teamAbbr)) {
+      return 1350 + this.getTeamVariance(teamAbbr, 50) // 1350-1400
+    }
+
+    // Default for any unlisted teams
+    return baseRating + this.getTeamVariance(teamAbbr, 30)
+  }
+
+  /**
+   * Get deterministic variance for team ratings to avoid ties
+   */
+  private getTeamVariance(teamAbbr: string, maxVariance: number): number {
+    // Create consistent variance based on team abbreviation
+    const hash = teamAbbr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    return (hash % maxVariance) - Math.floor(maxVariance / 2)
   }
 }

@@ -32,28 +32,58 @@ export interface SeasonProjection {
 
 export class SurvivorFutureValue {
   /**
-   * Calculate future value rating (1-5 stars) based on upcoming matchups
+   * Calculate future value rating (1-5 stars) based on comprehensive analysis
    */
   static calculateFutureValueRating(
     averageFavorability: number,
     bestWeeksCount: number,
-    hasEliteMatchup: boolean
+    hasEliteMatchup: boolean,
+    strengthOfSchedule?: number,
+    homeGameAdvantage?: number,
+    divisionalMatchupCount?: number
   ): number {
-    let rating = 1
+    let baseRating = 1
+    let bonusPoints = 0
 
-    // Base rating on average favorability
-    if (averageFavorability >= 70) rating = 4
-    else if (averageFavorability >= 60) rating = 3
-    else if (averageFavorability >= 50) rating = 2
+    // Base rating on average favorability (more granular)
+    if (averageFavorability >= 75) baseRating = 5      // Excellent schedule
+    else if (averageFavorability >= 68) baseRating = 4 // Very good schedule  
+    else if (averageFavorability >= 62) baseRating = 3 // Good schedule
+    else if (averageFavorability >= 55) baseRating = 2 // Average schedule
+    else if (averageFavorability >= 48) baseRating = 1 // Below average
+    else baseRating = 1 // Poor schedule
 
-    // Bonus for multiple best weeks
-    if (bestWeeksCount >= 2) rating += 0.5
+    // Bonus for multiple best weeks (premium save opportunities)
+    if (bestWeeksCount >= 3) bonusPoints += 0.75
+    else if (bestWeeksCount >= 2) bonusPoints += 0.5
+    else if (bestWeeksCount >= 1) bonusPoints += 0.25
 
-    // Bonus for elite matchup (e.g., vs worst teams)
-    if (hasEliteMatchup) rating += 0.5
+    // Bonus for elite matchup opportunities
+    if (hasEliteMatchup) bonusPoints += 0.5
 
-    // Cap at 5
-    return Math.min(5, rating)
+    // Strength of schedule bonus (easier future opponents = higher rating)
+    if (strengthOfSchedule !== undefined) {
+      if (strengthOfSchedule < 1450) bonusPoints += 0.5      // Very weak SOS
+      else if (strengthOfSchedule < 1500) bonusPoints += 0.25 // Weak SOS  
+      else if (strengthOfSchedule > 1600) bonusPoints -= 0.25 // Strong SOS
+      else if (strengthOfSchedule > 1650) bonusPoints -= 0.5  // Very strong SOS
+    }
+
+    // Home game advantage (more home games = slightly better)
+    if (homeGameAdvantage !== undefined && homeGameAdvantage > 0.6) {
+      bonusPoints += 0.25
+    }
+
+    // Divisional matchup penalty (divisional games are less predictable)
+    if (divisionalMatchupCount !== undefined && divisionalMatchupCount > 2) {
+      bonusPoints -= 0.25
+    }
+
+    // Calculate final rating
+    const finalRating = baseRating + bonusPoints
+
+    // Cap between 1-5 and round to nearest 0.5
+    return Math.max(1, Math.min(5, Math.round(finalRating * 2) / 2))
   }
 
   /**
@@ -160,6 +190,69 @@ export class SurvivorFutureValue {
     const probPerPoint = 0.025
     const winProb = baseProb + -spread * probPerPoint
     return Math.max(0.01, Math.min(0.99, winProb))
+  }
+
+  /**
+   * Calculate strength of schedule for a team's future matchups
+   */
+  static calculateStrengthOfSchedule(
+    matchups: FutureMatchup[],
+    teamRatings: Map<string, number>
+  ): number {
+    if (matchups.length === 0) return 1500 // Average
+
+    const opponentRatings = matchups
+      .map(m => teamRatings.get(m.opponentId) || 1500)
+      .filter(rating => rating > 0)
+
+    if (opponentRatings.length === 0) return 1500
+
+    return opponentRatings.reduce((sum, rating) => sum + rating, 0) / opponentRatings.length
+  }
+
+  /**
+   * Calculate home game advantage percentage
+   */
+  static calculateHomeGameAdvantage(matchups: FutureMatchup[]): number {
+    if (matchups.length === 0) return 0.5
+
+    const homeGames = matchups.filter(m => m.isHome).length
+    return homeGames / matchups.length
+  }
+
+  /**
+   * Count divisional matchups (requires division data)
+   */
+  static calculateDivisionalMatchups(
+    teamAbbr: string,
+    matchups: FutureMatchup[]
+  ): number {
+    // Define divisions
+    const divisions = {
+      'AFC East': ['BUF', 'MIA', 'NE', 'NYJ'],
+      'AFC North': ['BAL', 'CIN', 'CLE', 'PIT'],
+      'AFC South': ['HOU', 'IND', 'JAX', 'TEN'],
+      'AFC West': ['DEN', 'KC', 'LAC', 'LVR'],
+      'NFC East': ['DAL', 'NYG', 'PHI', 'WAS'],
+      'NFC North': ['CHI', 'DET', 'GB', 'MIN'],
+      'NFC South': ['ATL', 'CAR', 'NO', 'TB'],
+      'NFC West': ['ARI', 'LAR', 'SF', 'SEA']
+    }
+
+    // Find team's division
+    let teamDivision: string[] = []
+    for (const [_, teams] of Object.entries(divisions)) {
+      if (teams.includes(teamAbbr)) {
+        teamDivision = teams
+        break
+      }
+    }
+
+    if (teamDivision.length === 0) return 0
+
+    // Count divisional opponents (excluding the team itself)
+    const divisionalOpponents = teamDivision.filter(t => t !== teamAbbr)
+    return matchups.filter(m => divisionalOpponents.includes(m.opponentAbbr)).length
   }
 
   /**
@@ -351,10 +444,18 @@ export class SurvivorFutureValue {
 
       const hasEliteMatchup = matchups.some((m) => m.favorabilityScore >= 85)
 
+      // Calculate advanced metrics for comprehensive rating
+      const strengthOfSchedule = this.calculateStrengthOfSchedule(matchups, teamRatings)
+      const homeGameAdvantage = this.calculateHomeGameAdvantage(matchups)
+      const divisionalMatchupCount = this.calculateDivisionalMatchups(team.abbr, matchups)
+
       const futureValueRating = this.calculateFutureValueRating(
         averageFavorability,
         bestWeeks.length,
-        hasEliteMatchup
+        hasEliteMatchup,
+        strengthOfSchedule,
+        homeGameAdvantage,
+        divisionalMatchupCount
       )
 
       // Determine save recommendation (will need current week data in practice)

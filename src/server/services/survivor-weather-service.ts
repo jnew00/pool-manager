@@ -274,13 +274,13 @@ export class SurvivorWeatherService {
   }
 
   /**
-   * Simulate weather based on location and week
+   * Get weather based on location and week using deterministic patterns
    */
   private simulateWeather(
     teamAbbr: string,
     week: number
   ): Omit<WeatherConditions, 'gameId' | 'lastUpdated'> {
-    // Northern cold weather teams
+    // Team location classifications
     const coldWeatherTeams = [
       'BUF',
       'NE',
@@ -305,61 +305,74 @@ export class SurvivorWeatherService {
       'LV',
       'SF',
     ]
+    const coastalTeams = ['BUF', 'NE', 'NYJ', 'MIA', 'TB', 'JAX', 'LAC', 'SEA', 'SF']
+    const windyTeams = ['CHI', 'DEN', 'BUF', 'GB', 'KC'] // Known for windy conditions
 
     const isColdWeather = coldWeatherTeams.includes(teamAbbr)
     const isWarmWeather = warmWeatherTeams.includes(teamAbbr)
+    const isCoastal = coastalTeams.includes(teamAbbr)
+    const isWindy = windyTeams.includes(teamAbbr)
 
-    // Base temperature by week
+    // Deterministic base temperature by week and location
     let baseTemp = 70
     if (week <= 4) {
-      baseTemp = 75 // Early season
+      baseTemp = 75 // Early season (September)
     } else if (week <= 8) {
-      baseTemp = 65 // Mid season
+      baseTemp = 65 // Mid season (October)
     } else if (week <= 12) {
-      baseTemp = 55 // Late season
+      baseTemp = 55 // Late season (November)
     } else {
-      baseTemp = 40 // Winter
+      baseTemp = 40 // Winter (December/January)
     }
 
     // Adjust for location
     if (isColdWeather) {
-      baseTemp -= 10
+      baseTemp -= 15
     } else if (isWarmWeather) {
-      baseTemp += 10
+      baseTemp += 15
     }
 
-    // Random weather event
-    const rand = Math.random()
+    // Deterministic weather patterns based on team and week
     let conditions: WeatherConditions['conditions'] = 'CLEAR'
     let precipitation = 0
-    let windSpeed = 5 + Math.random() * 10
+    let windSpeed = 8 // Base wind speed
+    
+    // Create deterministic weather based on team abbreviation hash and week
+    const teamHash = teamAbbr.charCodeAt(0) + teamAbbr.charCodeAt(1) + (teamAbbr.charCodeAt(2) || 0)
+    const weatherSeed = (teamHash + week) % 100
 
-    if (rand < 0.15) {
-      // Rain
+    // Deterministic weather events
+    if (weatherSeed < 15 && isCoastal) {
+      // Rain more likely for coastal teams
       conditions = 'RAIN'
-      precipitation = 30 + Math.random() * 60
-      windSpeed += 5
-    } else if (rand < 0.05 && week > 12 && isColdWeather) {
-      // Snow (late season, cold weather only)
+      precipitation = 45
+      windSpeed = 15
+    } else if (weatherSeed < 8 && week > 12 && isColdWeather) {
+      // Snow in winter for cold weather teams
       conditions = 'SNOW'
-      precipitation = 40 + Math.random() * 50
-      baseTemp = 25 + Math.random() * 10
-      windSpeed += 10
-    } else if (rand < 0.25) {
-      // Windy
+      precipitation = 60
+      baseTemp = 28
+      windSpeed = 20
+    } else if (weatherSeed < 20 && isWindy) {
+      // Wind more likely for windy cities
       conditions = 'WIND'
-      windSpeed = 15 + Math.random() * 20
-    } else if (rand < 0.02) {
-      // Fog (rare)
+      windSpeed = 25
+    } else if (weatherSeed < 3) {
+      // Rare fog
       conditions = 'FOG'
+      windSpeed = 5
     }
 
+    // Calculate final temperature with location variance
+    const locationTempVariance = teamHash % 20 - 10 // -10 to +10 degree variance
+    const finalTemp = Math.round(baseTemp + locationTempVariance)
+
     return {
-      temperature: Math.round(baseTemp + (Math.random() - 0.5) * 20),
+      temperature: Math.max(10, Math.min(95, finalTemp)), // Keep within reasonable bounds
       windSpeed: Math.round(windSpeed),
       precipitation: Math.round(precipitation),
       conditions,
-      humidity: 40 + Math.random() * 40,
+      humidity: Math.min(90, Math.max(20, 50 + (teamHash % 40 - 20))), // 30-70% based on location
       visibility: conditions === 'FOG' ? 0.25 : 10,
     }
   }

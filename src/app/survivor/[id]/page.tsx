@@ -48,7 +48,7 @@ export default function SurvivorPoolPage() {
   const [error, setError] = useState<string | null>(null)
   const [currentWeek, setCurrentWeek] = useState(1)
   const [selectedEntryId, setSelectedEntryId] = useState<string>(
-    searchParams.get('entryId') || 'cmekvk7ae001xp1lgboidndoo'
+    searchParams.get('entryId') || ''
   )
   const [currentTab, setCurrentTab] = useState<string>(() => {
     // Initialize with URL params if available, otherwise default to 'entries'
@@ -311,7 +311,7 @@ export default function SurvivorPoolPage() {
           <TabsContent value="entries" className="space-y-4">
             <MultiEntryManager
               poolId={poolId}
-              userId="test-user"
+              userId={undefined} // Will be dynamically determined
               currentWeek={currentWeek}
               maxEntries={
                 poolSettings?.maxEntriesPerUser ||
@@ -517,13 +517,21 @@ export default function SurvivorPoolPage() {
           </TabsContent>
 
           <TabsContent value="recommendations" className="space-y-4">
-            <RecommendationPanel
-              poolId={poolId}
-              week={currentWeek}
-              entryId={selectedEntryId || undefined}
-              strategy={selectedStrategy}
-              onStrategyChange={setSelectedStrategy}
-              canPick={true}
+            {!selectedEntryId ? (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Please select an entry from the Entries tab to view recommendations.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <RecommendationPanel
+                poolId={poolId}
+                week={currentWeek}
+                entryId={selectedEntryId}
+                strategy={selectedStrategy}
+                onStrategyChange={setSelectedStrategy}
+                canPick={true}
               onPickSelect={async (teamId, gameId) => {
                 try {
 
@@ -584,7 +592,8 @@ export default function SurvivorPoolPage() {
                   )
                 }
               }}
-            />
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="matchups" className="space-y-4">

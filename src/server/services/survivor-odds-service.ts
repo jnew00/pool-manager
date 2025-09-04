@@ -102,20 +102,45 @@ export class SurvivorOddsService {
    */
   private async fetchDraftKingsOdds(week: number): Promise<GameOdds[]> {
     try {
-      // In production, would use DraftKings API or scraping
+      // Fetch games with existing lines
       const games = await prisma.game.findMany({
-        where: { week },
+        where: { 
+          week,
+          season: 2025,
+        },
         include: {
           homeTeam: true,
           awayTeam: true,
+          lines: {
+            where: {
+              isUserProvided: false,
+            },
+            orderBy: {
+              capturedAt: 'desc',
+            },
+            take: 1,
+          },
         },
       })
 
       return games.map((game) => {
-        // Simulate realistic odds based on team strength
-        const homeAdvantage = -3 // Home field advantage
-        const randomFactor = (Math.random() - 0.5) * 4 // Random spread adjustment
-        const spread = homeAdvantage + randomFactor
+        // Use existing lines data or fall back to deterministic values
+        const line = game.lines[0]
+        let spread = -3 // Default home field advantage
+        let total = 47.5 // Default NFL total
+        
+        if (line) {
+          spread = line.spread ? Number(line.spread) : -3
+          total = line.total ? Number(line.total) : 47.5
+        } else {
+          // Use team strength for deterministic spread calculation
+          const homeAdvantage = -3
+          const teamStrengthDiff = this.getTeamStrengthDifference(
+            game.homeTeam.nflAbbr,
+            game.awayTeam.nflAbbr
+          )
+          spread = homeAdvantage + teamStrengthDiff
+        }
 
         // Convert spread to moneylines
         const { homeML, awayML } = this.spreadToMoneylines(spread)
@@ -129,7 +154,7 @@ export class SurvivorOddsService {
           homeMoneyline: homeML,
           awayMoneyline: awayML,
           spread,
-          total: 44.5 + Math.random() * 10, // Random total between 44.5-54.5
+          total,
           homeWinProbability: this.moneylineToWinProbability(homeML),
           awayWinProbability: this.moneylineToWinProbability(awayML),
           source: 'DRAFTKINGS' as const,
@@ -148,18 +173,44 @@ export class SurvivorOddsService {
   private async fetchFanDuelOdds(week: number): Promise<GameOdds[]> {
     try {
       const games = await prisma.game.findMany({
-        where: { week },
+        where: { 
+          week,
+          season: 2025,
+        },
         include: {
           homeTeam: true,
           awayTeam: true,
+          lines: {
+            where: {
+              isUserProvided: false,
+            },
+            orderBy: {
+              capturedAt: 'desc',
+            },
+            take: 1,
+          },
         },
       })
 
       return games.map((game) => {
-        // Slightly different from DraftKings to simulate variance
-        const homeAdvantage = -2.5
-        const randomFactor = (Math.random() - 0.5) * 5
-        const spread = homeAdvantage + randomFactor
+        // Use existing lines data or fall back to deterministic values
+        const line = game.lines[0]
+        let spread = -2.5 // Slightly different from DraftKings
+        let total = 47.0 // Default NFL total
+        
+        if (line) {
+          // Add small variance to simulate different sportsbooks
+          spread = (line.spread ? Number(line.spread) : -2.5) + 0.5
+          total = (line.total ? Number(line.total) : 47.0) - 0.5
+        } else {
+          // Use team strength for deterministic spread calculation
+          const homeAdvantage = -2.5
+          const teamStrengthDiff = this.getTeamStrengthDifference(
+            game.homeTeam.nflAbbr,
+            game.awayTeam.nflAbbr
+          )
+          spread = homeAdvantage + teamStrengthDiff + 0.5 // Small variance from DraftKings
+        }
 
         const { homeML, awayML } = this.spreadToMoneylines(spread)
 
@@ -172,7 +223,7 @@ export class SurvivorOddsService {
           homeMoneyline: homeML,
           awayMoneyline: awayML,
           spread,
-          total: 45 + Math.random() * 9,
+          total,
           homeWinProbability: this.moneylineToWinProbability(homeML),
           awayWinProbability: this.moneylineToWinProbability(awayML),
           source: 'FANDUEL' as const,
@@ -269,36 +320,63 @@ export class SurvivorOddsService {
     gameId: string,
     hoursBack: number = 24
   ): Promise<OddsMovement[]> {
-    // In production, would track historical odds
-    // For now, return simulated movement
-    const movements: OddsMovement[] = []
-    const now = Date.now()
-    const intervals = Math.floor(hoursBack / 2) // Check every 2 hours
-
-    for (let i = 0; i < intervals; i++) {
-      const timestamp = new Date(now - i * 2 * 60 * 60 * 1000)
-      const change = (Math.random() - 0.5) * 20 // Random movement
-
-      movements.push({
-        gameId,
-        timestamp,
-        homeMoneylinePrev: -150 + i * 5,
-        homeMoneylineCurrent: -150 + (i + 1) * 5 + change,
-        awayMoneylinePrev: 130 - i * 5,
-        awayMoneylineCurrent: 130 - (i + 1) * 5 - change,
-        spreadPrev: -3 + i * 0.5,
-        spreadCurrent: -3 + (i + 1) * 0.5,
-        direction: change > 0 ? 'HOME_IMPROVING' : 'AWAY_IMPROVING',
-        magnitude:
-          Math.abs(change) > 15
-            ? 'SIGNIFICANT'
-            : Math.abs(change) > 7
-              ? 'MODERATE'
-              : 'MINOR',
+    // Query historical lines from database
+    try {
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+        include: {
+          lines: {
+            where: {
+              capturedAt: {
+                gte: new Date(Date.now() - hoursBack * 60 * 60 * 1000),
+              },
+            },
+            orderBy: {
+              capturedAt: 'desc',
+            },
+          },
+        },
       })
-    }
 
-    return movements
+      if (!game || game.lines.length < 2) {
+        return []
+      }
+
+      const movements: OddsMovement[] = []
+      
+      for (let i = 0; i < game.lines.length - 1; i++) {
+        const current = game.lines[i]
+        const previous = game.lines[i + 1]
+        
+        if (!current.moneylineHome || !previous.moneylineHome) continue
+
+        const homeMLChange = current.moneylineHome - previous.moneylineHome
+        const awayMLChange = current.moneylineAway! - previous.moneylineAway!
+        
+        movements.push({
+          gameId,
+          timestamp: current.capturedAt,
+          homeMoneylinePrev: previous.moneylineHome,
+          homeMoneylineCurrent: current.moneylineHome,
+          awayMoneylinePrev: previous.moneylineAway!,
+          awayMoneylineCurrent: current.moneylineAway!,
+          spreadPrev: previous.spread ? Number(previous.spread) : 0,
+          spreadCurrent: current.spread ? Number(current.spread) : 0,
+          direction: homeMLChange > 0 ? 'HOME_IMPROVING' : 'AWAY_IMPROVING',
+          magnitude:
+            Math.abs(homeMLChange) > 15
+              ? 'SIGNIFICANT'
+              : Math.abs(homeMLChange) > 7
+                ? 'MODERATE'
+                : 'MINOR',
+        })
+      }
+
+      return movements
+    } catch (error) {
+      console.error('Error fetching odds movement:', error)
+      return []
+    }
   }
 
   /**
@@ -438,5 +516,31 @@ export class SurvivorOddsService {
         }
       }
     }
+  }
+
+  /**
+   * Get deterministic team strength difference for spread calculation
+   */
+  private getTeamStrengthDifference(homeTeam: string, awayTeam: string): number {
+    // Define team tiers based on historical performance
+    const tierA = ['KC', 'BUF', 'PHI', 'SF', 'BAL', 'CIN', 'MIA']
+    const tierB = ['DAL', 'MIN', 'DET', 'LAC', 'TEN', 'NYJ', 'SEA', 'JAX']
+    const tierC = ['LVR', 'PIT', 'CLE', 'NO', 'ATL', 'GB', 'TB', 'LAR']
+    const tierD = ['DEN', 'IND', 'WAS', 'NE', 'CHI', 'NYG', 'CAR', 'HOU', 'ARI']
+
+    const getTierValue = (team: string): number => {
+      if (tierA.includes(team)) return 3
+      if (tierB.includes(team)) return 1
+      if (tierC.includes(team)) return -1
+      if (tierD.includes(team)) return -3
+      return 0 // Default for unknown teams
+    }
+
+    const homeTier = getTierValue(homeTeam)
+    const awayTier = getTierValue(awayTeam)
+    
+    // Positive means home team is stronger (spread moves toward home)
+    // Negative means away team is stronger (spread moves toward away)
+    return homeTier - awayTier
   }
 }

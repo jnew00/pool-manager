@@ -118,7 +118,7 @@ interface RecommendationPanelProps {
 
 export default function RecommendationPanel({
   poolId,
-  entryId = 'default-entry',
+  entryId,
   week,
   strategy = 'BALANCED',
   onStrategyChange,
@@ -132,6 +132,14 @@ export default function RecommendationPanel({
     avoidList: Array<{ teamAbbr: string; reason: string }>
     weekOverview: WeekOverview
     strategicInsights: string[]
+    dataSource?: {
+      available: boolean
+      seasonActive: boolean
+      currentWeek: number
+      message: string
+      analysisType: string
+      confidence: string
+    }
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -141,6 +149,11 @@ export default function RecommendationPanel({
   }, [poolId, entryId, week, strategy])
 
   const fetchRecommendations = async () => {
+    if (!entryId) {
+      setError('Please select an entry to view recommendations')
+      return
+    }
+
     setLoading(true)
     setError(null)
 
@@ -274,6 +287,39 @@ export default function RecommendationPanel({
             </div>
           </CardHeader>
         </Card>
+      )}
+
+      {/* Data Source Indicator */}
+      {recommendations?.dataSource && (
+        <Alert className={cn(
+          recommendations.dataSource.available 
+            ? 'border-green-200 bg-green-50' 
+            : 'border-blue-200 bg-blue-50'
+        )}>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
+                  recommendations.dataSource.available
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-blue-100 text-blue-700'
+                )}>
+                  {recommendations.dataSource.confidence} Confidence
+                </span>
+                <span className="text-sm text-gray-600">
+                  {recommendations.dataSource.analysisType}
+                </span>
+              </div>
+              {!recommendations.dataSource.available && (
+                <span className="text-xs text-blue-600">
+                  Using deterministic analysis
+                </span>
+              )}
+            </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Week Overview */}

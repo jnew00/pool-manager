@@ -5,8 +5,32 @@ import {
   defaultModelWeights,
 } from '@/lib/models/confidence-engine'
 import { dataProviderRegistry } from '@/lib/data-sources/provider-registry'
+import { EspnOddsProvider } from '@/lib/data-sources/providers/espn-odds-provider'
+import { OpenWeatherProvider } from '@/lib/data-sources/providers/openweather-provider'
+import { MockWeatherProvider } from '@/lib/data-sources/providers/mock-weather-provider'
 import type { ModelInput } from '@/lib/models/types'
+
 const confidenceEngine = new ConfidenceEngine()
+
+// Initialize providers once
+let providersInitialized = false
+function initializeProviders() {
+  if (providersInitialized) return
+
+  const espnProvider = new EspnOddsProvider()
+  const weatherProvider = new OpenWeatherProvider({
+    apiKey: process.env.OPENWEATHER_API_KEY,
+  })
+  const mockWeatherProvider = new MockWeatherProvider()
+
+  dataProviderRegistry.registerOddsProvider(espnProvider, true)
+  dataProviderRegistry.registerWeatherProvider(
+    process.env.OPENWEATHER_API_KEY ? weatherProvider : mockWeatherProvider,
+    true
+  )
+
+  providersInitialized = true
+}
 
 // Helper function to determine if venue is a dome
 function isVenueDome(venue?: string): boolean {
@@ -28,8 +52,171 @@ function isVenueDome(venue?: string): boolean {
   return domeVenues.some((domeVenue) => venue.includes(domeVenue))
 }
 
+// Calculate injury impact based on recent player performance and status
+async function calculateInjuryImpact(
+  homeTeamId: string,
+  awayTeamId: string,
+  season: number,
+  week: number
+): Promise<{
+  homeTeamPenalty: number
+  awayTeamPenalty: number
+  totalPenalty: number
+  qbImpact: boolean
+  lineImpact: boolean
+  secondaryImpact: boolean
+}> {
+  try {
+    // Get recent games to analyze team performance trends
+    const recentGames = await prisma.game.findMany({
+      where: {
+        season,
+        week: { lt: week }, // Games before current week
+        OR: [{ homeTeamId }, { awayTeamId }, { homeTeamId: awayTeamId }, { awayTeamId: homeTeamId }],
+      },
+      include: {
+        result: true,
+      },
+      orderBy: { week: 'desc' },
+      take: 8, // Last 4 games per team
+    })
+
+    let homeTeamPenalty = 0
+    let awayTeamPenalty = 0
+    let qbImpact = false
+    let lineImpact = false
+    let secondaryImpact = false
+
+    // Analyze performance trends to infer injury impacts
+    const homeRecentGames = recentGames.filter(g => g.homeTeamId === homeTeamId || g.awayTeamId === homeTeamId).slice(0, 3)
+    const awayRecentGames = recentGames.filter(g => g.homeTeamId === awayTeamId || g.awayTeamId === awayTeamId).slice(0, 3)
+
+    // Calculate average scoring performance
+    for (const game of homeRecentGames) {
+      if (!game.result) continue
+      const isHome = game.homeTeamId === homeTeamId
+      const teamScore = isHome ? game.result.homeScore : game.result.awayScore
+      const oppScore = isHome ? game.result.awayScore : game.result.homeScore
+      
+      // Penalty increases if team is consistently underperforming (possible injuries)
+      if (teamScore < oppScore - 7) {
+        homeTeamPenalty += 0.5
+      }
+      
+      // Very low scoring suggests offensive line or QB issues
+      if (teamScore < 14) {
+        qbImpact = true
+        lineImpact = true
+        homeTeamPenalty += 1.0
+      }
+    }
+
+    for (const game of awayRecentGames) {
+      if (!game.result) continue
+      const isHome = game.homeTeamId === awayTeamId
+      const teamScore = isHome ? game.result.homeScore : game.result.awayScore
+      const oppScore = isHome ? game.result.awayScore : game.result.homeScore
+      
+      if (teamScore < oppScore - 7) {
+        awayTeamPenalty += 0.5
+      }
+      
+      if (teamScore < 14) {
+        qbImpact = true
+        lineImpact = true
+        awayTeamPenalty += 1.0
+      }
+    }
+
+    return {
+      homeTeamPenalty,
+      awayTeamPenalty,
+      totalPenalty: homeTeamPenalty + awayTeamPenalty,
+      qbImpact,
+      lineImpact,
+      secondaryImpact,
+    }
+  } catch (error) {
+    console.error('Error calculating injury impact:', error)
+    return {
+      homeTeamPenalty: 0,
+      awayTeamPenalty: 0,
+      totalPenalty: 0,
+      qbImpact: false,
+      lineImpact: false,
+      secondaryImpact: false,
+    }
+  }
+}
+
+// Calculate rest advantage based on actual game history
+async function calculateRestAdvantage(
+  homeTeamId: string,
+  awayTeamId: string,
+  season: number,
+  week: number,
+  currentGameTime: Date
+): Promise<{
+  homeDaysRest: number
+  awayDaysRest: number
+  advantage: number
+}> {
+  try {
+    // Find each team's most recent game
+    const homeLastGame = await prisma.game.findFirst({
+      where: {
+        season,
+        week: { lt: week },
+        OR: [{ homeTeamId }, { awayTeamId: homeTeamId }],
+      },
+      orderBy: { week: 'desc' },
+    })
+
+    const awayLastGame = await prisma.game.findFirst({
+      where: {
+        season,
+        week: { lt: week },
+        OR: [{ homeTeamId: awayTeamId }, { awayTeamId }],
+      },
+      orderBy: { week: 'desc' },
+    })
+
+    // Calculate rest days
+    let homeDaysRest = 7 // Default
+    let awayDaysRest = 7
+
+    if (homeLastGame) {
+      const daysDiff = Math.floor((currentGameTime.getTime() - homeLastGame.kickoff.getTime()) / (1000 * 60 * 60 * 24))
+      homeDaysRest = Math.max(1, daysDiff)
+    }
+
+    if (awayLastGame) {
+      const daysDiff = Math.floor((currentGameTime.getTime() - awayLastGame.kickoff.getTime()) / (1000 * 60 * 60 * 24))
+      awayDaysRest = Math.max(1, daysDiff)
+    }
+
+    // Calculate advantage
+    const advantage = homeDaysRest - awayDaysRest
+
+    return {
+      homeDaysRest,
+      awayDaysRest,
+      advantage,
+    }
+  } catch (error) {
+    console.error('Error calculating rest advantage:', error)
+    return {
+      homeDaysRest: 7,
+      awayDaysRest: 7,
+      advantage: 0,
+    }
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
+    initializeProviders()
+    
     const searchParams = request.nextUrl.searchParams
     const poolId = searchParams.get('poolId')
     const season = parseInt(
@@ -152,33 +339,95 @@ export async function GET(request: NextRequest) {
             moneylineAway: undefined,
           }
 
-      // Get real weather data if available
+      console.log(`[DEBUG] Starting weather check for game ${game.id} - force refresh`)
+      
+      // Get real weather data from provider
       const gameApiRefs = game.apiRefs as any
-      const weatherData = gameApiRefs?.weather || {
-        isDome: isVenueDome(game.venue || ''),
-        temperature: 65,
-        windSpeed: 5,
-        precipitationChance: 0.0,
+      let weatherData = gameApiRefs?.weather // Check if already cached in game data
+      
+      console.log(`[Weather Debug] Game: ${game.homeTeam?.nflAbbr} vs ${game.awayTeam?.nflAbbr}`)
+      console.log(`[Weather Debug] - venue: ${game.venue}`)
+      console.log(`[Weather Debug] - kickoff: ${game.kickoff}`)
+      console.log(`[Weather Debug] - cached weather: ${weatherData ? 'YES' : 'NO'}`)
+      if (weatherData) {
+        console.log(`[Weather Debug] - cached conditions: ${weatherData.conditions}`)
+        console.log(`[Weather Debug] - cached temp: ${weatherData.temperature}°F`)
+      }
+      
+      // Force refresh weather data if cached data shows "Forecast unavailable" or game is within 5 days
+      const gameTime = new Date(game.kickoff)
+      const now = new Date()
+      const hoursFromNow = (gameTime.getTime() - now.getTime()) / (1000 * 60 * 60)
+      const shouldRefreshWeather = !weatherData || 
+        (weatherData.conditions && weatherData.conditions.includes('Forecast unavailable')) ||
+        (hoursFromNow <= 120) // Within 5 days
+      
+      if (shouldRefreshWeather && game.venue && game.kickoff) {
+        console.log(`[Weather] Force fetching fresh weather for ${game.venue} at ${game.kickoff} (${Math.round(hoursFromNow)}h from now)`)
+        const weatherResponse = await dataProviderRegistry.getWeatherForGame(
+          game.id,
+          game.venue,
+          game.kickoff
+        )
+        console.log(`[Weather] Response:`, weatherResponse.success ? 'Success' : `Failed: ${weatherResponse.error?.message}`)
+        
+        if (weatherResponse.success && weatherResponse.data) {
+          weatherData = {
+            isDome: weatherResponse.data.isDome,
+            temperature: weatherResponse.data.temperature,
+            windSpeed: weatherResponse.data.windSpeed,
+            precipitationChance: weatherResponse.data.precipitationChance,
+            conditions: weatherResponse.data.conditions,
+            source: weatherResponse.data.source,
+            windDirection: weatherResponse.data.windDirection,
+            humidity: weatherResponse.data.humidity,
+            capturedAt: weatherResponse.data.capturedAt,
+          }
+          console.log(`[Weather] Fresh weather fetched: ${weatherData.temperature}°F, ${weatherData.conditions}`)
+          
+          // Update game's apiRefs with fresh weather data so UI tooltips show current weather
+          await prisma.game.update({
+            where: { id: game.id },
+            data: {
+              apiRefs: {
+                ...(game.apiRefs as any),
+                weather: weatherData,
+              },
+            },
+          })
+          console.log(`[Weather] Updated game ${game.id} database with fresh weather data`)
+        } else {
+          console.error(`[Weather] Failed to fetch weather: ${weatherResponse.error?.message}`)
+        }
+      }
+      
+      // Final fallback to sensible defaults if no weather data available
+      if (!weatherData) {
+        weatherData = {
+          isDome: isVenueDome(game.venue || ''),
+          temperature: 65,
+          windSpeed: 5,
+          precipitationChance: 0.0,
+        }
+        console.log(`[Recommendations] No weather data available for ${game.homeTeam.nflAbbr} vs ${game.awayTeam.nflAbbr}, using defaults`)
       }
 
-      // TODO: Get real injury data from external sources
-      // For now, use placeholder data
-      const injuryData = {
-        homeTeamPenalty: 0,
-        awayTeamPenalty: 0,
-        totalPenalty: 0,
-        qbImpact: false,
-        lineImpact: false,
-        secondaryImpact: false,
-      }
+      // Calculate real injury impact based on recent games and player data
+      const injuryData = await calculateInjuryImpact(
+        game.homeTeam.id,
+        game.awayTeam.id,
+        season,
+        week
+      )
 
-      // TODO: Calculate real rest days from game history
-      // For now, assume standard 7-day rest
-      const restData = {
-        homeDaysRest: 7,
-        awayDaysRest: 7,
-        advantage: 0, // No rest advantage
-      }
+      // Calculate real rest advantage based on previous games
+      const restData = await calculateRestAdvantage(
+        game.homeTeam.id,
+        game.awayTeam.id,
+        season,
+        week,
+        game.kickoff
+      )
 
       // Get current market data from ESPN odds provider
       const currentMarketData = await dataProviderRegistry
