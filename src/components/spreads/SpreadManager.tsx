@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Plus, Upload, Edit2, Save, X, FileText, Download } from 'lucide-react'
+import { Plus, Upload, Edit2, Save, X, FileText, Download, Globe } from 'lucide-react'
 
 interface SpreadData {
   id: string
@@ -42,6 +42,8 @@ export function SpreadManager({ poolId, season, week, onSpreadUpdate }: SpreadMa
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showCsvUpload, setShowCsvUpload] = useState(false)
   const [uploadingCsv, setUploadingCsv] = useState(false)
+  const [showNumber1PoolScraper, setShowNumber1PoolScraper] = useState(false)
+  const [scrapingNumber1Pool, setScrapingNumber1Pool] = useState(false)
   
   // Form state for editing
   const [editForm, setEditForm] = useState({
@@ -204,6 +206,70 @@ export function SpreadManager({ poolId, season, week, onSpreadUpdate }: SpreadMa
     }
   }
 
+  const handleNumber1PoolScrape = async (url: string) => {
+    setScrapingNumber1Pool(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/upload/number1pool', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          url,
+          poolId 
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to scrape Number1Pool')
+      }
+
+      // Now save the scraped spreads to the pool
+      if (result.spreads && result.spreads.length > 0) {
+        const savePromises = result.spreads.map(async (spread: any) => {
+          // Find the game for these teams
+          const game = games.find(g => 
+            (g.homeTeam.nflAbbr === spread.homeTeam && g.awayTeam.nflAbbr === spread.awayTeam) ||
+            (g.awayTeam.nflAbbr === spread.homeTeam && g.homeTeam.nflAbbr === spread.awayTeam)
+          )
+          
+          if (game) {
+            const spreadData = {
+              gameId: game.id,
+              poolId,
+              spread: spread.spread,
+              source: 'number1pool',
+              isUserProvided: true
+            }
+
+            return fetch(`/api/pools/${poolId}/spreads`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(spreadData),
+            })
+          }
+        })
+
+        await Promise.all(savePromises.filter(Boolean))
+      }
+
+      alert(`Successfully scraped and saved ${result.spreadsCount} spreads from Number1Pool`)
+      await fetchData()
+      setShowNumber1PoolScraper(false)
+      onSpreadUpdate?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to scrape Number1Pool')
+    } finally {
+      setScrapingNumber1Pool(false)
+    }
+  }
+
   const exportToCsv = () => {
     const headers = ['Away Team', 'Home Team', 'ESPN Spread', 'Uploaded Spread', 'ESPN Total', 'Uploaded Total', 'ESPN ML Home', 'Uploaded ML Home', 'ESPN ML Away', 'Uploaded ML Away']
     const csvData = [
@@ -273,6 +339,13 @@ export function SpreadManager({ poolId, season, week, onSpreadUpdate }: SpreadMa
             Export CSV
           </button>
           <button
+            onClick={() => setShowNumber1PoolScraper(!showNumber1PoolScraper)}
+            className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+          >
+            <Globe className="w-4 h-4 mr-2" />
+            Number1Pool
+          </button>
+          <button
             onClick={() => setShowCsvUpload(!showCsvUpload)}
             className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
           >
@@ -327,6 +400,80 @@ export function SpreadManager({ poolId, season, week, onSpreadUpdate }: SpreadMa
             <code className="bg-blue-100 dark:bg-blue-900/40 px-2 py-1 rounded">
               Away Team,Home Team,Spread,Total,ML Home,ML Away
             </code>
+          </div>
+        </div>
+      )}
+
+      {/* Number1Pool Scraper Panel */}
+      {showNumber1PoolScraper && (
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-600 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">
+                Import from Number1Pool
+              </h3>
+              <p className="text-sm text-green-700 dark:text-green-300">
+                Enter your Number1Pool weekly picks URL to automatically import spreads
+              </p>
+            </div>
+            <button
+              onClick={() => setShowNumber1PoolScraper(false)}
+              className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="number1pool-url" className="block text-sm font-medium text-green-900 dark:text-green-100 mb-2">
+                Number1Pool Weekly Picks URL
+              </label>
+              <input
+                id="number1pool-url"
+                type="url"
+                placeholder="https://number1pool.com/picks_weekly.php?user=YourUser&verify=..."
+                className="w-full px-3 py-2 border border-green-300 dark:border-green-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    const url = (e.target as HTMLInputElement).value
+                    if (url.trim()) {
+                      handleNumber1PoolScrape(url.trim())
+                    }
+                  }
+                }}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-green-600 dark:text-green-400">
+                <p>Example URL format:</p>
+                <code className="bg-green-100 dark:bg-green-900/40 px-2 py-1 rounded text-xs">
+                  https://number1pool.com/picks_weekly.php?user=GatorBait&verify=970622f774ee22dcef22f41487b87fa3
+                </code>
+              </div>
+              
+              {scrapingNumber1Pool && (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
+                  <span className="text-sm text-green-600 dark:text-green-400">Scraping spreads...</span>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => {
+                const input = document.getElementById('number1pool-url') as HTMLInputElement
+                const url = input?.value?.trim()
+                if (url) {
+                  handleNumber1PoolScrape(url)
+                }
+              }}
+              disabled={scrapingNumber1Pool}
+              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-lg font-medium transition-colors"
+            >
+              {scrapingNumber1Pool ? 'Importing...' : 'Import Spreads'}
+            </button>
           </div>
         </div>
       )}

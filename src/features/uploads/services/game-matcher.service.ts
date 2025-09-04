@@ -144,15 +144,41 @@ export class GameMatcherService {
 
     if (match) {
       console.log(`[GameMatcher] ✓ Fuzzy match found: ${match.awayTeam.nflAbbr} @ ${match.homeTeam.nflAbbr}`)
-    } else {
-      console.log(`[GameMatcher] ✗ No match found for "${spread.away_team}" @ "${spread.home_team}"`)
-      console.log(`[GameMatcher] Available games:`)
-      games.forEach((game, i) => {
-        console.log(`[GameMatcher]   ${i + 1}. ${game.awayTeam.nflAbbr} @ ${game.homeTeam.nflAbbr}`)
-      })
+      return match
     }
 
-    return match || null
+    console.log(`[GameMatcher] No match in standard direction, trying reversed home/away...`)
+    
+    // Try bidirectional matching - sometimes upload data has opposite home/away assignment
+    match = games.find((game) => {
+      const homeMatchReversed = this.teamMatches(
+        game.homeTeam.nflAbbr,
+        spread.away_team  // Upload away team matches database home team
+      )
+      const awayMatchReversed = this.teamMatches(
+        game.awayTeam.nflAbbr,
+        spread.home_team  // Upload home team matches database away team
+      )
+      
+      console.log(`[GameMatcher]   Testing reversed ${game.awayTeam.nflAbbr} @ ${game.homeTeam.nflAbbr}:`)
+      console.log(`[GameMatcher]     Away(rev): "${spread.home_team}" vs "${game.awayTeam.nflAbbr}" = ${awayMatchReversed}`)
+      console.log(`[GameMatcher]     Home(rev): "${spread.away_team}" vs "${game.homeTeam.nflAbbr}" = ${homeMatchReversed}`)
+      
+      return homeMatchReversed && awayMatchReversed
+    })
+
+    if (match) {
+      console.log(`[GameMatcher] ✓ Bidirectional match found (reversed): ${match.awayTeam.nflAbbr} @ ${match.homeTeam.nflAbbr}`)
+      return match
+    }
+
+    console.log(`[GameMatcher] ✗ No match found for "${spread.away_team}" @ "${spread.home_team}" in either direction`)
+    console.log(`[GameMatcher] Available games:`)
+    games.forEach((game, i) => {
+      console.log(`[GameMatcher]   ${i + 1}. ${game.awayTeam.nflAbbr} @ ${game.homeTeam.nflAbbr}`)
+    })
+
+    return null
   }
 
   /**
@@ -160,24 +186,24 @@ export class GameMatcherService {
    * Handles variations, abbreviations, nicknames, and fuzzy matching
    */
   private teamMatches(dbTeam: string, uploadTeam: string): boolean {
-    // Debug log for team matching
-    if (dbTeam === 'LVR' || uploadTeam === 'LV' || uploadTeam === 'LVR') {
-      console.log(`[TeamMatcher DEBUG] Checking LVR match: DB="${dbTeam}" vs Upload="${uploadTeam}"`)
+    // Debug log for team matching  
+    if (uploadTeam.includes('PHILADELPHIA') || dbTeam === 'PHI' || uploadTeam.includes('Dallas') || dbTeam === 'DAL') {
+      console.log(`[TeamMatcher DEBUG] Checking PHI/DAL match: DB="${dbTeam}" vs Upload="${uploadTeam}"`)
     }
     
     // Comprehensive team name variations for NFL teams
     const variations: Record<string, string[]> = {
-      ARI: ['Arizona', 'Cardinals', 'AZ', 'ARIZ', 'Card', 'Cards', 'Cardinal'],
-      ATL: ['Atlanta', 'Falcons', 'GA', 'Falcon', 'Dirty Birds'],
-      BAL: ['Baltimore', 'Ravens', 'MD', 'Raven'],
-      BUF: ['Buffalo', 'Bills', 'NY', 'Bill', 'Mafia'],
-      CAR: ['Carolina', 'Panthers', 'NC', 'Panther', 'CAR', 'Cats'],
-      CHI: ['Chicago', 'Bears', 'IL', 'Bear', 'Da Bears'],
-      CIN: ['Cincinnati', 'Bengals', 'OH', 'Bengal', 'Stripes'],
-      CLE: ['Cleveland', 'Browns', 'OH', 'Brown', 'Factory of Sadness'],
-      DAL: ['Dallas', 'Cowboys', 'TX', 'Cowboy', 'Boys', 'Americas Team'],
-      DEN: ['Denver', 'Broncos', 'CO', 'Bronco', 'Orange Crush'],
-      DET: ['Detroit', 'Lions', 'MI', 'Lion'],
+      ARI: ['Arizona', 'Cardinals', 'AZ', 'ARIZ', 'Card', 'Cards', 'Cardinal', 'Arizona Cardinals', 'ARIZONA CARDINALS'],
+      ATL: ['Atlanta', 'Falcons', 'GA', 'Falcon', 'Dirty Birds', 'Atlanta Falcons', 'ATLANTA FALCONS'],
+      BAL: ['Baltimore', 'Ravens', 'MD', 'Raven', 'Baltimore Ravens', 'BALTIMORE RAVENS'],
+      BUF: ['Buffalo', 'Bills', 'NY', 'Bill', 'Mafia', 'Buffalo Bills', 'BUFFALO BILLS'],
+      CAR: ['Carolina', 'Panthers', 'NC', 'Panther', 'CAR', 'Cats', 'Carolina Panthers', 'CAROLINA PANTHERS'],
+      CHI: ['Chicago', 'Bears', 'IL', 'Bear', 'Da Bears', 'Chicago Bears', 'CHICAGO BEARS'],
+      CIN: ['Cincinnati', 'Bengals', 'OH', 'Bengal', 'Stripes', 'Cincinnati Bengals', 'CINCINNATI BENGALS'],
+      CLE: ['Cleveland', 'Browns', 'OH', 'Brown', 'Factory of Sadness', 'Cleveland Browns', 'CLEVELAND BROWNS'],
+      DAL: ['Dallas', 'Cowboys', 'TX', 'Cowboy', 'Boys', 'Americas Team', 'Dallas Cowboys', 'DALLAS COWBOYS'],
+      DEN: ['Denver', 'Broncos', 'CO', 'Bronco', 'Orange Crush', 'Denver Broncos', 'DENVER BRONCOS'],
+      DET: ['Detroit', 'Lions', 'MI', 'Lion', 'Detroit Lions', 'DETROIT LIONS'],
       GB: [
         'Green Bay',
         'Packers',
@@ -186,11 +212,40 @@ export class GameMatcherService {
         'Packer',
         'Pack',
         'Cheeseheads',
+        'Green Bay Packers',
+        'GREEN BAY PACKERS',
       ],
-      HOU: ['Houston', 'Texans', 'TX', 'Texan'],
-      IND: ['Indianapolis', 'Colts', 'IN', 'Colt', 'Horseshoe'],
-      JAX: ['Jacksonville', 'Jaguars', 'FL', 'JAC', 'Jaguar', 'Jags', 'Duval'],
-      KC: ['Kansas City', 'Chiefs', 'MO', 'KAN', 'Chief', 'Kingdom'],
+      HOU: ['Houston', 'Texans', 'TX', 'Texan', 'Houston Texans', 'HOUSTON TEXANS'],
+      IND: ['Indianapolis', 'Colts', 'IN', 'Colt', 'Horseshoe', 'Indianapolis Colts', 'INDIANAPOLIS COLTS'],
+      JAX: ['Jacksonville', 'Jaguars', 'FL', 'JAC', 'Jaguar', 'Jags', 'Duval', 'Jacksonville Jaguars', 'JACKSONVILLE JAGUARS'],
+      KC: ['Kansas City', 'Chiefs', 'MO', 'KAN', 'Chief', 'Kingdom', 'Kansas City Chiefs', 'KANSAS CITY CHIEFS'],
+      LAC: [
+        'Los Angeles',
+        'Chargers',
+        'CA',
+        'LAC',
+        'San Diego',
+        'Charger',
+        'Bolts',
+        'SD',
+        'Powder Blue',
+        'Los Angeles Chargers',
+        'LOS ANGELES CHARGERS',
+        'LA CHARGERS',
+        'San Diego Chargers',
+      ],
+      LAR: [
+        'Los Angeles',
+        'Rams',
+        'CA',
+        'LAR',
+        'Ram',
+        'Horns',
+        'Los Angeles Rams',
+        'LOS ANGELES RAMS',
+        'LA RAMS',
+        'St Louis Rams',
+      ],
       LVR: [
         'Las Vegas',
         'Raiders',
@@ -203,22 +258,14 @@ export class GameMatcherService {
         'OAK',
         'Silver and Black',
         'Nation',
+        'Las Vegas Raiders',
+        'LAS VEGAS RAIDERS',
+        'Oakland Raiders',
+        'OAKLAND RAIDERS',
       ],
       // Add explicit LV mapping for backward compatibility
       LV: ['LVR', 'Las Vegas', 'Raiders', 'NV', 'LV', 'Oakland', 'Raider', 'Vegas', 'OAK'],
-      LAC: [
-        'Los Angeles',
-        'Chargers',
-        'CA',
-        'LAC',
-        'San Diego',
-        'Charger',
-        'Bolts',
-        'SD',
-        'Powder Blue',
-      ],
-      LAR: ['Los Angeles', 'Rams', 'CA', 'LAR', 'Ram', 'Horns'],
-      MIA: ['Miami', 'Dolphins', 'FL', 'Dolphin', 'Fins', 'Aqua'],
+      MIA: ['Miami', 'Dolphins', 'FL', 'Dolphin', 'Fins', 'Aqua', 'Miami Dolphins', 'MIAMI DOLPHINS'],
       MIN: [
         'Minnesota',
         'Vikings',
@@ -226,6 +273,8 @@ export class GameMatcherService {
         'Viking',
         'Vikes',
         'Purple People Eaters',
+        'Minnesota Vikings',
+        'MINNESOTA VIKINGS',
       ],
       NE: [
         'New England',
@@ -235,10 +284,12 @@ export class GameMatcherService {
         'Patriot',
         'Pats',
         'Flying Elvis',
+        'New England Patriots',
+        'NEW ENGLAND PATRIOTS',
       ],
-      NO: ['New Orleans', 'Saints', 'LA', 'NOR', 'Saint', 'Who Dat'],
-      NYG: ['New York', 'Giants', 'NY', 'NYG', 'Giant', 'G-Men', 'Big Blue'],
-      NYJ: ['New York', 'Jets', 'NY', 'NYJ', 'Jet', 'Gang Green'],
+      NO: ['New Orleans', 'Saints', 'LA', 'NOR', 'Saint', 'Who Dat', 'New Orleans Saints', 'NEW ORLEANS SAINTS'],
+      NYG: ['New York', 'Giants', 'NY', 'NYG', 'Giant', 'G-Men', 'Big Blue', 'New York Giants', 'NEW YORK GIANTS'],
+      NYJ: ['New York', 'Jets', 'NY', 'NYJ', 'Jet', 'Gang Green', 'New York Jets', 'NEW YORK JETS'],
       PHI: [
         'Philadelphia',
         'Eagles',
@@ -246,6 +297,8 @@ export class GameMatcherService {
         'Eagle',
         'Iggles',
         'Fly Eagles Fly',
+        'Philadelphia Eagles',
+        'PHILADELPHIA EAGLES',
       ],
       PIT: [
         'Pittsburgh',
@@ -254,6 +307,8 @@ export class GameMatcherService {
         'Steeler',
         'Steel Curtain',
         'Black and Gold',
+        'Pittsburgh Steelers',
+        'PITTSBURGH STEELERS',
       ],
       SF: [
         'San Francisco',
@@ -264,8 +319,10 @@ export class GameMatcherService {
         'Niners',
         '49er',
         'Faithful',
+        'San Francisco 49ers',
+        'SAN FRANCISCO 49ERS',
       ],
-      SEA: ['Seattle', 'Seahawks', 'WA', 'Seahawk', 'Hawks', '12th Man'],
+      SEA: ['Seattle', 'Seahawks', 'WA', 'Seahawk', 'Hawks', '12th Man', 'Seattle Seahawks', 'SEATTLE SEAHAWKS'],
       TB: [
         'Tampa Bay',
         'Buccaneers',
@@ -277,8 +334,10 @@ export class GameMatcherService {
         'Tampa',
         'Buccaneer',
         'Fire the Cannons',
+        'Tampa Bay Buccaneers',
+        'TAMPA BAY BUCCANEERS',
       ],
-      TEN: ['Tennessee', 'Titans', 'TN', 'Titan', 'Oilers'],
+      TEN: ['Tennessee', 'Titans', 'TN', 'Titan', 'Oilers', 'Tennessee Titans', 'TENNESSEE TITANS'],
       WAS: [
         'Washington',
         'Commanders',
@@ -288,6 +347,8 @@ export class GameMatcherService {
         'WFT',
         'Football Team',
         'Burgundy and Gold',
+        'Washington Commanders',
+        'WASHINGTON COMMANDERS',
       ],
     }
 
@@ -431,25 +492,49 @@ export class GameMatcherService {
     for (const match of matches) {
       try {
         if (match.spread !== null) {
-          await prisma.line.create({
-            data: {
+          // Check if line already exists for this game, pool, and source
+          const existingLine = await prisma.line.findFirst({
+            where: {
               gameId: match.gameId,
               poolId: poolId,
               source: source,
-              spread: match.spread,
-              total: null, // Only spreads for pool uploads
-              moneylineHome: null,
-              moneylineAway: null,
-              isUserProvided: true,
-            },
+            }
           })
+
+          if (existingLine) {
+            // Update existing line
+            await prisma.line.update({
+              where: { id: existingLine.id },
+              data: {
+                spread: match.spread,
+                capturedAt: new Date(), // Update timestamp
+              },
+            })
+            console.log(
+              `[GameMatcher] Updated existing line for ${match.awayTeam} @ ${match.homeTeam}: spread ${match.spread}`
+            )
+          } else {
+            // Create new line
+            await prisma.line.create({
+              data: {
+                gameId: match.gameId,
+                poolId: poolId,
+                source: source,
+                spread: match.spread,
+                total: null, // Only spreads for pool uploads
+                moneylineHome: null,
+                moneylineAway: null,
+                isUserProvided: true,
+              },
+            })
+            console.log(
+              `[GameMatcher] Created line for ${match.awayTeam} @ ${match.homeTeam}: spread ${match.spread}`
+            )
+          }
           created++
-          console.log(
-            `[GameMatcher] Created line for ${match.awayTeam} @ ${match.homeTeam}: spread ${match.spread}`
-          )
         }
       } catch (error) {
-        const errorMsg = `Failed to create line for ${match.awayTeam} @ ${match.homeTeam}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        const errorMsg = `Failed to create/update line for ${match.awayTeam} @ ${match.homeTeam}: ${error instanceof Error ? error.message : 'Unknown error'}`
         errors.push(errorMsg)
         console.error(`[GameMatcher] ${errorMsg}`)
       }

@@ -104,6 +104,54 @@ export default function PoolDetailPage() {
     }
   }
 
+  const handleNumber1PoolScrape = async (url: string) => {
+    if (!pool) return
+    
+    try {
+      setUploadingImage(true) // Reuse this loading state
+      setError(null)
+
+      const response = await fetch('/api/upload/number1pool', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          url,
+          poolId: pool.id,
+          season: pool.season,
+          week: selectedWeek
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to scrape Number1Pool')
+      }
+
+      console.log(`[Number1Pool Frontend] API returned:`, result);
+
+      // Show success message with details
+      const message = [
+        `Successfully scraped ${result.spreadsCount} spreads from Number1Pool`,
+        `Matched ${result.matchedCount} spreads to existing games`,
+        `${result.unmatchedCount} spreads could not be matched`,
+        result.unmatched && result.unmatched.length > 0 ? 
+          '\nUnmatched spreads:\n' + result.unmatched.map((s: any) => `  ${s.away_team} @ ${s.home_team}`).join('\n') : ''
+      ].filter(Boolean).join('\n');
+
+      alert(message);
+      fetchSpreadsData() // Refresh the spreads data
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to scrape Number1Pool'
+      setError(errorMsg)
+      alert(`Error: ${errorMsg}`)
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   const handleSaveEditedSpreads = async (spreads: any[]) => {
     if (!pool) return
     
@@ -841,6 +889,22 @@ export default function PoolDetailPage() {
                     >
                       CSV
                     </label>
+
+                    {/* Compact Number1Pool Scraper */}
+                    <button
+                      onClick={() => {
+                        const url = prompt('Enter your Number1Pool weekly picks URL:', 'https://number1pool.com/picks_weekly.php?user=GatorBait&verify=970622f774ee22dcef22f41487b87fa3')
+                        if (url?.trim()) {
+                          handleNumber1PoolScrape(url.trim())
+                        }
+                      }}
+                      disabled={uploadingImage}
+                      className={`px-3 py-1.5 text-xs bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors ${
+                        uploadingImage ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      Number1Pool
+                    </button>
 
                     {/* Compact Image Upload */}
                     <button

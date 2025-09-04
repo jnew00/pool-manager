@@ -11,6 +11,19 @@ const testTeamMatching = () => {
   const matcher = gameMatcherService as any
   
   const testCases = [
+    // Number1Pool specific test cases based on the failing matches
+    { db: 'TB', upload: 'Tampa Bay Buccaneers', expected: true, description: 'TB should match Tampa Bay Buccaneers' },
+    { db: 'ATL', upload: 'ATLANTA FALCONS', expected: true, description: 'ATL should match ATLANTA FALCONS' },
+    { db: 'BAL', upload: 'Baltimore Ravens', expected: true, description: 'BAL should match Baltimore Ravens' },
+    { db: 'BUF', upload: 'BUFFALO BILLS', expected: true, description: 'BUF should match BUFFALO BILLS' },
+    { db: 'KC', upload: 'Kansas City Chiefs', expected: true, description: 'KC should match Kansas City Chiefs' },
+    { db: 'LAC', upload: 'LOS ANGELES CHARGERS', expected: true, description: 'LAC should match LOS ANGELES CHARGERS' },
+    { db: 'SF', upload: 'San Francisco 49ers', expected: true, description: 'SF should match San Francisco 49ers' },
+    { db: 'SEA', upload: 'SEATTLE SEAHAWKS', expected: true, description: 'SEA should match SEATTLE SEAHAWKS' },
+    { db: 'NYJ', upload: 'NEW YORK JETS', expected: true, description: 'NYJ should match NEW YORK JETS' },
+    { db: 'WSH', upload: 'WASHINGTON COMMANDERS', expected: true, description: 'WSH should match WASHINGTON COMMANDERS' },
+    
+    // Original test cases
     { db: 'LVR', upload: 'LV', expected: true, description: 'LVR database should match LV upload' },
     { db: 'LVR', upload: 'LVR', expected: true, description: 'LVR should match LVR exactly' },
     { db: 'LVR', upload: 'Las Vegas', expected: true, description: 'LVR should match Las Vegas' },
