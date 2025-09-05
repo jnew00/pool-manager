@@ -145,17 +145,10 @@ export class OpenWeatherProvider
 
     super('OpenWeatherMap', defaultConfig)
 
-    console.log('[Weather] OpenWeatherProvider initialized')
-    console.log('[Weather] Environment NODE_ENV:', process.env.NODE_ENV)
-    console.log('[Weather] OPENWEATHER_API_KEY from env:', process.env.OPENWEATHER_API_KEY ? 'Present' : 'Missing')
-    console.log('[Weather] Config API key:', this.config.apiKey ? 'Present' : 'Missing')
-    
     if (!this.config.apiKey) {
       console.warn(
         'OpenWeatherMap API key not provided. Weather data will not be available.'
       )
-    } else {
-      console.log('[Weather] API key configured successfully, first 8 chars:', this.config.apiKey.substring(0, 8))
     }
   }
 
@@ -242,11 +235,6 @@ export class OpenWeatherProvider
     lat: number,
     lon: number
   ): Promise<ApiResponse<WeatherData>> {
-    console.log('[Weather] Getting current weather for venue:', venue)
-    console.log('[Weather] API key available:', this.config.apiKey ? 'Yes' : 'No')
-    console.log('[Weather] API key length:', this.config.apiKey?.length || 0)
-    console.log('[Weather] API key first 8 chars:', this.config.apiKey?.substring(0, 8) || 'undefined')
-    
     const params = new URLSearchParams({
       lat: lat.toString(),
       lon: lon.toString(),
@@ -254,13 +242,9 @@ export class OpenWeatherProvider
       units: 'imperial', // Fahrenheit
     })
 
-    console.log('[Weather] Request URL:', `${this.config.baseUrl}/weather?${params}`)
-    
     const response = await this.makeRequest<OpenWeatherResponse>(
       `/weather?${params}`
     )
-    
-    console.log('[Weather] Response:', response.success ? 'Success' : `Failed: ${response.error?.message}`)
 
     if (!response.success || !response.data) {
       return response as ApiResponse<WeatherData>
@@ -300,9 +284,6 @@ export class OpenWeatherProvider
     lon: number,
     targetTime: Date
   ): Promise<ApiResponse<WeatherData>> {
-    console.log('[Weather] Getting forecast weather for venue:', venue, 'at time:', targetTime.toISOString())
-    console.log('[Weather] API key available:', this.config.apiKey ? 'Yes' : 'No')
-    
     const params = new URLSearchParams({
       lat: lat.toString(),
       lon: lon.toString(),
@@ -310,13 +291,9 @@ export class OpenWeatherProvider
       units: 'imperial',
     })
 
-    console.log('[Weather] Forecast Request URL:', `${this.config.baseUrl}/forecast?${params}`)
-    
     const response = await this.makeRequest<ForecastResponse>(
       `/forecast?${params}`
     )
-    
-    console.log('[Weather] Forecast Response:', response.success ? 'Success' : `Failed: ${response.error?.message}`)
 
     if (!response.success || !response.data) {
       return response as ApiResponse<WeatherData>
