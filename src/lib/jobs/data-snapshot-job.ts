@@ -2,6 +2,7 @@ import cron from 'node-cron'
 import { prisma } from '@/lib/prisma'
 import { dataProviderRegistry } from '@/lib/data-sources'
 import type { GameDataSnapshot } from '@/lib/data-sources/types'
+import { EloSystem } from '@/lib/models/elo-system'
 
 export interface SnapshotJobConfig {
   enabled: boolean
@@ -9,6 +10,7 @@ export interface SnapshotJobConfig {
   preweekSchedule: string // Thursday 06:00 ET for line snapshots
   weeklySchedule: string // Sunday every 15 minutes for odds updates
   weatherSchedule: string // Every 6 hours for weather updates
+  postGameSchedule: string // Tuesday 06:00 ET for post-game processing (Elo updates, etc.)
 }
 
 /**
@@ -35,6 +37,7 @@ export class DataSnapshotJob {
     this.startPreweekJob()
     this.startOddsUpdateJob()
     this.startWeatherUpdateJob()
+    this.startPostGameJob()
 
     console.log('Data snapshot jobs started')
   }
@@ -119,6 +122,27 @@ export class DataSnapshotJob {
     this.scheduledTasks.set('weather-updates', task)
     task.start()
     console.log(`Weather update job scheduled: ${this.config.weatherSchedule}`)
+  }
+
+  /**
+   * Tuesday 06:00 ET - Post-game processing (Elo rating updates, etc.)
+   */
+  private startPostGameJob(): void {
+    const task = cron.schedule(
+      this.config.postGameSchedule,
+      async () => {
+        console.log('Running post-game processing job...')
+        await this.processCompletedWeek()
+      },
+      {
+        scheduled: false,
+        timezone: 'America/New_York',
+      }
+    )
+
+    this.scheduledTasks.set('post-game-processing', task)
+    task.start()
+    console.log(`Post-game processing job scheduled: ${this.config.postGameSchedule}`)
   }
 
   /**
@@ -339,6 +363,111 @@ export class DataSnapshotJob {
   }
 
   /**
+   * Process completed week - Update Elo ratings for finished games
+   */
+  private async processCompletedWeek(): Promise<void> {
+    try {
+      console.log('Starting post-game processing for completed week...')
+      
+      // Get recently completed games (last 7 days) that have results but haven't had Elo processed
+      const completedGames = await this.getRecentlyCompletedGames()
+      console.log(`Found ${completedGames.length} completed games to process`)
+
+      if (completedGames.length === 0) {
+        console.log('No completed games found for Elo processing')
+        return
+      }
+
+      const eloSystem = new EloSystem()
+      let processedCount = 0
+      let errorCount = 0
+
+      for (const game of completedGames) {
+        try {
+          // Update Elo ratings based on game result
+          const result = await eloSystem.updateRatingsAfterGame(
+            game.homeTeamId,
+            game.awayTeamId,
+            game.result.homeScore,
+            game.result.awayScore,
+            game.lines[0]?.spread ? parseFloat(game.lines[0].spread.toString()) : undefined
+          )
+
+          console.log(`Updated Elo ratings for ${game.homeTeam.nflAbbr} vs ${game.awayTeam.nflAbbr}:`, {
+            homeChange: result.homeRatingChange,
+            awayChange: result.awayRatingChange,
+            homeNewRating: result.homeNewRating,
+            awayNewRating: result.awayNewRating,
+          })
+
+          // Mark game as Elo processed (we can add a flag to the game or result table later)
+          await prisma.result.update({
+            where: { gameId: game.id },
+            data: {
+              // We could add an "eloProcessed" field later, for now just update updatedAt
+              updatedAt: new Date(),
+            },
+          })
+
+          processedCount++
+          await this.sleep(100) // Small delay between processing
+        } catch (error) {
+          console.error(`Failed to process Elo for game ${game.id}:`, error)
+          errorCount++
+        }
+      }
+
+      console.log(`Post-game processing completed: ${processedCount} games processed, ${errorCount} errors`)
+    } catch (error) {
+      console.error('Error in post-game processing job:', error)
+    }
+  }
+
+  /**
+   * Get recently completed games that need Elo processing
+   */
+  private async getRecentlyCompletedGames() {
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+    return await prisma.game.findMany({
+      where: {
+        kickoff: {
+          gte: sevenDaysAgo,
+        },
+        result: {
+          isNot: null,
+          homeScore: {
+            not: null,
+          },
+          awayScore: {
+            not: null,
+          },
+          status: {
+            in: ['FINAL', 'COMPLETED'],
+          },
+        },
+      },
+      include: {
+        result: true,
+        homeTeam: {
+          select: { nflAbbr: true },
+        },
+        awayTeam: {
+          select: { nflAbbr: true },
+        },
+        lines: {
+          take: 1,
+          orderBy: { capturedAt: 'desc' },
+        },
+      },
+      orderBy: {
+        kickoff: 'asc',
+      },
+    })
+  }
+
+  /**
    * Simple sleep utility
    */
   private sleep(ms: number): Promise<void> {
@@ -375,6 +504,11 @@ export class DataSnapshotJob {
     console.log('Manually triggering weather update...')
     await this.updateWeatherForecasts()
   }
+
+  async triggerPostGameProcessing(): Promise<void> {
+    console.log('Manually triggering post-game processing...')
+    await this.processCompletedWeek()
+  }
 }
 
 // Default configuration
@@ -384,6 +518,7 @@ export const defaultSnapshotConfig: SnapshotJobConfig = {
   preweekSchedule: '0 6 * * 4', // Thursday 06:00 ET
   weeklySchedule: '*/15 * * * 0,1', // Every 15 minutes on Sunday/Monday
   weatherSchedule: '0 */6 * * *', // Every 6 hours
+  postGameSchedule: '0 6 * * 2', // Tuesday 06:00 ET for post-game processing
 }
 
 // Global instance

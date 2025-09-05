@@ -160,15 +160,30 @@ export class ConfidenceEngine {
             return 50.0
           })()
         : Math.max(0, Math.min(100, rawConfidence * 100))
-    let recommendedPick: 'HOME' | 'AWAY' = rawConfidence > 0.5 ? 'HOME' : 'AWAY'
-
     // 8.5. Pool-specific confidence adjustments
     adjustedConfidence = this.applyPoolSpecificAdjustments(
       adjustedConfidence,
       input.poolType
     )
-    // Update pick based on adjusted confidence
-    recommendedPick = adjustedConfidence > 50 ? 'HOME' : 'AWAY'
+
+    // 8.6. Determine pick based on pool type and spread
+    let recommendedPick: 'HOME' | 'AWAY'
+    if (input.poolType === 'ATS' && input.marketData?.spread !== undefined) {
+      // For ATS pools, pick is based on who we think will cover the spread
+      // If home team is favored (negative spread) and we're confident, take the underdog (AWAY + points)
+      // If home team is underdog (positive spread) and we're confident, take the favorite (HOME + points)
+      const homeSpread = input.marketData.spread
+      if (adjustedConfidence > 50) {
+        // We're confident in our model - bet against the market expectation
+        recommendedPick = homeSpread < 0 ? 'AWAY' : 'HOME'
+      } else {
+        // We're not confident - go with the safer market favorite
+        recommendedPick = homeSpread < 0 ? 'HOME' : 'AWAY'  
+      }
+    } else {
+      // For SU pools or games without spread data, pick based on straight-up win probability  
+      recommendedPick = adjustedConfidence > 50 ? 'HOME' : 'AWAY'
+    }
 
     // 9. News Analysis Tie-Breaking (for close games)
     let newsAnalysis: NewsAnalysisResult | null = null
@@ -242,14 +257,24 @@ export class ConfidenceEngine {
                 100,
                 adjustedConfidence + newsAdjustment
               )
-              if (adjustedConfidence > 50) recommendedPick = 'HOME'
             } else {
               newsAdjustment = -maxAdjustment
               adjustedConfidence = Math.max(
                 0,
                 adjustedConfidence + newsAdjustment
               )
-              if (adjustedConfidence < 50) recommendedPick = 'AWAY'
+            }
+
+            // Re-determine pick after news analysis using the same pool-specific logic
+            if (input.poolType === 'ATS' && input.marketData?.spread !== undefined) {
+              const homeSpread = input.marketData.spread
+              if (adjustedConfidence > 50) {
+                recommendedPick = homeSpread < 0 ? 'AWAY' : 'HOME'
+              } else {
+                recommendedPick = homeSpread < 0 ? 'HOME' : 'AWAY'  
+              }
+            } else {
+              recommendedPick = adjustedConfidence > 50 ? 'HOME' : 'AWAY'
             }
 
             console.log(
@@ -486,8 +511,8 @@ export class ConfidenceEngine {
         adjustedConfidence = Math.max(10, confidence - 2) // Boost away confidence slightly
       }
     } else if (poolType === 'ATS') {
-      // For ATS pools, compress confidence toward 50% as spreads are designed to be 50/50
-      const compressionFactor = 0.85 // Compress by 15%
+      // For ATS pools, heavily compress confidence toward 50% as spreads are designed to be 50/50
+      const compressionFactor = 0.4 // Compress by 60% - much more aggressive for ATS
       adjustedConfidence = 50 + (confidence - 50) * compressionFactor
     }
 
