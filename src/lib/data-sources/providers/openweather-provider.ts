@@ -145,6 +145,21 @@ export class OpenWeatherProvider
 
     super('OpenWeatherMap', defaultConfig)
 
+    // Debug production API key issue
+    if (process.env.NODE_ENV === 'production') {
+      console.log('[Weather Debug] Raw OPENWEATHER_API_KEY from env:', process.env.OPENWEATHER_API_KEY)
+      console.log('[Weather Debug] Config apiKey:', this.config.apiKey)
+      console.log('[Weather Debug] Config apiKey length:', this.config.apiKey?.length)
+      console.log('[Weather Debug] First char code:', this.config.apiKey?.charCodeAt(0))
+      console.log('[Weather Debug] Last char code:', this.config.apiKey?.charCodeAt(this.config.apiKey.length - 1))
+      // Check if quotes are present (ASCII 34 is double quote)
+      if (this.config.apiKey?.charCodeAt(0) === 34) {
+        console.warn('[Weather Debug] API key starts with quotes! Removing them...')
+        this.config.apiKey = this.config.apiKey.slice(1, -1)
+        console.log('[Weather Debug] Fixed API key:', this.config.apiKey)
+      }
+    }
+
     if (!this.config.apiKey) {
       console.warn(
         'OpenWeatherMap API key not provided. Weather data will not be available.'
