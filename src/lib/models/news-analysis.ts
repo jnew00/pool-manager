@@ -310,6 +310,28 @@ export class NewsAnalysisService {
   }
 
   /**
+   * Safely parse potentially malformed JSON from LLM responses
+   */
+  private safeParseJSON(content: string): any {
+    try {
+      // Clean up common LLM JSON mistakes
+      let cleanedContent = content
+        .replace(/\+(\d+)/g, '$1') // Fix +3 to 3
+        .replace(/:\s*"?(\+?\d+)"?([,\}])/g, ': $1$2') // Fix number formatting
+        .replace(/,\s*\}/g, '}') // Remove trailing commas
+        .replace(/,\s*\]/g, ']') // Remove trailing commas in arrays
+        .replace(/(\w+):/g, '"$1":') // Add quotes to unquoted keys
+        .replace(/:"([^"]*)":/g, ':"$1",') // Fix missing commas
+        
+      return JSON.parse(cleanedContent)
+    } catch (error) {
+      console.warn('[News Analysis] Failed to parse JSON:', error)
+      console.warn('[News Analysis] Raw content:', content?.substring(0, 500))
+      return null
+    }
+  }
+
+  /**
    * Call OpenAI API for news analysis
    */
   private async callOpenAIAPI(prompt: string): Promise<NewsFactor[]> {
@@ -351,7 +373,10 @@ export class NewsAnalysisService {
       return []
     }
 
-    const analysis = JSON.parse(content)
+    const analysis = this.safeParseJSON(content)
+    if (!analysis) {
+      return []
+    }
     return this.validateAndNormalizeFactors(analysis.factors || [])
   }
 
@@ -400,7 +425,10 @@ export class NewsAnalysisService {
       return []
     }
 
-    const analysis = JSON.parse(content)
+    const analysis = this.safeParseJSON(content)
+    if (!analysis) {
+      return []
+    }
     return this.validateAndNormalizeFactors(analysis.factors || [])
   }
 
