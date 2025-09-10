@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import type { Pool } from '@/lib/types/database'
+import { getCurrentNFLWeek } from '@/lib/utils/nfl-week'
 
 type PoolCompletion = {
   poolId: string
@@ -42,26 +43,8 @@ export default function PicksPage() {
       })()
     : 'user-default'
 
-  // Calculate current NFL week based on Tuesday rollover
-  const calculateCurrentWeek = () => {
-    const seasonStart = new Date(2025, 8, 2) // Sept 2, 2025 (Tuesday before Week 1)
-    const now = new Date()
-    
-    // If before season start, return week 1
-    if (now < seasonStart) return 1
-    
-    // Calculate days since season start
-    const daysSinceStart = Math.floor((now.getTime() - seasonStart.getTime()) / (1000 * 60 * 60 * 24))
-    
-    // Each week starts on Tuesday (every 7 days)
-    const weekNumber = Math.floor(daysSinceStart / 7) + 1
-    
-    // Cap at week 18 (regular season)
-    return Math.min(weekNumber, 18)
-  }
-
   const currentSeason = new Date().getFullYear()
-  const currentWeek = calculateCurrentWeek()
+  const currentWeek = getCurrentNFLWeek()
 
   const loadPools = async () => {
     try {

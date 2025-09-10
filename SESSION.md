@@ -1431,3 +1431,39 @@ ec67f08 weather
 *[Auto-generated from git history - No LLM used]*
 
 ---
+
+
+## Session - 2025-09-10 10:36
+
+### Files Changed
+**Modified:**
+- src/app/picks/page.tsx
+- src/app/pools/[id]/page.tsx
+- src/app/survivor/[id]/page.tsx
+
+**Created:**
+- src/lib/utils/nfl-week.test.ts
+- src/lib/utils/nfl-week.ts
+
+### Git Statistics
+```
+ src/app/picks/page.tsx         | 21 ++----------------
+ src/app/pools/[id]/page.tsx    |  3 ++-
+ src/app/survivor/[id]/page.tsx | 48 +++++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 51 insertions(+), 21 deletions(-)
+
+```
+
+### Recent Commits
+```
+bf085e2 weather
+ab03667 weather
+0ddbfed weather
+ec67f08 weather
+019833b scheduled elo
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---

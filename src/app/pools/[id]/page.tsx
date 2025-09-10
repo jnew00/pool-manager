@@ -25,6 +25,7 @@ import { GameProjection } from '@/features/projections/components/GameProjection
 import { PointsPlusStrategyAdvisor } from '@/features/pools/components/PointsPlusStrategyAdvisor'
 import { EditableSpreadsTable } from '@/components/spreads/EditableSpreadsTable'
 import type { ModelOutput } from '@/lib/models/types'
+import { getCurrentNFLWeek } from '@/lib/utils/nfl-week'
 
 interface Pool {
   id: string
@@ -63,7 +64,7 @@ export default function PoolDetailPage() {
   const [pool, setPool] = useState<Pool | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedWeek, setSelectedWeek] = useState(1)
+  const [selectedWeek, setSelectedWeek] = useState(() => getCurrentNFLWeek())
   const [uploadingImage, setUploadingImage] = useState(false)
   const [games, setGames] = useState<Game[]>([])
   const [showImageUpload, setShowImageUpload] = useState(false)

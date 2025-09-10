@@ -22,8 +22,11 @@ import {
   TrendingUp,
   Settings,
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { getTeamLogoUrl } from '@/lib/utils/team-logos'
+import { getCurrentNFLWeek } from '@/lib/utils/nfl-week'
 
 interface SurvivorPoolData {
   id: string
@@ -46,7 +49,7 @@ export default function SurvivorPoolPage() {
   const [poolData, setPoolData] = useState<SurvivorPoolData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentWeek, setCurrentWeek] = useState(1)
+  const [currentWeek, setCurrentWeek] = useState(() => getCurrentNFLWeek())
   const [selectedEntryId, setSelectedEntryId] = useState<string>(
     searchParams.get('entryId') || ''
   )
@@ -261,6 +264,49 @@ export default function SurvivorPoolPage() {
             ← Back to Picks
           </Link>
         </div>
+        
+        {/* Week Navigation */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Week Selection</h2>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentWeek(Math.max(1, currentWeek - 1))}
+                disabled={currentWeek === 1}
+                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <select
+                value={currentWeek}
+                onChange={(e) => setCurrentWeek(parseInt(e.target.value))}
+                className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {Array.from({ length: 18 }, (_, i) => i + 1).map((week) => (
+                  <option key={week} value={week}>
+                    Week {week}
+                    {week === getCurrentNFLWeek() && ' (Current)'}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => setCurrentWeek(Math.min(18, currentWeek + 1))}
+                disabled={currentWeek === 18}
+                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            {poolData && (
+              <span>
+                Season {poolData.season} • {poolData.name}
+              </span>
+            )}
+          </div>
+        </div>
+        
         {/* Main Interface */}
         <Tabs
           value={currentTab}
