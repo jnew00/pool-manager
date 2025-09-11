@@ -1657,3 +1657,110 @@ ab03667 weather
 *[Auto-generated from git history - No LLM used]*
 
 ---
+
+
+## Session - 2025-09-11 11:38
+
+### Files Changed
+**Modified:**
+- scripts/debug-ats-recommendation.ts
+- src/lib/models/confidence-engine.ts
+
+**Created:**
+- scripts/browser-debug-ats.js
+
+### Git Statistics
+```
+ scripts/debug-ats-recommendation.ts |  2 +-
+ src/lib/models/confidence-engine.ts | 21 +++++++++++++++++++--
+ 2 files changed, 20 insertions(+), 3 deletions(-)
+
+```
+
+### Recent Commits
+```
+230dae2 arbitrage
+1460f6d arbitrage
+18a3d40 weeks
+bf085e2 weather
+ab03667 weather
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-11 11:46
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- scripts/debug-ats-recommendation.ts
+- src/app/pools/[id]/page.tsx
+- src/lib/models/confidence-engine.ts
+
+**Created:**
+- scripts/browser-debug-ats.js
+
+### Git Statistics
+```
+ SESSION.md                          | 33 +++++++++++++++++++++++++++++++++
+ scripts/debug-ats-recommendation.ts |  2 +-
+ src/app/pools/[id]/page.tsx         |  6 ++++++
+ src/lib/models/confidence-engine.ts | 21 +++++++++++++++++++--
+ 4 files changed, 59 insertions(+), 3 deletions(-)
+
+```
+
+### Recent Commits
+```
+230dae2 arbitrage
+1460f6d arbitrage
+18a3d40 weeks
+bf085e2 weather
+ab03667 weather
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-11 11:59
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- scripts/debug-ats-recommendation.ts
+- src/app/pools/[id]/page.tsx
+- src/lib/models/confidence-engine.ts
+
+**Created:**
+- scripts/browser-debug-ats.js
+
+### Git Statistics
+```
+ SESSION.md                          | 70 +++++++++++++++++++++++++++++++++++++
+ scripts/debug-ats-recommendation.ts |  2 +-
+ src/app/pools/[id]/page.tsx         |  6 ++++
+ src/lib/models/confidence-engine.ts | 21 +++++++++--
+ 4 files changed, 96 insertions(+), 3 deletions(-)
+
+```
+
+### Recent Commits
+```
+230dae2 arbitrage
+1460f6d arbitrage
+18a3d40 weeks
+bf085e2 weather
+ab03667 weather
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---

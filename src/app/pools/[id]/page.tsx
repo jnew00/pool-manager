@@ -98,6 +98,7 @@ export default function PoolDetailPage() {
   }, [pool, selectedWeek])
 
   const handleWeightsChange = (newWeights: any) => {
+    console.log('[PoolDetail] Weights changed, fetching fresh recommendations:', newWeights)
     setCustomWeights(newWeights)
     // Immediately fetch new recommendations with updated weights
     if (pool) {
@@ -305,11 +306,16 @@ export default function PoolDetailPage() {
           weightParams.append(`weights.${key}`, weights[key].toString())
         })
         url += '&' + weightParams.toString()
+        
+        // Add cache-busting timestamp when custom weights are used
+        url += `&_t=${Date.now()}`
       }
 
+      console.log('[PoolDetail] Fetching recommendations from:', url)
       const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
+        console.log('[PoolDetail] Received recommendations:', data.data?.recommendations?.length, 'games')
         setRecommendations(data.data)
       } else {
         setRecommendations(null)

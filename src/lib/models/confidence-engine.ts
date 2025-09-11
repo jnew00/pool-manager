@@ -187,7 +187,16 @@ export class ConfidenceEngine {
       // Dynamic arbitrage threshold based on line value weight
       // High weight = lower threshold = more aggressive arbitrage seeking
       const lineValueWeight = input.weights?.lineValueWeight || 0.215
-      const arbitrageThreshold = Math.max(0.5, 1.5 - (lineValueWeight * 2))
+      
+      // When Line Value weight is very high (>50%), be much more aggressive
+      let arbitrageThreshold: number
+      if (lineValueWeight >= 0.8) {
+        arbitrageThreshold = 0.25 // Very aggressive - any 0.25+ point difference
+      } else if (lineValueWeight >= 0.5) {
+        arbitrageThreshold = 0.5 // Aggressive - any 0.5+ point difference
+      } else {
+        arbitrageThreshold = Math.max(0.5, 1.5 - (lineValueWeight * 2)) // Original formula
+      }
       
       if (Math.abs(lineValue) >= arbitrageThreshold && vegasSpread !== undefined) {
         // Arbitrage opportunity detected - threshold based on user preference
@@ -339,7 +348,15 @@ export class ConfidenceEngine {
               
               // Maintain line arbitrage priority even after news adjustment
               const lineValueWeight = input.weights?.lineValueWeight || 0.215
-              const arbitrageThreshold = Math.max(0.5, 1.5 - (lineValueWeight * 2))
+              
+              let arbitrageThreshold: number
+              if (lineValueWeight >= 0.8) {
+                arbitrageThreshold = 0.25 // Very aggressive
+              } else if (lineValueWeight >= 0.5) {
+                arbitrageThreshold = 0.5 // Aggressive
+              } else {
+                arbitrageThreshold = Math.max(0.5, 1.5 - (lineValueWeight * 2))
+              }
               if (Math.abs(lineValue) >= arbitrageThreshold && vegasSpread !== undefined) {
                 // Arbitrage opportunity still takes precedence
                 if (homeIsFavorite) {
