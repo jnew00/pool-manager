@@ -126,12 +126,32 @@ const NFL_VENUES = {
 } as const
 
 /**
+ * Cache entry for weather data
+ */
+interface WeatherCacheEntry {
+  data: WeatherData
+  timestamp: number
+  expiresAt: number
+}
+
+/**
  * OpenWeatherMap weather provider - free tier with 1000 calls/day
+ * Includes aggressive caching to prevent API limit overruns
  */
 export class OpenWeatherProvider
   extends BaseDataProvider
   implements WeatherProvider
 {
+  private weatherCache = new Map<string, WeatherCacheEntry>()
+  private readonly CACHE_DURATION_MINUTES = 15 // Cache for 15 minutes
+  private readonly FORECAST_CACHE_DURATION_MINUTES = 60 // Cache forecasts for 1 hour
+  
+  // Rate limiting to prevent API overrun
+  private lastApiCall = 0
+  private readonly MIN_API_INTERVAL_MS = 1000 // Minimum 1 second between API calls
+  private apiCallQueue: Array<() => Promise<any>> = []
+  private isProcessingQueue = false
+  
   constructor(config: Partial<ProviderConfig> = {}) {
     const defaultConfig: ProviderConfig = {
       name: 'OpenWeatherMap',
@@ -175,6 +195,18 @@ export class OpenWeatherProvider
     venue: string,
     kickoffTime: Date
   ): Promise<ApiResponse<WeatherData>> {
+    // Check cache first
+    const cacheKey = this.createCacheKey(venue, kickoffTime)
+    const cached = this.getCachedWeather(cacheKey)
+    
+    if (cached) {
+      console.log(`[OpenWeather] Cache hit for ${venue} at ${kickoffTime.toISOString()}`)
+      return {
+        success: true,
+        data: { ...cached, gameId }, // Add gameId to cached data
+      }
+    }
+
     const venueInfo = this.getVenueInfo(venue)
     if (!venueInfo) {
       return {
@@ -189,12 +221,22 @@ export class OpenWeatherProvider
       }
     }
 
-    return this.getWeatherForVenue(
+    console.log(`[OpenWeather] Cache miss - fetching fresh data for ${venue} at ${kickoffTime.toISOString()}`)
+    
+    const result = await this.getWeatherForVenue(
       venue,
       venueInfo.lat,
       venueInfo.lon,
       kickoffTime
     )
+    
+    // Cache successful results
+    if (result.success && result.data) {
+      this.cacheWeatherData(cacheKey, result.data, kickoffTime)
+      result.data.gameId = gameId // Ensure gameId is set
+    }
+    
+    return result
   }
 
   /**
@@ -440,6 +482,53 @@ export class OpenWeatherProvider
   }
 
   /**
+   * Override makeRequest to add rate limiting
+   */
+  protected async makeRequest<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return new Promise((resolve) => {
+      const queuedRequest = async () => {
+        const now = Date.now()
+        const timeSinceLastCall = now - this.lastApiCall
+        
+        if (timeSinceLastCall < this.MIN_API_INTERVAL_MS) {
+          const waitTime = this.MIN_API_INTERVAL_MS - timeSinceLastCall
+          console.log(`[OpenWeather] Rate limiting: waiting ${waitTime}ms before API call`)
+          await new Promise(resolve => setTimeout(resolve, waitTime))
+        }
+        
+        this.lastApiCall = Date.now()
+        console.log(`[OpenWeather] Making API request to ${endpoint}`)
+        
+        const result = await super.makeRequest<T>(endpoint)
+        resolve(result)
+      }
+      
+      this.apiCallQueue.push(queuedRequest)
+      this.processApiQueue()
+    })
+  }
+
+  /**
+   * Process queued API calls sequentially
+   */
+  private async processApiQueue(): Promise<void> {
+    if (this.isProcessingQueue || this.apiCallQueue.length === 0) {
+      return
+    }
+    
+    this.isProcessingQueue = true
+    
+    while (this.apiCallQueue.length > 0) {
+      const queuedCall = this.apiCallQueue.shift()
+      if (queuedCall) {
+        await queuedCall()
+      }
+    }
+    
+    this.isProcessingQueue = false
+  }
+
+  /**
    * Health check for OpenWeatherMap
    */
   async healthCheck(): Promise<boolean> {
@@ -459,6 +548,99 @@ export class OpenWeatherProvider
       return response.success
     } catch {
       return false
+    }
+  }
+
+  /**
+   * Create cache key for venue and time
+   */
+  private createCacheKey(venue: string, kickoffTime: Date): string {
+    // Round to nearest hour to improve cache hit rate
+    const roundedTime = new Date(kickoffTime)
+    roundedTime.setMinutes(0, 0, 0)
+    return `${venue}:${roundedTime.getTime()}`
+  }
+
+  /**
+   * Get cached weather data if valid
+   */
+  private getCachedWeather(cacheKey: string): WeatherData | null {
+    const entry = this.weatherCache.get(cacheKey)
+    
+    if (!entry) {
+      return null
+    }
+    
+    const now = Date.now()
+    if (now > entry.expiresAt) {
+      this.weatherCache.delete(cacheKey)
+      return null
+    }
+    
+    return entry.data
+  }
+
+  /**
+   * Cache weather data with appropriate expiration
+   */
+  private cacheWeatherData(cacheKey: string, data: WeatherData, kickoffTime: Date): void {
+    const now = Date.now()
+    const timeDiff = kickoffTime.getTime() - now
+    const hoursFromNow = timeDiff / (1000 * 60 * 60)
+    
+    // Use longer cache for future forecasts, shorter for current weather
+    const cacheDurationMinutes = Math.abs(hoursFromNow) > 1 
+      ? this.FORECAST_CACHE_DURATION_MINUTES 
+      : this.CACHE_DURATION_MINUTES
+    
+    const expiresAt = now + (cacheDurationMinutes * 60 * 1000)
+    
+    this.weatherCache.set(cacheKey, {
+      data,
+      timestamp: now,
+      expiresAt,
+    })
+    
+    console.log(`[OpenWeather] Cached weather for ${data.venue} (expires in ${cacheDurationMinutes}min)`)
+    
+    // Clean up expired entries periodically
+    this.cleanupExpiredCache()
+  }
+
+  /**
+   * Remove expired cache entries
+   */
+  private cleanupExpiredCache(): void {
+    const now = Date.now()
+    let removedCount = 0
+    
+    for (const [key, entry] of this.weatherCache.entries()) {
+      if (now > entry.expiresAt) {
+        this.weatherCache.delete(key)
+        removedCount++
+      }
+    }
+    
+    if (removedCount > 0) {
+      console.log(`[OpenWeather] Cleaned up ${removedCount} expired cache entries`)
+    }
+  }
+
+  /**
+   * Clear all cached weather data (for testing/debugging)
+   */
+  clearCache(): void {
+    this.weatherCache.clear()
+    console.log('[OpenWeather] Cache cleared')
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats(): { size: number; entries: string[] } {
+    return {
+      size: this.weatherCache.size,
+      entries: Array.from(this.weatherCache.keys())
     }
   }
 }

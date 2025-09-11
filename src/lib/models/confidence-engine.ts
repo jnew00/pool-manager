@@ -169,16 +169,76 @@ export class ConfidenceEngine {
     // 8.6. Determine pick based on pool type and spread
     let recommendedPick: 'HOME' | 'AWAY'
     if (input.poolType === 'ATS' && input.marketData?.spread !== undefined) {
-      // For ATS pools, pick is based on who we think will cover the spread
-      // If home team is favored (negative spread) and we're confident, take the underdog (AWAY + points)
-      // If home team is underdog (positive spread) and we're confident, take the favorite (HOME + points)
-      const homeSpread = input.marketData.spread
-      if (adjustedConfidence > 50) {
-        // We're confident in our model - bet against the market expectation
-        recommendedPick = homeSpread < 0 ? 'AWAY' : 'HOME'
+      // For ATS pools, we need to identify the favorite and compare line values
+      // Spread convention: negative = home favored, positive = home underdog
+      
+      const poolSpread = input.marketData.spread
+      const vegasSpread = input.currentMarketData?.spread
+      
+      // Determine who is the favorite based on pool spread
+      const homeIsFavorite = poolSpread < 0
+      const favoriteTeam = homeIsFavorite ? 'HOME' : 'AWAY'
+      const underdogTeam = homeIsFavorite ? 'AWAY' : 'HOME'
+      
+      // Line value tells us who has better value:
+      // Negative lineValue = Vegas spread more negative than pool (favorite getting better value in pool)
+      // Positive lineValue = Vegas spread less negative than pool (underdog getting better value in pool)
+      
+      if (Math.abs(lineValue) >= 1.0 && vegasSpread !== undefined) {
+        // Significant arbitrage opportunity - exploit it!
+        
+        if (homeIsFavorite) {
+          // Home is favorite
+          // If lineValue < 0: Pool has smaller spread (e.g., -10.5 vs -11.5), favorite has better value
+          // If lineValue > 0: Pool has larger spread (e.g., -12.5 vs -11.5), underdog has better value
+          recommendedPick = lineValue < 0 ? 'HOME' : 'AWAY'
+          
+          console.log(
+            `[ATS Pick] Home favorite: Pool ${poolSpread}, Vegas ${vegasSpread}, lineValue ${lineValue}. ` +
+            `Picking ${recommendedPick} (${lineValue < 0 ? 'favorite gets better value' : 'underdog gets better value'})`
+          )
+        } else {
+          // Away is favorite (home is underdog with positive spread)
+          // If lineValue < 0: Pool has larger positive spread (e.g., +7.5 vs +4.5 → -3), underdog (HOME) has better value  
+          // If lineValue > 0: Pool has smaller positive spread (e.g., +4.5 vs +7.5 → +3), favorite (AWAY) has better value
+          recommendedPick = lineValue < 0 ? 'HOME' : 'AWAY'
+          
+          console.log(
+            `[ATS Pick] Away favorite: Pool ${poolSpread}, Vegas ${vegasSpread}, lineValue ${lineValue}. ` +
+            `Picking ${recommendedPick} (${lineValue < 0 ? 'underdog gets better value' : 'favorite gets better value'})`
+          )
+        }
       } else {
-        // We're not confident - go with the safer market favorite
-        recommendedPick = homeSpread < 0 ? 'HOME' : 'AWAY'  
+        // No significant arbitrage - use model confidence and other factors
+        
+        // For ATS, we want to pick teams that will cover the spread
+        // Adjust confidence interpretation based on who's favored
+        if (adjustedConfidence > 55) {
+          // High confidence typically means home team will perform well
+          // But for ATS, we need to consider the spread direction
+          recommendedPick = homeIsFavorite ? 'AWAY' : 'HOME' // Fade the public/take the dog
+        } else if (adjustedConfidence < 45) {
+          // Low confidence in home team
+          recommendedPick = homeIsFavorite ? 'HOME' : 'AWAY' // Take the favorite to cover
+        } else {
+          // Close to 50/50 - use minor factors
+          if (lineValue !== 0) {
+            // Use same logic as arbitrage but for smaller differences
+            if (homeIsFavorite) {
+              recommendedPick = lineValue < 0 ? 'HOME' : 'AWAY'
+            } else {
+              recommendedPick = lineValue < 0 ? 'HOME' : 'AWAY'
+            }
+          } else {
+            // True toss-up - lean toward underdog (historical ATS advantage)
+            recommendedPick = underdogTeam
+          }
+        }
+        
+        console.log(
+          `[ATS Pick] No arbitrage. Confidence: ${adjustedConfidence.toFixed(1)}%, ` +
+          `Favorite: ${favoriteTeam}, Picking: ${recommendedPick}`
+        )
       }
     } else {
       // For SU pools or games without spread data, pick based on straight-up win probability  
@@ -267,11 +327,37 @@ export class ConfidenceEngine {
 
             // Re-determine pick after news analysis using the same pool-specific logic
             if (input.poolType === 'ATS' && input.marketData?.spread !== undefined) {
-              const homeSpread = input.marketData.spread
-              if (adjustedConfidence > 50) {
-                recommendedPick = homeSpread < 0 ? 'AWAY' : 'HOME'
+              const poolSpread = input.marketData.spread
+              const vegasSpread = input.currentMarketData?.spread
+              const homeIsFavorite = poolSpread < 0
+              const underdogTeam = homeIsFavorite ? 'AWAY' : 'HOME'
+              
+              // Maintain line arbitrage priority even after news adjustment
+              if (Math.abs(lineValue) >= 1.0 && vegasSpread !== undefined) {
+                // Significant arbitrage still takes precedence
+                if (homeIsFavorite) {
+                  recommendedPick = lineValue < 0 ? 'HOME' : 'AWAY'
+                } else {
+                  recommendedPick = lineValue < 0 ? 'HOME' : 'AWAY'
+                }
               } else {
-                recommendedPick = homeSpread < 0 ? 'HOME' : 'AWAY'  
+                // Use adjusted confidence for pick
+                if (adjustedConfidence > 55) {
+                  recommendedPick = homeIsFavorite ? 'AWAY' : 'HOME' // Fade the public
+                } else if (adjustedConfidence < 45) {
+                  recommendedPick = homeIsFavorite ? 'HOME' : 'AWAY' // Take the favorite
+                } else {
+                  // Still close - use line value or underdog lean
+                  if (lineValue !== 0) {
+                    if (homeIsFavorite) {
+                      recommendedPick = lineValue < 0 ? 'HOME' : 'AWAY'
+                    } else {
+                      recommendedPick = lineValue < 0 ? 'HOME' : 'AWAY'
+                    }
+                  } else {
+                    recommendedPick = underdogTeam
+                  }
+                }
               }
             } else {
               recommendedPick = adjustedConfidence > 50 ? 'HOME' : 'AWAY'
@@ -535,9 +621,13 @@ export class ConfidenceEngine {
       return 0
     }
 
-    // Calculate spread difference
-    // Positive value = pool line is more favorable to home team
-    // Example: Pool has TB +7, Vegas has TB +4 → lineValue = +3 for TB
+    // Calculate spread difference for arbitrage opportunity
+    // Positive value = pool line is more favorable to home team than Vegas
+    // Negative value = pool line is more favorable to away team than Vegas
+    // 
+    // Examples:
+    // - Pool: BAL -10.5, Vegas: BAL -11.5 → lineValue = +1.0 (BAL gives fewer points in pool, pick BAL)
+    // - Pool: TB +7, Vegas: TB +4 → lineValue = -3.0 (TB gets more points in pool, pick TB)
     const spreadDifference = currentMarketData.spread - poolMarketData.spread
 
     console.log(
