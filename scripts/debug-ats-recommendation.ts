@@ -110,7 +110,7 @@ async function main() {
     'CLE',      // Away team  
     -10.5,      // Pool spread (BAL favored by 10.5 - YOUR UPLOADED LINE)
     -11.5,      // Vegas spread (BAL favored by 11.5 - ESPN LINE)
-    0.215       // Line value weight (21.5% - DEFAULT)
+    0.95        // Line value weight (95% - USER SETTING)
   )
 }
 

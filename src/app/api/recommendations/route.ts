@@ -305,11 +305,30 @@ export async function GET(request: NextRequest) {
         ? { ...defaultModelWeights, ...customWeights }
         : modelWeights?.weights || defaultModelWeights
 
+    // For ATS pools, fetch pool-specific uploaded spreads
+    let poolSpreads: any[] = []
+    if (pool.type === 'ATS') {
+      poolSpreads = await prisma.poolSpread.findMany({
+        where: {
+          poolId: pool.id,
+          season: season,
+          week: week,
+        },
+      })
+      console.log(`[Recommendations] Found ${poolSpreads.length} pool-specific spreads for week ${week}`)
+    }
+
+    // Create a map of gameId to pool spread for quick lookup
+    const poolSpreadMap = new Map()
+    poolSpreads.forEach((ps) => {
+      poolSpreadMap.set(ps.gameId, ps.spread)
+    })
+
     // Calculate recommendations for each game
     const recommendations = []
 
     for (const game of games) {
-      const line = game.lines[0] // Most recent line
+      const line = game.lines[0] // Most recent ESPN line
 
       // For non-SU pools, we require betting lines
       if (!line && pool.type !== 'SU') {
@@ -317,11 +336,22 @@ export async function GET(request: NextRequest) {
         continue
       }
 
+      // For ATS pools, use pool-specific spread if available, otherwise fall back to ESPN
+      const poolSpread = poolSpreadMap.get(game.id)
+      const spreadToUse = pool.type === 'ATS' && poolSpread !== undefined ? poolSpread : line?.spread
+      
+      if (pool.type === 'ATS' && poolSpread !== undefined && line?.spread !== undefined) {
+        console.log(
+          `[Recommendations] ${game.homeTeam.nflAbbr} vs ${game.awayTeam.nflAbbr}: ` +
+          `Pool spread=${poolSpread}, ESPN spread=${line.spread}, Using=${spreadToUse}`
+        )
+      }
+
       // For SU pools, we can proceed without lines (will rely on Elo and other factors)
       const marketData = line
         ? {
-            spread: line.spread
-              ? parseFloat(line.spread.toString())
+            spread: spreadToUse
+              ? parseFloat(spreadToUse.toString())
               : undefined,
             total: line.total ? parseFloat(line.total.toString()) : undefined,
             moneylineHome: line.moneylineHome
