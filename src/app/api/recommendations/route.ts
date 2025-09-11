@@ -306,59 +306,66 @@ export async function GET(request: NextRequest) {
         : modelWeights?.weights || defaultModelWeights
 
     // For ATS pools, fetch pool-specific uploaded spreads
-    let poolSpreads: any[] = []
+    let poolLines: any[] = []
     if (pool.type === 'ATS') {
-      poolSpreads = await prisma.poolSpread.findMany({
+      poolLines = await prisma.line.findMany({
         where: {
           poolId: pool.id,
-          season: season,
-          week: week,
+          game: {
+            season: season,
+            week: week,
+          },
+        },
+        include: {
+          game: true,
         },
       })
-      console.log(`[Recommendations] Found ${poolSpreads.length} pool-specific spreads for week ${week}`)
+      console.log(`[Recommendations] Found ${poolLines.length} pool-specific lines for week ${week}`)
     }
 
     // Create a map of gameId to pool spread for quick lookup
     const poolSpreadMap = new Map()
-    poolSpreads.forEach((ps) => {
-      poolSpreadMap.set(ps.gameId, ps.spread)
+    poolLines.forEach((line) => {
+      if (line.spread !== null) {
+        poolSpreadMap.set(line.gameId, line.spread)
+      }
     })
 
     // Calculate recommendations for each game
     const recommendations = []
 
     for (const game of games) {
-      const line = game.lines[0] // Most recent ESPN line
+      const espnLine = game.lines[0] // Most recent ESPN line
 
       // For non-SU pools, we require betting lines
-      if (!line && pool.type !== 'SU') {
+      if (!espnLine && pool.type !== 'SU') {
         // Skip games without betting data for ATS and other pools
         continue
       }
 
       // For ATS pools, use pool-specific spread if available, otherwise fall back to ESPN
       const poolSpread = poolSpreadMap.get(game.id)
-      const spreadToUse = pool.type === 'ATS' && poolSpread !== undefined ? poolSpread : line?.spread
+      const spreadToUse = pool.type === 'ATS' && poolSpread !== undefined ? poolSpread : espnLine?.spread
       
-      if (pool.type === 'ATS' && poolSpread !== undefined && line?.spread !== undefined) {
+      if (pool.type === 'ATS' && poolSpread !== undefined && espnLine?.spread !== undefined) {
         console.log(
           `[Recommendations] ${game.homeTeam.nflAbbr} vs ${game.awayTeam.nflAbbr}: ` +
-          `Pool spread=${poolSpread}, ESPN spread=${line.spread}, Using=${spreadToUse}`
+          `Pool spread=${poolSpread}, ESPN spread=${espnLine.spread}, Using pool spread=${poolSpread} for marketData`
         )
       }
 
       // For SU pools, we can proceed without lines (will rely on Elo and other factors)
-      const marketData = line
+      const marketData = espnLine
         ? {
             spread: spreadToUse
               ? parseFloat(spreadToUse.toString())
               : undefined,
-            total: line.total ? parseFloat(line.total.toString()) : undefined,
-            moneylineHome: line.moneylineHome
-              ? Number(line.moneylineHome)
+            total: espnLine.total ? parseFloat(espnLine.total.toString()) : undefined,
+            moneylineHome: espnLine.moneylineHome
+              ? Number(espnLine.moneylineHome)
               : undefined,
-            moneylineAway: line.moneylineAway
-              ? Number(line.moneylineAway)
+            moneylineAway: espnLine.moneylineAway
+              ? Number(espnLine.moneylineAway)
               : undefined,
           }
         : {
@@ -500,7 +507,7 @@ export async function GET(request: NextRequest) {
       }
 
       console.log(
-        `[Recommendations] Game ${game.homeTeam.nflAbbr} vs ${game.awayTeam.nflAbbr}: spread=${line?.spread || 'N/A'}, total=${line?.total || 'N/A'}, ML=${line?.moneylineHome || 'N/A'}/${line?.moneylineAway || 'N/A'}`
+        `[Recommendations] Game ${game.homeTeam.nflAbbr} vs ${game.awayTeam.nflAbbr}: spread=${espnLine?.spread || 'N/A'}, total=${espnLine?.total || 'N/A'}, ML=${espnLine?.moneylineHome || 'N/A'}/${espnLine?.moneylineAway || 'N/A'}`
       )
       console.log(`[Recommendations] marketData:`, modelInput.marketData)
 
@@ -526,13 +533,13 @@ export async function GET(request: NextRequest) {
           week: game.week,
           season: game.season,
         },
-        line: line
+        line: espnLine
           ? {
-              spread: line.spread,
-              total: line.total,
-              moneylineHome: line.moneylineHome,
-              moneylineAway: line.moneylineAway,
-              source: line.source,
+              spread: espnLine.spread,
+              total: espnLine.total,
+              moneylineHome: espnLine.moneylineHome,
+              moneylineAway: espnLine.moneylineAway,
+              source: espnLine.source,
             }
           : {
               spread: null,
