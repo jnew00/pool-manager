@@ -184,8 +184,13 @@ export class ConfidenceEngine {
       // Negative lineValue = Vegas spread more negative than pool (favorite getting better value in pool)
       // Positive lineValue = Vegas spread less negative than pool (underdog getting better value in pool)
       
-      if (Math.abs(lineValue) >= 1.0 && vegasSpread !== undefined) {
-        // Significant arbitrage opportunity - exploit it!
+      // Dynamic arbitrage threshold based on line value weight
+      // High weight = lower threshold = more aggressive arbitrage seeking
+      const lineValueWeight = input.weights?.lineValueWeight || 0.215
+      const arbitrageThreshold = Math.max(0.5, 1.5 - (lineValueWeight * 2))
+      
+      if (Math.abs(lineValue) >= arbitrageThreshold && vegasSpread !== undefined) {
+        // Arbitrage opportunity detected - threshold based on user preference
         
         if (homeIsFavorite) {
           // Home is favorite
@@ -194,7 +199,7 @@ export class ConfidenceEngine {
           recommendedPick = lineValue < 0 ? 'HOME' : 'AWAY'
           
           console.log(
-            `[ATS Pick] Home favorite: Pool ${poolSpread}, Vegas ${vegasSpread}, lineValue ${lineValue}. ` +
+            `[ATS Pick] Home favorite: Pool ${poolSpread}, Vegas ${vegasSpread}, lineValue ${lineValue} (threshold: ${arbitrageThreshold}). ` +
             `Picking ${recommendedPick} (${lineValue < 0 ? 'favorite gets better value' : 'underdog gets better value'})`
           )
         } else {
@@ -204,7 +209,7 @@ export class ConfidenceEngine {
           recommendedPick = lineValue < 0 ? 'HOME' : 'AWAY'
           
           console.log(
-            `[ATS Pick] Away favorite: Pool ${poolSpread}, Vegas ${vegasSpread}, lineValue ${lineValue}. ` +
+            `[ATS Pick] Away favorite: Pool ${poolSpread}, Vegas ${vegasSpread}, lineValue ${lineValue} (threshold: ${arbitrageThreshold}). ` +
             `Picking ${recommendedPick} (${lineValue < 0 ? 'underdog gets better value' : 'favorite gets better value'})`
           )
         }
@@ -236,7 +241,7 @@ export class ConfidenceEngine {
         }
         
         console.log(
-          `[ATS Pick] No arbitrage. Confidence: ${adjustedConfidence.toFixed(1)}%, ` +
+          `[ATS Pick] No arbitrage (lineValue: ${lineValue}, threshold: ${arbitrageThreshold}). Confidence: ${adjustedConfidence.toFixed(1)}%, ` +
           `Favorite: ${favoriteTeam}, Picking: ${recommendedPick}`
         )
       }
@@ -333,8 +338,10 @@ export class ConfidenceEngine {
               const underdogTeam = homeIsFavorite ? 'AWAY' : 'HOME'
               
               // Maintain line arbitrage priority even after news adjustment
-              if (Math.abs(lineValue) >= 1.0 && vegasSpread !== undefined) {
-                // Significant arbitrage still takes precedence
+              const lineValueWeight = input.weights?.lineValueWeight || 0.215
+              const arbitrageThreshold = Math.max(0.5, 1.5 - (lineValueWeight * 2))
+              if (Math.abs(lineValue) >= arbitrageThreshold && vegasSpread !== undefined) {
+                // Arbitrage opportunity still takes precedence
                 if (homeIsFavorite) {
                   recommendedPick = lineValue < 0 ? 'HOME' : 'AWAY'
                 } else {
@@ -1026,14 +1033,14 @@ export class ConfidenceEngine {
         `[Confidence Engine] SU pool detected - adjusted weights: market=${marketWeight}, elo=${eloWeight}, lineValue=${lineValueWeight}`
       )
     } else if (input.poolType === 'ATS') {
-      // For ATS pools, line value and situational factors are much more important
+      // For ATS pools, use provided weights but ensure reasonable minimums
       // Spread betting requires more nuanced analysis than straight-up wins
-      marketWeight = 0.45 // 45% on market spread data
-      eloWeight = 0.2 // 20% on team strength
-      lineValueWeight = 0.15 // 15% on line movement/value (important for ATS)
+      marketWeight = Math.max(weights.marketProbWeight || 0.335, 0.2) // At least 20% on market data
+      eloWeight = Math.max(weights.eloWeight || 0.215, 0.1) // At least 10% on team strength
+      lineValueWeight = weights.lineValueWeight || 0.215 // Use actual UI weight for arbitrage
 
       console.log(
-        `[Confidence Engine] ATS pool detected - adjusted weights: market=${marketWeight}, elo=${eloWeight}, lineValue=${lineValueWeight}`
+        `[Confidence Engine] ATS pool detected - using UI weights: market=${marketWeight}, elo=${eloWeight}, lineValue=${lineValueWeight}`
       )
     }
     // Set situational factor weights - higher for ATS pools
@@ -1048,20 +1055,26 @@ export class ConfidenceEngine {
     let injuryWeight = weights.injuryPenaltyWeight || 0.005
 
     if (input.poolType === 'ATS') {
-      // For ATS, situational factors matter more since margins matter
-      homeAdvWeight = 0.06 // Slightly higher home advantage impact
-      divisionalWeight = 0.08 // Division games are often closer than spread suggests
-      recentFormWeight = 0.04 // Recent performance more predictive for ATS
-      weatherWeight = 0.01 // Weather affects margin more than wins/losses
-      injuryWeight = 0.01 // Injuries affect performance depth
+      // For ATS, adjust weights to reflect that spread already accounts for home advantage
+      // Home advantage is ALREADY BAKED INTO THE SPREAD - reduce significantly
+      homeAdvWeight = Math.min(weights.homeAdvWeight || 0.01, 0.01) // Cap at 1% max
+      
+      // These factors affect performance AFTER the line is set - boost their importance
+      weatherWeight = Math.max(weights.weatherPenaltyWeight || 0.02, 0.02) // Min 2%
+      injuryWeight = Math.max(weights.injuryPenaltyWeight || 0.02, 0.02) // Min 2%
+      
+      // Use UI weights for other factors
+      divisionalWeight = weights.divisionalWeight || 0.065
+      recentFormWeight = weights.recentFormWeight || 0.025
+      playoffImplicationsWeight = weights.playoffImplicationsWeight || 0.015
+      
+      console.log(
+        `[Confidence Engine] ATS adjustments: homeAdv=${homeAdvWeight} (reduced - in spread), ` +
+        `weather=${weatherWeight}, injury=${injuryWeight} (boosted - post-line factors)`
+      )
     } else if (input.poolType === 'SU') {
-      // For SU pools, focus on factors that affect outright wins
-      homeAdvWeight = 0.04 // Home advantage less important with heavy market weighting
-      divisionalWeight = 0.04 // Division games matter but market already factors this
-      recentFormWeight = 0.02 // Form less important when market dominates
-      weatherWeight = 0.015 // Weather can affect close games significantly
-      injuryWeight = 0.015 // Key injuries can flip outcomes
-      playoffImplicationsWeight = 0.02 // Motivation more important in win/loss scenarios
+      // For SU pools, use UI weights as-is (home advantage matters for outright wins)
+      console.log('[Confidence Engine] SU pool - using UI weights as configured')
     }
 
     // Weighted combination

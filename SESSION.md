@@ -1593,3 +1593,67 @@ ec67f08 weather
 *[Auto-generated from git history - No LLM used]*
 
 ---
+
+
+## Session - 2025-09-11 07:22
+
+### Files Changed
+**Modified:**
+- src/lib/models/confidence-engine.ts
+
+**Created:**
+- scripts/debug-ats-recommendation.ts
+
+### Git Statistics
+```
+ src/lib/models/confidence-engine.ts | 29 +++++++++++++++++------------
+ 1 file changed, 17 insertions(+), 12 deletions(-)
+
+```
+
+### Recent Commits
+```
+1460f6d arbitrage
+18a3d40 weeks
+bf085e2 weather
+ab03667 weather
+0ddbfed weather
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-11 07:31
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- src/lib/models/confidence-engine.ts
+
+**Created:**
+- scripts/debug-ats-recommendation.ts
+
+### Git Statistics
+```
+ SESSION.md                          | 31 ++++++++++++++++++
+ src/lib/models/confidence-engine.ts | 63 ++++++++++++++++++++++---------------
+ 2 files changed, 69 insertions(+), 25 deletions(-)
+
+```
+
+### Recent Commits
+```
+1460f6d arbitrage
+18a3d40 weeks
+bf085e2 weather
+ab03667 weather
+0ddbfed weather
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
