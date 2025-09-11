@@ -523,6 +523,43 @@ export default function PoolDetailPage() {
 
   const weeks = Array.from({ length: 18 }, (_, i) => i + 1) // NFL weeks 1-18
 
+  // Helper function to calculate tiebreaker data
+  const calculateTiebreakerData = () => {
+    if (!recommendations?.recommendations || recommendations.recommendations.length === 0) {
+      return {
+        mondayNightTotal: null,
+        weeklyTotal: null,
+        mondayNightGame: null,
+      }
+    }
+
+    let weeklyTotal = 0
+    let mondayNightTotal = null
+    let mondayNightGame = null
+
+    recommendations.recommendations.forEach((rec: any) => {
+      const tieBreakerData = rec.recommendation?.tieBreakerData
+      if (tieBreakerData?.overUnderPrediction?.prediction) {
+        const gameTotal = tieBreakerData.overUnderPrediction.prediction
+        weeklyTotal += gameTotal
+
+        // Check if this is Monday Night Football
+        const gameDate = new Date(rec.game.kickoff)
+        const dayOfWeek = gameDate.getDay() // 0=Sunday, 1=Monday
+        if (dayOfWeek === 1) { // Monday
+          mondayNightTotal = gameTotal
+          mondayNightGame = `${rec.game.awayTeam.nflAbbr} @ ${rec.game.homeTeam.nflAbbr}`
+        }
+      }
+    })
+
+    return {
+      mondayNightTotal,
+      weeklyTotal: weeklyTotal > 0 ? Math.round(weeklyTotal) : null,
+      mondayNightGame,
+    }
+  }
+
   // Helper function to transform recommendation to ModelOutput format
   const transformRecommendationToModelOutput = (
     game: Game,
@@ -1597,6 +1634,77 @@ export default function PoolDetailPage() {
                 </p>
               </div>
             )}
+
+            {/* Tiebreaker Section */}
+            {pool && (pool.type === 'ATS' || pool.type === 'SU') && recommendations && recommendations.recommendations.length > 0 && (() => {
+              const tiebreakerData = calculateTiebreakerData()
+              
+              if (!tiebreakerData.weeklyTotal) {
+                return null
+              }
+
+              return (
+                <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Tiebreaker Predictions
+                    </h2>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Monday Night Game Total */}
+                    <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Monday Night Football
+                        </h3>
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {tiebreakerData.mondayNightTotal ? 
+                          `${tiebreakerData.mondayNightTotal.toFixed(1)} pts` : 
+                          'No Monday game'}
+                      </div>
+                      {tiebreakerData.mondayNightGame && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {tiebreakerData.mondayNightGame}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Weekly Total */}
+                    <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                        </svg>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Weekly Total Points
+                        </h3>
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {tiebreakerData.weeklyTotal.toFixed(1)} pts
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        All games combined
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                    <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Predictions based on AI analysis of team performance, weather, injuries, and betting lines
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         )}
       </main>
