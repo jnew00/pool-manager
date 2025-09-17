@@ -306,9 +306,13 @@ Note: This auto-fills with FAVORITES (1) by default. You can manually change any
       }
 
       // Store the Number1Pool games data for auto-fill functionality
+      console.log('Number1Pool API result:', result)
       if (result.number1poolGames && result.number1poolGames.length > 0) {
+        console.log('Setting Number1Pool games:', result.number1poolGames)
         setNumber1PoolGames(result.number1poolGames)
         setLastNumber1PoolUrl(url)
+      } else {
+        console.log('No number1poolGames in result or empty array')
       }
 
       // Now save the scraped spreads to the pool
@@ -559,25 +563,32 @@ Note: This auto-fills with FAVORITES (1) by default. You can manually change any
                 {scrapingNumber1Pool ? 'Importing...' : 'Import Spreads'}
               </button>
 
-              {number1PoolGames.length > 0 && (
-                <div className="border-t border-green-200 dark:border-green-600 pt-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-green-700 dark:text-green-300">
-                      Auto-fill Number1Pool ({number1PoolGames.length} games imported)
-                    </span>
-                  </div>
-                  <button
-                    onClick={generateNumber1PoolScript}
-                    className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <Globe className="w-4 h-4" />
-                    <span>Generate Auto-Fill Script</span>
-                  </button>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-2">
-                    Generates script to auto-fill picks on Number1Pool website (defaults to all favorites)
-                  </p>
+              {/* Debug: Always show this section for now */}
+              <div className="border-t border-green-200 dark:border-green-600 pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-green-700 dark:text-green-300">
+                    Auto-fill Number1Pool ({number1PoolGames.length} games imported)
+                  </span>
                 </div>
-              )}
+                {number1PoolGames.length > 0 ? (
+                  <>
+                    <button
+                      onClick={generateNumber1PoolScript}
+                      className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <Globe className="w-4 h-4" />
+                      <span>Generate Auto-Fill Script</span>
+                    </button>
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                      Generates script to auto-fill picks on Number1Pool website (defaults to all favorites)
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Import spreads first to enable auto-fill functionality
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
