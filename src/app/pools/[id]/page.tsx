@@ -80,6 +80,8 @@ export default function PoolDetailPage() {
   const [loadingUploadedSpreads, setLoadingUploadedSpreads] = useState(false)
   const [editableSpreads, setEditableSpreads] = useState<any[] | null>(null)
   const [showEditableSpreads, setShowEditableSpreads] = useState(false)
+  const [number1PoolGames, setNumber1PoolGames] = useState<any[]>([])
+  const [lastNumber1PoolUrl, setLastNumber1PoolUrl] = useState<string>('')
 
   useEffect(() => {
     if (poolId) {

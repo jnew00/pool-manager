@@ -208,79 +208,52 @@ export function SpreadManager({ poolId, season, week, onSpreadUpdate }: SpreadMa
     }
   }
 
-  const generateNumber1PoolScript = () => {
+  const autoFillNumber1Pool = async () => {
     if (!number1PoolGames.length) {
       alert('No Number1Pool games data available. Please import spreads first.')
       return
     }
 
-    // Generate JavaScript code to auto-fill the Number1Pool website
-    const script = `
-// Auto-fill script for Number1Pool website
-// Generated from PoolManager - ${new Date().toLocaleString()}
+    if (!lastNumber1PoolUrl) {
+      alert('No Number1Pool URL available. Please import spreads first.')
+      return
+    }
 
-console.log('Starting Number1Pool auto-fill...');
+    try {
+      // Create auto-fill payload
+      const autoFillData = {
+        url: lastNumber1PoolUrl,
+        games: number1PoolGames,
+        defaultSelection: '1' // Default to favorites
+      }
 
-const games = ${JSON.stringify(number1PoolGames, null, 2)};
+      const response = await fetch('/api/number1pool/autofill', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(autoFillData),
+      })
 
-// Map to find select elements by game number
-const gameSelects = {};
+      const result = await response.json()
 
-// Find all select elements that match the pattern for weekly picks
-document.querySelectorAll('select[name^="Game_"]').forEach(select => {
-  const match = select.name.match(/Game_(\\d+)/);
-  if (match) {
-    const gameNum = parseInt(match[1]);
-    gameSelects[gameNum] = select;
-  }
-});
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to auto-fill Number1Pool')
+      }
 
-console.log('Found select elements for games:', Object.keys(gameSelects));
+      alert(\`Auto-fill completed!
 
-// Auto-fill based on games data (sorted by Number1Pool order)
-games.forEach((game, index) => {
-  const gameNumber = game.sortOrder || (index + 1);
-  const select = gameSelects[gameNumber];
+Filled \${result.gamesProcessed} games with favorites by default.
+The Number1Pool website should now be open with your picks pre-selected.
 
-  if (select) {
-    // 1 = Favorite (left column), 2 = Underdog (right column)
-    // For ATS pools, typically pick the favorite
-    const pickValue = '1'; // Pick favorite by default
+Please review and modify any picks before submitting.\`)
 
-    console.log(\`Setting Game \${gameNumber}: \${game.favorite} (Favorite) vs \${game.underdog} (Underdog) - Picking: \${pickValue}\`);
+    } catch (error) {
+      console.error('Auto-fill failed:', error)
+      alert(\`Auto-fill failed: \${error instanceof Error ? error.message : 'Unknown error'}
 
-    select.value = pickValue;
-
-    // Trigger change event
-    const event = new Event('change', { bubbles: true });
-    select.dispatchEvent(event);
-  } else {
-    console.warn(\`No select found for game \${gameNumber}\`);
-  }
-});
-
-console.log('Auto-fill complete! Review your picks before submitting.');
-    `.trim()
-
-    // Copy to clipboard and show instructions
-    navigator.clipboard.writeText(script).then(() => {
-      alert(\`Auto-fill script copied to clipboard!
-
-Instructions:
-1. Open the Number1Pool website in a new tab: \${lastNumber1PoolUrl}
-2. Open browser developer tools (F12)
-3. Go to the Console tab
-4. Paste the script and press Enter
-5. Review the auto-filled picks (all favorites selected by default)
-6. Modify any picks you want to change
-7. Submit your picks
-
-Note: This auto-fills with FAVORITES (1) by default. You can manually change any to UNDERDOGS (2) as needed.\`)
-    }).catch(err => {
-      console.error('Failed to copy to clipboard:', err)
-      alert('Failed to copy script to clipboard. Please copy manually from the console.')
-      console.log('Auto-fill script:', script)
-    })
+You can still manually fill the form at: \${lastNumber1PoolUrl}\`)
+    }
   }
 
   const handleNumber1PoolScrape = async (url: string) => {
@@ -573,14 +546,14 @@ Note: This auto-fills with FAVORITES (1) by default. You can manually change any
                 {number1PoolGames.length > 0 ? (
                   <>
                     <button
-                      onClick={generateNumber1PoolScript}
+                      onClick={autoFillNumber1Pool}
                       className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
                     >
                       <Globe className="w-4 h-4" />
-                      <span>Generate Auto-Fill Script</span>
+                      <span>Auto-Fill Number1Pool</span>
                     </button>
                     <p className="text-xs text-green-600 dark:text-green-400 mt-2">
-                      Generates script to auto-fill picks on Number1Pool website (defaults to all favorites)
+                      Automatically opens and fills your picks on the Number1Pool website (defaults to all favorites)
                     </p>
                   </>
                 ) : (
