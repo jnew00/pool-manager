@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
         source: 'number1pool-scraper'
       })),
       unmatched: matchingResult.unmatched,
+      number1poolGames: scrapedData.games, // Include raw Number1Pool games for auto-fill
       metadata: {
         scrapedAt: scrapedData.scrapedAt,
         totalGames: scrapedData.games.length

@@ -1880,3 +1880,74 @@ e7964bd arbitrage
 *[Auto-generated from git history - No LLM used]*
 
 ---
+
+
+## Session - 2025-09-17 17:28
+
+### Files Changed
+**Modified:**
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- number1pool-week3.html
+- scripts/test-corrected-number1pool.ts
+- scripts/test-number1pool-week3.ts
+
+### Git Statistics
+```
+ .../services/number1pool-scraper.service.ts        | 69 ++++++++++++++++++----
+ 1 file changed, 59 insertions(+), 10 deletions(-)
+
+```
+
+### Recent Commits
+```
+7036186 tiebreakers
+2d8adca arbitrage
+0bf3885 arbitrage
+e7964bd arbitrage
+230dae2 arbitrage
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-17 17:36
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- src/app/api/upload/number1pool/route.ts
+- src/components/spreads/SpreadManager.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- scripts/test-corrected-number1pool.ts
+- scripts/test-number1pool-week3.ts
+
+### Git Statistics
+```
+ SESSION.md                                         |  33 ++++++
+ src/app/api/upload/number1pool/route.ts            |   1 +
+ src/components/spreads/SpreadManager.tsx           | 131 +++++++++++++++++++--
+ .../services/number1pool-scraper.service.ts        |  92 ++++++++++++---
+ 4 files changed, 227 insertions(+), 30 deletions(-)
+
+```
+
+### Recent Commits
+```
+7036186 tiebreakers
+2d8adca arbitrage
+0bf3885 arbitrage
+e7964bd arbitrage
+230dae2 arbitrage
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---

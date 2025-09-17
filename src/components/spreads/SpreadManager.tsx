@@ -44,6 +44,8 @@ export function SpreadManager({ poolId, season, week, onSpreadUpdate }: SpreadMa
   const [uploadingCsv, setUploadingCsv] = useState(false)
   const [showNumber1PoolScraper, setShowNumber1PoolScraper] = useState(false)
   const [scrapingNumber1Pool, setScrapingNumber1Pool] = useState(false)
+  const [number1PoolGames, setNumber1PoolGames] = useState<any[]>([])
+  const [lastNumber1PoolUrl, setLastNumber1PoolUrl] = useState<string>('')
   
   // Form state for editing
   const [editForm, setEditForm] = useState({
@@ -206,6 +208,81 @@ export function SpreadManager({ poolId, season, week, onSpreadUpdate }: SpreadMa
     }
   }
 
+  const generateNumber1PoolScript = () => {
+    if (!number1PoolGames.length) {
+      alert('No Number1Pool games data available. Please import spreads first.')
+      return
+    }
+
+    // Generate JavaScript code to auto-fill the Number1Pool website
+    const script = `
+// Auto-fill script for Number1Pool website
+// Generated from PoolManager - ${new Date().toLocaleString()}
+
+console.log('Starting Number1Pool auto-fill...');
+
+const games = ${JSON.stringify(number1PoolGames, null, 2)};
+
+// Map to find select elements by game number
+const gameSelects = {};
+
+// Find all select elements that match the pattern for weekly picks
+document.querySelectorAll('select[name^="Game_"]').forEach(select => {
+  const match = select.name.match(/Game_(\\d+)/);
+  if (match) {
+    const gameNum = parseInt(match[1]);
+    gameSelects[gameNum] = select;
+  }
+});
+
+console.log('Found select elements for games:', Object.keys(gameSelects));
+
+// Auto-fill based on games data (sorted by Number1Pool order)
+games.forEach((game, index) => {
+  const gameNumber = game.sortOrder || (index + 1);
+  const select = gameSelects[gameNumber];
+
+  if (select) {
+    // 1 = Favorite (left column), 2 = Underdog (right column)
+    // For ATS pools, typically pick the favorite
+    const pickValue = '1'; // Pick favorite by default
+
+    console.log(\`Setting Game \${gameNumber}: \${game.favorite} (Favorite) vs \${game.underdog} (Underdog) - Picking: \${pickValue}\`);
+
+    select.value = pickValue;
+
+    // Trigger change event
+    const event = new Event('change', { bubbles: true });
+    select.dispatchEvent(event);
+  } else {
+    console.warn(\`No select found for game \${gameNumber}\`);
+  }
+});
+
+console.log('Auto-fill complete! Review your picks before submitting.');
+    `.trim()
+
+    // Copy to clipboard and show instructions
+    navigator.clipboard.writeText(script).then(() => {
+      alert(\`Auto-fill script copied to clipboard!
+
+Instructions:
+1. Open the Number1Pool website in a new tab: \${lastNumber1PoolUrl}
+2. Open browser developer tools (F12)
+3. Go to the Console tab
+4. Paste the script and press Enter
+5. Review the auto-filled picks (all favorites selected by default)
+6. Modify any picks you want to change
+7. Submit your picks
+
+Note: This auto-fills with FAVORITES (1) by default. You can manually change any to UNDERDOGS (2) as needed.\`)
+    }).catch(err => {
+      console.error('Failed to copy to clipboard:', err)
+      alert('Failed to copy script to clipboard. Please copy manually from the console.')
+      console.log('Auto-fill script:', script)
+    })
+  }
+
   const handleNumber1PoolScrape = async (url: string) => {
     setScrapingNumber1Pool(true)
     setError(null)
@@ -226,6 +303,12 @@ export function SpreadManager({ poolId, season, week, onSpreadUpdate }: SpreadMa
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to scrape Number1Pool')
+      }
+
+      // Store the Number1Pool games data for auto-fill functionality
+      if (result.number1poolGames && result.number1poolGames.length > 0) {
+        setNumber1PoolGames(result.number1poolGames)
+        setLastNumber1PoolUrl(url)
       }
 
       // Now save the scraped spreads to the pool
@@ -461,19 +544,41 @@ export function SpreadManager({ poolId, season, week, onSpreadUpdate }: SpreadMa
               )}
             </div>
 
-            <button
-              onClick={() => {
-                const input = document.getElementById('number1pool-url') as HTMLInputElement
-                const url = input?.value?.trim()
-                if (url) {
-                  handleNumber1PoolScrape(url)
-                }
-              }}
-              disabled={scrapingNumber1Pool}
-              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-lg font-medium transition-colors"
-            >
-              {scrapingNumber1Pool ? 'Importing...' : 'Import Spreads'}
-            </button>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  const input = document.getElementById('number1pool-url') as HTMLInputElement
+                  const url = input?.value?.trim()
+                  if (url) {
+                    handleNumber1PoolScrape(url)
+                  }
+                }}
+                disabled={scrapingNumber1Pool}
+                className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-lg font-medium transition-colors"
+              >
+                {scrapingNumber1Pool ? 'Importing...' : 'Import Spreads'}
+              </button>
+
+              {number1PoolGames.length > 0 && (
+                <div className="border-t border-green-200 dark:border-green-600 pt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-green-700 dark:text-green-300">
+                      Auto-fill Number1Pool ({number1PoolGames.length} games imported)
+                    </span>
+                  </div>
+                  <button
+                    onClick={generateNumber1PoolScript}
+                    className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Globe className="w-4 h-4" />
+                    <span>Generate Auto-Fill Script</span>
+                  </button>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                    Generates script to auto-fill picks on Number1Pool website (defaults to all favorites)
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
