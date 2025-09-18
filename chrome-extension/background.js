@@ -4,12 +4,16 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('PoolManager Auto-Fill extension installed');
 
   // Create context menu for easy access
-  chrome.contextMenus.create({
-    id: 'poolmanager-autofill',
-    title: 'PoolManager Auto-Fill',
-    contexts: ['page'],
-    documentUrlPatterns: ['https://number1pool.com/*']
-  });
+  try {
+    chrome.contextMenus.create({
+      id: 'poolmanager-autofill',
+      title: 'PoolManager Auto-Fill',
+      contexts: ['page'],
+      documentUrlPatterns: ['https://number1pool.com/*']
+    });
+  } catch (error) {
+    console.error('Error creating context menu:', error);
+  }
 });
 
 // Handle messages from content scripts and popup
@@ -37,14 +41,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === 'poolmanager-autofill') {
-    // Send message to content script to show the auto-fill panel
-    chrome.tabs.sendMessage(tab.id, {
-      type: 'SHOW_AUTOFILL_PANEL'
-    });
-  }
-});
+// Handle context menu clicks with error checking
+if (chrome.contextMenus && chrome.contextMenus.onClicked) {
+  chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === 'poolmanager-autofill') {
+      // Send message to content script to show the auto-fill panel
+      chrome.tabs.sendMessage(tab.id, {
+        type: 'SHOW_AUTOFILL_PANEL'
+      });
+    }
+  });
+} else {
+  console.warn('Context menus not available');
+}
 
 // Badge to show when on Number1Pool
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
