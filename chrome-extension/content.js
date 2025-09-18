@@ -8,6 +8,9 @@ class PoolManagerAutoFill {
   }
 
   async init() {
+    // Make this instance globally available for debugging
+    window.poolManagerAutoFill = this;
+
     // Check if this is a Number1Pool picks page
     if (window.location.hostname === 'number1pool.com' &&
         window.location.pathname.includes('picks_weekly.php')) {
@@ -17,8 +20,9 @@ class PoolManagerAutoFill {
       this.createUI();
       this.loadStoredData();
 
-      // Make this instance globally available
-      window.poolManagerAutoFill = this;
+      console.log('[PoolManager] Extension initialized on Number1Pool picks page');
+    } else {
+      console.log('[PoolManager] Not on Number1Pool picks page:', window.location.href);
     }
   }
 
@@ -28,19 +32,45 @@ class PoolManagerAutoFill {
   }
 
   detectGameSelects() {
-    // Find all game select elements
-    const selects = document.querySelectorAll('select[name^="Game_"]');
-    console.log(`[PoolManager] Found ${selects.length} game select elements`);
+    // Try multiple selectors to find game select elements
+    let selects = document.querySelectorAll('select[name^="Game_"]');
+    console.log(`[PoolManager] Found ${selects.length} selects with name^="Game_"`);
+
+    if (selects.length === 0) {
+      // Try alternative selectors
+      selects = document.querySelectorAll('select[name*="Game"]');
+      console.log(`[PoolManager] Found ${selects.length} selects with name*="Game"`);
+    }
+
+    if (selects.length === 0) {
+      // Try any select elements
+      selects = document.querySelectorAll('select');
+      console.log(`[PoolManager] Found ${selects.length} total select elements`);
+      // Log first few select names for debugging
+      Array.from(selects).slice(0, 5).forEach(select => {
+        console.log(`[PoolManager] Select name: "${select.name}", id: "${select.id}"`);
+      });
+    }
 
     // Store select elements with their game numbers
     this.gameSelects = {};
-    selects.forEach(select => {
-      const match = select.name.match(/Game_(\d+)/);
-      if (match) {
-        const gameNum = parseInt(match[1]);
-        this.gameSelects[gameNum] = select;
+    selects.forEach((select, index) => {
+      let gameNum = null;
+
+      // Try to extract game number from name
+      const nameMatch = select.name.match(/Game_?(\d+)/i);
+      if (nameMatch) {
+        gameNum = parseInt(nameMatch[1]);
+      } else {
+        // Use index as fallback
+        gameNum = index + 1;
       }
+
+      this.gameSelects[gameNum] = select;
+      console.log(`[PoolManager] Mapped game ${gameNum} to select: ${select.name}`);
     });
+
+    console.log(`[PoolManager] Total game selects mapped: ${Object.keys(this.gameSelects).length}`);
   }
 
   createUI() {
@@ -274,13 +304,18 @@ class PoolManagerAutoFill {
   }
 }
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
+// Initialize when DOM is ready, with a small delay for dynamic content
+function initializeExtension() {
+  console.log('[PoolManager] Initializing extension...');
+  setTimeout(() => {
     new PoolManagerAutoFill();
-  });
+  }, 1000); // 1 second delay for page to fully load
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeExtension);
 } else {
-  new PoolManagerAutoFill();
+  initializeExtension();
 }
 
 // Listen for messages from popup and background
