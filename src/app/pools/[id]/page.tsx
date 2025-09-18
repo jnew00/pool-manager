@@ -428,6 +428,32 @@ export default function PoolDetailPage() {
       if (uploadedResponse.ok) {
         const uploadedData = await uploadedResponse.json()
         setUploadedSpreads(uploadedData.spreads || [])
+
+        // Check if Number1Pool spreads exist and auto-populate number1PoolGames
+        const number1PoolSpreads = (uploadedData.spreads || []).filter((spread: any) =>
+          spread.source === 'number1pool-scraper'
+        )
+
+        if (number1PoolSpreads.length > 0) {
+          console.log(`[PoolManager] Found ${number1PoolSpreads.length} existing Number1Pool spreads`)
+
+          // Convert spreads back to Number1Pool game format for the extension
+          const reconstructedGames = number1PoolSpreads.map((spread: any, index: number) => ({
+            week: index + 1, // Use index as week number
+            day: 'TBD',
+            time: 'TBD',
+            favorite: spread.spread_for_home < 0 ? spread.home_team : spread.away_team,
+            underdog: spread.spread_for_home < 0 ? spread.away_team : spread.home_team,
+            spread: Math.abs(spread.spread_for_home),
+            homeTeam: spread.home_team,
+            awayTeam: spread.away_team,
+            homeSpread: spread.spread_for_home,
+            sortOrder: index + 1
+          }))
+
+          setNumber1PoolGames(reconstructedGames)
+          console.log('Auto-populated Number1Pool games from existing spreads:', reconstructedGames)
+        }
       }
     } catch (err) {
       console.error('Failed to fetch spreads data:', err)
@@ -1033,26 +1059,6 @@ export default function PoolDetailPage() {
                         Number1Pool
                       </button>
 
-                      {/* Extension Data Buttons - Always visible */}
-                      <button
-                        onClick={() => {
-                          if (number1PoolGames.length === 0) {
-                            alert('Please import spreads first to copy game data.');
-                            return;
-                          }
-                          navigator.clipboard.writeText(JSON.stringify(number1PoolGames, null, 2))
-                          alert(`Game data copied to clipboard!\n\n${number1PoolGames.length} games copied for Chrome extension use.`)
-                        }}
-                        disabled={number1PoolGames.length === 0}
-                        className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                          number1PoolGames.length === 0
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : 'bg-blue-500 text-white hover:bg-blue-600'
-                        }`}
-                        title={number1PoolGames.length === 0 ? "Import spreads first" : "Copy game data for Chrome extension"}
-                      >
-                        Copy for Ext
-                      </button>
 
                       {/* Copy with Recommendations - Always visible */}
                       <button
@@ -1138,8 +1144,49 @@ export default function PoolDetailPage() {
                                 };
                               });
 
+                              // Store data for Chrome extension
+                              const extensionData = gamesWithPicks.map(game => ({
+                                favorite: game.favorite,
+                                underdog: game.underdog,
+                                spread: game.spread,
+                                homeTeam: game.homeTeam,
+                                awayTeam: game.awayTeam,
+                                aiPick: game.aiPick,
+                                confidence: game.confidence,
+                                recommendation: game.recommendation,
+                                recommendedTeam: game.recommendedTeam,
+                                sortOrder: game.sortOrder
+                              }));
+
+                              // Store in localStorage for immediate access
+                              const storageData = {
+                                games: extensionData,
+                                lastUpdate: Date.now(),
+                                week: selectedWeek,
+                                poolId: pool?.id
+                              };
+                              localStorage.setItem('poolmanagerExtensionData', JSON.stringify(storageData));
+                              console.log('[PoolManager] Stored in localStorage:', storageData);
+                              console.log('[PoolManager] localStorage verification:', localStorage.getItem('poolmanagerExtensionData'));
+
+                              // Send data to Chrome extension via custom event
+                              const extensionEvent = new CustomEvent('poolmanager-data', {
+                                detail: {
+                                  games: extensionData,
+                                  lastUpdate: Date.now(),
+                                  week: selectedWeek,
+                                  poolId: pool?.id
+                                }
+                              });
+                              window.dispatchEvent(extensionEvent);
+                              console.log('[PoolManager] Dispatched data to extension via custom event', {
+                                gamesCount: extensionData.length,
+                                hasAI: extensionData.filter(g => g.aiPick).length
+                              });
+
+                              // Also copy to clipboard
                               navigator.clipboard.writeText(JSON.stringify(gamesWithPicks, null, 2))
-                              alert(`Game data with AI picks copied!\n\n${gamesWithPicks.filter(g => g.aiPick).length} games have AI recommendations.`)
+                              alert(`Game data with AI picks stored for extension!\n\n${gamesWithPicks.filter(g => g.aiPick).length} games have AI recommendations.`)
                             }}
                             disabled={number1PoolGames.length === 0}
                             className={`px-2 py-1 text-xs rounded-md transition-colors ${

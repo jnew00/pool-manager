@@ -22,6 +22,11 @@
       "js": ["content.js"],
       "css": ["styles.css"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["http://localhost:*/*", "https://localhost:*/*", "*://dev.gulfcoasthackers.com/*", "*://gulfcoasthackers.com/*"],
+      "js": ["poolmanager-listener.js"],
+      "run_at": "document_idle"
     }
   ],
 

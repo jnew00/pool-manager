@@ -92,80 +92,77 @@ export class Number1PoolScraperService {
       }
       
       console.log(`[Number1Pool] Row cells:`, cells);
+      console.log(`[Number1Pool] Cell breakdown: [0]="${cells[0]}" [1]="${cells[1]}" [2]="${cells[2]}" [3]="${cells[3]}" [4]="${cells[4]}"`);
+
+      // Let's also check if we have more cells than expected
+      if (cells.length > 5) {
+        console.log(`[Number1Pool] Extra cells found:`, cells.slice(5));
+      }
       
       if (cells.length < 5) return null;
       
       // Based on HTML structure:
       // cells[0] = week number (1, 2, 3...)
       // cells[1] = game time (Thu 8:20 PM, Fri 8:00 PM)
-      // cells[2] = favorite team (PHILADELPHIA EAGLES (0-0))
-      // cells[3] = underdog team (Dallas Cowboys (0-0))
+      // cells[2] = LEFT COLUMN = ALWAYS FAVORITE (regardless of home/away)
+      // cells[3] = RIGHT COLUMN = ALWAYS UNDERDOG (regardless of home/away)
       // cells[4] = point spread (6.5, 3.5, etc.)
 
       const weekText = cells[0];
-      const favoriteText = cells[2];
-      const underdogText = cells[3];
+      const leftTeamText = cells[2];   // ALWAYS FAVORITE
+      const rightTeamText = cells[3];  // ALWAYS UNDERDOG
       const spreadText = cells[4];
       const gameTime = cells[1];
-      
-      console.log(`[Number1Pool] Structured parse: Fav="${favoriteText}" vs Under="${underdogText}" Spread="${spreadText}" Time="${gameTime}"`);
-      
-      // Based on the HTML structure:
-      // - Left column contains team 1, right column contains team 2
-      // - The team in ALL CAPS is the home team
-      // - The spread always favors the left team (team 1)
-      const team1Text = favoriteText; // Left column
-      const team2Text = underdogText; // Right column
+
+      console.log(`[Number1Pool] Structured parse: Left="${leftTeamText}" vs Right="${rightTeamText}" Spread="${spreadText}" Time="${gameTime}"`);
+
+      // Key rules:
+      // - Left column = ALWAYS favorite
+      // - Right column = ALWAYS underdog
+      // - ALL CAPS = home team
+      // - Mixed case = away team
 
       // Validate that we have team names and a valid spread
-      if (team1Text && team2Text && spreadText) {
+      if (leftTeamText && rightTeamText && spreadText) {
         const spreadValue = parseFloat(spreadText);
+        console.log(`[Number1Pool] Validating spread: "${spreadText}" -> ${spreadValue} (valid: ${!isNaN(spreadValue) && spreadValue >= 0.5 && spreadValue <= 20.5})`);
 
         // Validate spread is a reasonable NFL spread (0.5 to 20.5)
         if (!isNaN(spreadValue) && spreadValue >= 0.5 && spreadValue <= 20.5) {
+          // Assign favorite and underdog based on Number1Pool column structure
+          const favorite = this.cleanTeamName(leftTeamText);   // Left column = ALWAYS favorite
+          const underdog = this.cleanTeamName(rightTeamText);  // Right column = ALWAYS underdog
+
           // Determine which team is home/away based on capitalization
-          const team1IsHome = this.isHomeTeam(team1Text);
-          const team2IsHome = this.isHomeTeam(team2Text);
+          const leftIsHome = this.isHomeTeam(leftTeamText);
+          const rightIsHome = this.isHomeTeam(rightTeamText);
 
           // Determine home and away teams
-          let homeTeam: string, awayTeam: string, homeSpread: number;
+          let homeTeam: string, awayTeam: string;
 
-          if (team1IsHome && !team2IsHome) {
-            // Team 1 (left) is home, Team 2 (right) is away
-            homeTeam = this.cleanTeamName(team1Text);
-            awayTeam = this.cleanTeamName(team2Text);
-            homeSpread = spreadValue; // Team 1 is favored, so home team gets positive spread
-          } else if (team2IsHome && !team1IsHome) {
-            // Team 2 (right) is home, Team 1 (left) is away
-            homeTeam = this.cleanTeamName(team2Text);
-            awayTeam = this.cleanTeamName(team1Text);
-            homeSpread = -spreadValue; // Team 1 is favored, so home team gets negative spread
+          if (leftIsHome && !rightIsHome) {
+            // Left team (favorite) is home, Right team (underdog) is away
+            homeTeam = favorite;
+            awayTeam = underdog;
+          } else if (rightIsHome && !leftIsHome) {
+            // Right team (underdog) is home, Left team (favorite) is away
+            homeTeam = underdog;
+            awayTeam = favorite;
           } else {
-            // Fallback: assume left team is away, right team is home (old logic)
-            console.warn(`[Number1Pool] Could not determine home/away from caps: "${team1Text}" vs "${team2Text}"`);
-            homeTeam = this.cleanTeamName(team2Text);
-            awayTeam = this.cleanTeamName(team1Text);
-            homeSpread = -spreadValue;
+            // Fallback: assume left team is away, right team is home
+            console.warn(`[Number1Pool] Could not determine home/away from caps: "${leftTeamText}" vs "${rightTeamText}"`);
+            homeTeam = underdog;
+            awayTeam = favorite;
           }
 
-          // Determine favorite/underdog based on who is actually favored
-          const leftTeam = this.cleanTeamName(team1Text);
-          const rightTeam = this.cleanTeamName(team2Text);
-
-          // The team that is favored has the negative spread
-          // If homeSpread is negative, home team is favored
-          // If homeSpread is positive, away team is favored
-          let favorite: string;
-          let underdog: string;
-
-          if (homeSpread < 0) {
-            // Home team is favored (has negative spread)
-            favorite = homeTeam;
-            underdog = awayTeam;
+          // Calculate homeSpread: negative if home team is favored, positive if home team is underdog
+          let homeSpread: number;
+          if (homeTeam === favorite) {
+            // Home team is favored, so negative spread
+            homeSpread = -spreadValue;
           } else {
-            // Away team is favored (home team has positive spread)
-            favorite = awayTeam;
-            underdog = homeTeam;
+            // Home team is underdog, so positive spread
+            homeSpread = spreadValue;
           }
 
           // Parse actual week number
@@ -183,9 +180,13 @@ export class Number1PoolScraperService {
             homeSpread,
             sortOrder: weekNumber // Use week number as sort order
           };
+        } else {
+          console.log(`[Number1Pool] Invalid spread value: "${spreadText}" -> ${spreadValue} (isNaN: ${isNaN(spreadValue)}, range: ${spreadValue >= 0.5 && spreadValue <= 20.5})`);
         }
+      } else {
+        console.log(`[Number1Pool] Missing required fields - Left: "${leftTeamText}", Right: "${rightTeamText}", Spread: "${spreadText}"`);
       }
-      
+
       console.log(`[Number1Pool] Failed validation - skipping row`);
       return null;
     } catch (error) {

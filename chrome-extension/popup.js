@@ -40,15 +40,7 @@ class PopupManager {
       this.loadGameData();
     });
 
-    // Auto-fill buttons
-    document.getElementById('fill-balanced').addEventListener('click', () => {
-      this.sendAutoFillMessage('balanced');
-    });
-
-    document.getElementById('fill-aggressive').addEventListener('click', () => {
-      this.sendAutoFillMessage('aggressive');
-    });
-
+    // Auto-fill button
     document.getElementById('fill-ai').addEventListener('click', () => {
       this.sendAutoFillMessage('ai');
     });
@@ -189,21 +181,17 @@ class PopupManager {
 
   updateUI() {
     const gamesInfoEl = document.getElementById('games-info');
-    const fillBalancedBtn = document.getElementById('fill-balanced');
-    const fillAggressiveBtn = document.getElementById('fill-aggressive');
     const fillAiBtn = document.getElementById('fill-ai');
     const clearAllBtn = document.getElementById('clear-all');
 
     if (this.games.length > 0) {
       // Check if AI recommendations are available
-      const hasAiPicks = this.games.some(game => game.recommendation && game.recommendation !== '00');
+      const hasAiPicks = this.games.some(game => game.aiPick);
 
       gamesInfoEl.textContent = `${this.games.length} games loaded${hasAiPicks ? ' (with AI picks)' : ''}`;
 
       const buttonsEnabled = this.isNumber1PoolPage;
-      fillBalancedBtn.disabled = !buttonsEnabled;
-      fillAggressiveBtn.disabled = !buttonsEnabled;
-      fillAiBtn.disabled = !buttonsEnabled || !hasAiPicks;
+      fillAiBtn.disabled = !buttonsEnabled;
       clearAllBtn.disabled = !buttonsEnabled;
 
       if (!buttonsEnabled) {
@@ -211,8 +199,6 @@ class PopupManager {
       }
     } else {
       gamesInfoEl.textContent = 'No game data loaded';
-      fillBalancedBtn.disabled = true;
-      fillAggressiveBtn.disabled = true;
       fillAiBtn.disabled = true;
       clearAllBtn.disabled = true;
     }

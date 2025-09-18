@@ -1112,3 +1112,656 @@ e0cdb1b fix
 *[Auto-generated from git history - No LLM used]*
 
 ---
+
+
+## Session - 2025-09-18 17:54
+
+### Files Changed
+**Modified:**
+- chrome-extension/content.js
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+### Git Statistics
+```
+ chrome-extension/content.js                                  | 2 +-
+ src/features/uploads/services/number1pool-scraper.service.ts | 9 +++++++--
+ 2 files changed, 8 insertions(+), 3 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 18:04
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+### Git Statistics
+```
+ SESSION.md                                         | 30 ++++++++++++++++++++
+ chrome-extension/content.js                        |  2 +-
+ src/app/pools/[id]/page.tsx                        | 33 +++++++++++++++++++++-
+ .../services/number1pool-scraper.service.ts        |  9 ++++--
+ 4 files changed, 70 insertions(+), 4 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 18:08
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+### Git Statistics
+```
+ SESSION.md                                         | 64 ++++++++++++++++++++++
+ chrome-extension/content.js                        | 11 +++-
+ src/app/pools/[id]/page.tsx                        | 36 +++++++++++-
+ .../services/number1pool-scraper.service.ts        |  9 ++-
+ 4 files changed, 116 insertions(+), 4 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 18:12
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 98 ++++++++++++++++++++++
+ chrome-extension/content.js                        | 11 ++-
+ chrome-extension/manifest.json                     |  5 ++
+ src/app/pools/[id]/page.tsx                        | 43 +++++++++-
+ .../services/number1pool-scraper.service.ts        |  9 +-
+ 5 files changed, 162 insertions(+), 4 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 18:19
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- chrome-extension/popup.html
+- chrome-extension/popup.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 137 +++++++++++++++++++++
+ chrome-extension/content.js                        | 109 ++++++----------
+ chrome-extension/manifest.json                     |   5 +
+ chrome-extension/popup.html                        |   8 +-
+ chrome-extension/popup.js                          |  20 +--
+ src/app/pools/[id]/page.tsx                        |  43 ++++++-
+ .../services/number1pool-scraper.service.ts        |   9 +-
+ 7 files changed, 236 insertions(+), 95 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 18:25
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- chrome-extension/popup.html
+- chrome-extension/popup.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 180 +++++++++++++++++++++
+ chrome-extension/content.js                        | 155 ++++++++++--------
+ chrome-extension/manifest.json                     |   5 +
+ chrome-extension/popup.html                        |   8 +-
+ chrome-extension/popup.js                          |  20 +--
+ src/app/pools/[id]/page.tsx                        |  43 ++++-
+ .../services/number1pool-scraper.service.ts        |   9 +-
+ 7 files changed, 325 insertions(+), 95 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 18:29
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- chrome-extension/popup.html
+- chrome-extension/popup.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 223 +++++++++++++++++++++
+ chrome-extension/content.js                        | 155 +++++++-------
+ chrome-extension/manifest.json                     |   5 +
+ chrome-extension/popup.html                        |   8 +-
+ chrome-extension/popup.js                          |  20 +-
+ src/app/pools/[id]/page.tsx                        |  43 +++-
+ .../services/number1pool-scraper.service.ts        |   9 +-
+ 7 files changed, 368 insertions(+), 95 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 18:34
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- chrome-extension/popup.html
+- chrome-extension/popup.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 266 +++++++++++++++++++++
+ chrome-extension/content.js                        | 155 ++++++------
+ chrome-extension/manifest.json                     |   5 +
+ chrome-extension/popup.html                        |   8 +-
+ chrome-extension/popup.js                          |  20 +-
+ src/app/pools/[id]/page.tsx                        |  43 +++-
+ .../services/number1pool-scraper.service.ts        |  15 +-
+ 7 files changed, 415 insertions(+), 97 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 18:39
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- chrome-extension/popup.html
+- chrome-extension/popup.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 309 +++++++++++++++++++++
+ chrome-extension/content.js                        | 155 ++++++-----
+ chrome-extension/manifest.json                     |   5 +
+ chrome-extension/popup.html                        |   8 +-
+ chrome-extension/popup.js                          |  20 +-
+ src/app/pools/[id]/page.tsx                        |  43 ++-
+ .../services/number1pool-scraper.service.ts        |  48 ++--
+ 7 files changed, 473 insertions(+), 115 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 18:44
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- chrome-extension/popup.html
+- chrome-extension/popup.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 352 +++++++++++++++++++++
+ chrome-extension/content.js                        | 155 +++++----
+ chrome-extension/manifest.json                     |   5 +
+ chrome-extension/popup.html                        |   8 +-
+ chrome-extension/popup.js                          |  20 +-
+ src/app/pools/[id]/page.tsx                        |  43 ++-
+ .../services/number1pool-scraper.service.ts        |  97 +++---
+ 7 files changed, 536 insertions(+), 144 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 18:52
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- chrome-extension/popup.html
+- chrome-extension/popup.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 395 +++++++++++++++++++++
+ chrome-extension/content.js                        | 155 ++++----
+ chrome-extension/manifest.json                     |   5 +
+ chrome-extension/popup.html                        |   8 +-
+ chrome-extension/popup.js                          |  20 +-
+ src/app/pools/[id]/page.tsx                        |  43 ++-
+ .../services/number1pool-scraper.service.ts        | 103 +++---
+ 7 files changed, 585 insertions(+), 144 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 18:56
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- chrome-extension/popup.html
+- chrome-extension/popup.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 438 +++++++++++++++++++++
+ chrome-extension/content.js                        | 155 ++++----
+ chrome-extension/manifest.json                     |   5 +
+ chrome-extension/popup.html                        |   8 +-
+ chrome-extension/popup.js                          |  20 +-
+ src/app/pools/[id]/page.tsx                        |  43 +-
+ .../services/number1pool-scraper.service.ts        | 103 ++---
+ 7 files changed, 628 insertions(+), 144 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 19:06
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- chrome-extension/popup.html
+- chrome-extension/popup.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 481 +++++++++++++++++++++
+ chrome-extension/content.js                        | 155 ++++---
+ chrome-extension/manifest.json                     |   5 +
+ chrome-extension/popup.html                        |   8 +-
+ chrome-extension/popup.js                          |  20 +-
+ src/app/pools/[id]/page.tsx                        |  43 +-
+ .../services/number1pool-scraper.service.ts        | 103 ++---
+ 7 files changed, 671 insertions(+), 144 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 19:32
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- chrome-extension/popup.html
+- chrome-extension/popup.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 524 +++++++++++++++++++++
+ chrome-extension/content.js                        | 155 +++---
+ chrome-extension/manifest.json                     |   5 +
+ chrome-extension/popup.html                        |   8 +-
+ chrome-extension/popup.js                          |  20 +-
+ src/app/pools/[id]/page.tsx                        |  43 +-
+ .../services/number1pool-scraper.service.ts        | 103 ++--
+ 7 files changed, 714 insertions(+), 144 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 19:33
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- chrome-extension/popup.html
+- chrome-extension/popup.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 567 +++++++++++++++++++++
+ chrome-extension/content.js                        | 157 +++---
+ chrome-extension/manifest.json                     |   5 +
+ chrome-extension/popup.html                        |   8 +-
+ chrome-extension/popup.js                          |  20 +-
+ src/app/pools/[id]/page.tsx                        |  43 +-
+ .../services/number1pool-scraper.service.ts        | 103 ++--
+ 7 files changed, 758 insertions(+), 145 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-18 19:42
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- chrome-extension/content.js
+- chrome-extension/manifest.json
+- chrome-extension/popup.html
+- chrome-extension/popup.js
+- src/app/pools/[id]/page.tsx
+- src/features/uploads/services/number1pool-scraper.service.ts
+
+**Created:**
+- chrome-extension/poolmanager-listener.js
+
+### Git Statistics
+```
+ SESSION.md                                         | 610 +++++++++++++++++++++
+ chrome-extension/content.js                        | 195 ++++---
+ chrome-extension/manifest.json                     |   5 +
+ chrome-extension/popup.html                        |   8 +-
+ chrome-extension/popup.js                          |  20 +-
+ src/app/pools/[id]/page.tsx                        |  89 ++-
+ .../services/number1pool-scraper.service.ts        | 103 ++--
+ 7 files changed, 865 insertions(+), 165 deletions(-)
+
+```
+
+### Recent Commits
+```
+a6d26c8 fix
+d8c5d2c fix
+28ace35 fix
+ea84d23 fix
+357a19c fix
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---

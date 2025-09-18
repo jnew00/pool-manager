@@ -124,25 +124,11 @@ class PoolManagerAutoFill {
         <div id="pm-games-count" class="pm-games-count"></div>
         <div class="pm-actions">
           <button id="pm-auto-fill" class="pm-btn pm-btn-primary" disabled>
-            Auto-Fill Favorites
+            Use AI Recommendations
           </button>
           <button id="pm-clear-all" class="pm-btn pm-btn-secondary">
             Clear All
           </button>
-        </div>
-        <div class="pm-options">
-          <label>
-            <input type="radio" name="pm-fill-type" value="balanced" checked>
-            Balanced Strategy (mix of favorites/underdogs)
-          </label>
-          <label>
-            <input type="radio" name="pm-fill-type" value="aggressive">
-            Aggressive Strategy (higher risk/reward)
-          </label>
-          <label>
-            <input type="radio" name="pm-fill-type" value="ai">
-            AI Recommendations (if available)
-          </label>
         </div>
         <div id="pm-game-list" class="pm-game-list"></div>
       </div>
@@ -185,19 +171,28 @@ class PoolManagerAutoFill {
 
       // First try to get data from localStorage (set automatically by PoolManager)
       const localStorageData = localStorage.getItem('poolmanagerExtensionData');
+      console.log('[PoolManager] localStorage raw data:', localStorageData);
+
       if (localStorageData) {
         try {
           const data = JSON.parse(localStorageData);
+          console.log('[PoolManager] localStorage parsed data:', data);
+          console.log('[PoolManager] Games array length:', data.games ? data.games.length : 'no games array');
+
           if (data.games && data.games.length > 0) {
             this.games = data.games;
             this.updateUI();
             this.updateStatus(`✅ ${this.games.length} games loaded automatically`, 'success');
             console.log(`[PoolManager] Loaded ${this.games.length} games from localStorage automatically`);
             return;
+          } else {
+            console.log('[PoolManager] localStorage has data but no valid games array');
           }
         } catch (e) {
           console.warn('[PoolManager] Failed to parse localStorage data:', e);
         }
+      } else {
+        console.log('[PoolManager] No localStorage data found at all');
       }
 
       // Fallback: Try to get data from Chrome storage (manual popup method)
@@ -312,57 +307,93 @@ class PoolManagerAutoFill {
     }
   }
 
+  teamNamesMatch(team1, team2) {
+    // Normalize team names for comparison
+    if (!team1 || !team2) return false;
+
+    const normalize = (name) => {
+      return name.toLowerCase()
+        .replace(/[^a-z\s]/g, '') // Remove non-alphabetic chars except spaces
+        .replace(/\s+/g, ' ')     // Normalize whitespace
+        .trim();
+    };
+
+    const norm1 = normalize(team1);
+    const norm2 = normalize(team2);
+
+    // Direct match
+    if (norm1 === norm2) return true;
+
+    // Check if one contains the other (for cases like "BUFFALO BILLS" vs "Buffalo Bills")
+    if (norm1.includes(norm2) || norm2.includes(norm1)) return true;
+
+    // Split into words and check for significant word matches
+    const words1 = norm1.split(' ').filter(w => w.length > 2); // Ignore short words like "of"
+    const words2 = norm2.split(' ').filter(w => w.length > 2);
+
+    // If any significant word matches, consider it a match
+    for (const word1 of words1) {
+      for (const word2 of words2) {
+        if (word1 === word2) return true;
+      }
+    }
+
+    return false;
+  }
+
   autoFillGames() {
-    const fillType = document.querySelector('input[name="pm-fill-type"]:checked').value;
     let filled = 0;
     let errors = [];
+
+    console.log('[PoolManager] Starting auto-fill with', this.games.length, 'games');
 
     this.games.forEach((game, index) => {
       const gameNumber = game.sortOrder || (index + 1);
       const gameInput = this.gameSelects[gameNumber];
       const gameButton = this.gameButtons[gameNumber];
 
+      console.log(`[PoolManager] Game ${gameNumber}:`, {
+        aiPick: game.aiPick,
+        favorite: game.favorite,
+        underdog: game.underdog,
+        homeTeam: game.homeTeam,
+        awayTeam: game.awayTeam
+      });
+
       if (gameInput) {
         let value;
-        switch (fillType) {
-          case 'balanced':
-            // Balanced strategy: alternate between favorites and underdogs based on spread
-            const spread = parseFloat(game.spread) || 0;
-            if (Math.abs(spread) <= 3) {
-              // Close games: slight preference for underdog
-              value = index % 2 === 0 ? '2' : '1';
-            } else {
-              // Bigger spreads: slight preference for favorite
-              value = index % 2 === 0 ? '1' : '2';
-            }
-            break;
-          case 'aggressive':
-            // Aggressive strategy: prefer underdogs for bigger payouts
-            const aggressiveSpread = parseFloat(game.spread) || 0;
-            if (Math.abs(aggressiveSpread) >= 7) {
-              // Big underdogs for high reward
-              value = '2';
-            } else if (Math.abs(aggressiveSpread) <= 2.5) {
-              // Pick 'em games, go with underdog
-              value = '2';
-            } else {
-              // Medium spreads, mix it up favoring underdogs
-              value = index % 3 === 0 ? '1' : '2';
-            }
-            break;
-          case 'ai':
-            // Use PoolManager AI recommendation if available
-            if (game.recommendation) {
-              value = game.recommendation;
-            } else if (game.aiPick && game.recommendedTeam) {
-              // Fallback: determine pick from recommendedTeam
-              value = game.recommendedTeam === game.favorite ? '1' : '2';
-            } else {
-              value = '1'; // Default to favorite if no AI data
-            }
-            break;
-          default:
-            value = '1';
+
+        // Use AI recommendation from PoolManager
+        if (game.aiPick) {
+          // Map HOME/AWAY to favorite/underdog
+          if (game.aiPick === 'HOME') {
+            // AI picked the home team - check if home team is favorite or underdog
+            const homeTeamName = game.homeTeam;
+            const favoriteTeamName = game.favorite;
+
+            // Use team name matching to determine if home team is the favorite
+            const homeIsFavorite = this.teamNamesMatch(homeTeamName, favoriteTeamName);
+            value = homeIsFavorite ? '1' : '2';
+
+            console.log(`[PoolManager] Game ${gameNumber}: AI picked HOME (${homeTeamName}), favorite is ${favoriteTeamName}, homeIsFavorite=${homeIsFavorite} -> value=${value}`);
+          } else if (game.aiPick === 'AWAY') {
+            // AI picked the away team - check if away team is favorite or underdog
+            const awayTeamName = game.awayTeam;
+            const favoriteTeamName = game.favorite;
+
+            // Use team name matching to determine if away team is the favorite
+            const awayIsFavorite = this.teamNamesMatch(awayTeamName, favoriteTeamName);
+            value = awayIsFavorite ? '1' : '2';
+
+            console.log(`[PoolManager] Game ${gameNumber}: AI picked AWAY (${awayTeamName}), favorite is ${favoriteTeamName}, awayIsFavorite=${awayIsFavorite} -> value=${value}`);
+          } else {
+            value = '1'; // Default to favorite
+            console.log(`[PoolManager] Game ${gameNumber}: Unknown aiPick=${game.aiPick}, defaulting to favorite`);
+          }
+        } else {
+          // No AI pick available, default to favorite
+          value = '1';
+          console.log(`[PoolManager] Game ${gameNumber}: No AI pick, defaulting to favorite`);
         }
 
         // Handle different pool types
@@ -415,9 +446,12 @@ class PoolManagerAutoFill {
       }
     });
 
+    // Fill tiebreaker with Monday Night Football total
+    this.fillTiebreaker();
+
     // Show result
     if (filled > 0) {
-      this.updateStatus(`✅ Filled ${filled} games (${this.poolType}) with ${fillType}`, 'success');
+      this.updateStatus(`✅ Filled ${filled} games with AI recommendations`, 'success');
     }
 
     if (errors.length > 0) {
@@ -428,6 +462,41 @@ class PoolManagerAutoFill {
     setTimeout(() => {
       document.getElementById('poolmanager-autofill-panel').style.display = 'none';
     }, 3000);
+  }
+
+  fillTiebreaker() {
+    try {
+      // Find Monday Night Football game (usually has "Mon" in day/time)
+      const mondayGame = this.games.find(game =>
+        game.day && game.day.toLowerCase().includes('monday') ||
+        game.time && game.time.toLowerCase().includes('mon')
+      );
+
+      if (!mondayGame) {
+        console.log('[PoolManager] No Monday Night Football game found for tiebreaker');
+        return;
+      }
+
+      // Calculate total points (spread + estimated total)
+      // For NFL games, average total is around 45-50 points, but we can estimate from spread
+      const spread = parseFloat(mondayGame.spread) || 0;
+      const estimatedTotal = Math.round(45 + (spread / 2)); // Simple estimation
+
+      // Look for tiebreaker input field
+      const tiebreakerInput = document.querySelector('input[name*="tiebreaker" i], input[name*="TIEBREAKER" i], input[placeholder*="tiebreaker" i]');
+
+      if (tiebreakerInput) {
+        tiebreakerInput.value = estimatedTotal.toString();
+        tiebreakerInput.dispatchEvent(new Event('input', { bubbles: true }));
+        tiebreakerInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+        console.log(`[PoolManager] Filled tiebreaker with ${estimatedTotal} (Monday Night: ${mondayGame.favorite} vs ${mondayGame.underdog})`);
+      } else {
+        console.log('[PoolManager] Tiebreaker input field not found');
+      }
+    } catch (error) {
+      console.error('[PoolManager] Error filling tiebreaker:', error);
+    }
   }
 
   clearAllSelections() {
@@ -496,19 +565,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'AUTO_FILL_NOW') {
     if (window.poolManagerAutoFill) {
-      // Set the fill type if specified
-      if (message.fillType) {
-        // Map old fillType values to new ones
-        let fillType = message.fillType;
-        if (fillType === 'custom') fillType = 'ai';
-        if (fillType === 'favorites') fillType = 'balanced';
-        if (fillType === 'underdogs') fillType = 'aggressive';
-
-        const radioElement = document.querySelector(`input[name="pm-fill-type"][value="${fillType}"]`);
-        if (radioElement) {
-          radioElement.checked = true;
-        }
-      }
+      // Fill type is ignored - we always use AI recommendations from PoolManager
       window.poolManagerAutoFill.autoFillGames();
       sendResponse({ success: true });
     } else {
