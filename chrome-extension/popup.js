@@ -105,11 +105,19 @@ class PopupManager {
         poolmanagerGames: gameData,
         lastUpdate: Date.now()
       }, () => {
+        if (chrome.runtime.lastError) {
+          console.error('Storage error:', chrome.runtime.lastError);
+          this.updateStatus('Error saving data', 'error');
+          return;
+        }
+
         this.updateStatus(`✅ Loaded ${gameData.length} games successfully`, 'success');
         this.updateUI();
 
         // Clear the input
         gameDataInput.value = '';
+
+        console.log(`[PoolManager] Stored ${gameData.length} games in Chrome storage`);
       });
 
     } catch (error) {

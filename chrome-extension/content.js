@@ -116,26 +116,32 @@ class PoolManagerAutoFill {
 
   async loadStoredData() {
     try {
+      console.log('[PoolManager] Loading stored data...');
       // Try to get data from Chrome storage (set by popup or PoolManager)
-      const result = await chrome.storage.local.get(['poolmanagerGames']);
+      const result = await chrome.storage.local.get(['poolmanagerGames', 'lastUpdate']);
+
+      console.log('[PoolManager] Storage result:', result);
 
       if (result.poolmanagerGames && result.poolmanagerGames.length > 0) {
         this.games = result.poolmanagerGames;
         this.updateUI();
+        this.updateStatus(`✅ ${this.games.length} games loaded from storage`, 'success');
+        console.log(`[PoolManager] Loaded ${this.games.length} games from storage`);
       } else {
-        // Try to fetch from PoolManager API if running locally
-        await this.fetchFromPoolManager();
+        console.log('[PoolManager] No stored data found');
+        // Show message to load data via popup
+        this.updateStatus('Click extension icon to load game data', 'warning');
       }
     } catch (error) {
       console.error('[PoolManager] Error loading data:', error);
-      this.updateStatus('No PoolManager data found. Import spreads first.', 'error');
+      this.updateStatus('Error loading data. Check extension popup.', 'error');
     }
   }
 
   async fetchFromPoolManager() {
     // This would require CORS to be enabled on the PoolManager API
     // For now, we'll rely on the popup to set the data
-    this.updateStatus('Connect to PoolManager to import game data', 'warning');
+    this.updateStatus('Load game data via extension popup first', 'warning');
   }
 
   updateUI() {
@@ -286,6 +292,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (window.poolManagerAutoFill) {
         window.poolManagerAutoFill.games = message.games;
         window.poolManagerAutoFill.updateUI();
+        window.poolManagerAutoFill.updateStatus(`✅ ${message.games.length} games loaded`, 'success');
       }
       sendResponse({ success: true });
     });
