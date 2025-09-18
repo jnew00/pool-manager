@@ -989,8 +989,11 @@ export default function PoolDetailPage() {
                             return;
                           }
 
+                          // Filter to current week only
+                          const currentWeekGames = number1PoolGames.filter(game => game.week === selectedWeek);
+
                           // Enrich games with AI recommendations
-                          const gamesWithPicks = number1PoolGames.map(game => {
+                          const gamesWithPicks = currentWeekGames.map(game => {
                                 // Find the recommendation for this game
                                 const gameRec = recommendations?.recommendations?.find((rec: any) => {
                                   const recHome = rec.game?.homeTeam?.name || '';
@@ -1021,18 +1024,26 @@ export default function PoolDetailPage() {
                                   // Handle aiPick field (HOME/AWAY format)
                                   if (game.aiPick === 'HOME') {
                                     recommendedTeam = game.homeTeam;
-                                    // Check if home team is favorite or underdog
-                                    if (game.homeTeam === game.favorite) {
+                                    // Check if home team is favorite or underdog using case-insensitive comparison
+                                    const normalizedHome = game.homeTeam?.toLowerCase().replace(/[^a-z]/g, '') || '';
+                                    const normalizedFav = game.favorite?.toLowerCase().replace(/[^a-z]/g, '') || '';
+                                    const normalizedUnder = game.underdog?.toLowerCase().replace(/[^a-z]/g, '') || '';
+
+                                    if (normalizedHome.includes(normalizedFav.split(' ')[0]) || normalizedFav.includes(normalizedHome.split(' ')[0])) {
                                       recommendation = '1'; // Home team is favorite
-                                    } else {
+                                    } else if (normalizedHome.includes(normalizedUnder.split(' ')[0]) || normalizedUnder.includes(normalizedHome.split(' ')[0])) {
                                       recommendation = '2'; // Home team is underdog
                                     }
                                   } else if (game.aiPick === 'AWAY') {
                                     recommendedTeam = game.awayTeam;
-                                    // Check if away team is favorite or underdog
-                                    if (game.awayTeam === game.favorite) {
+                                    // Check if away team is favorite or underdog using case-insensitive comparison
+                                    const normalizedAway = game.awayTeam?.toLowerCase().replace(/[^a-z]/g, '') || '';
+                                    const normalizedFav = game.favorite?.toLowerCase().replace(/[^a-z]/g, '') || '';
+                                    const normalizedUnder = game.underdog?.toLowerCase().replace(/[^a-z]/g, '') || '';
+
+                                    if (normalizedAway.includes(normalizedFav.split(' ')[0]) || normalizedFav.includes(normalizedAway.split(' ')[0])) {
                                       recommendation = '1'; // Away team is favorite
-                                    } else {
+                                    } else if (normalizedAway.includes(normalizedUnder.split(' ')[0]) || normalizedUnder.includes(normalizedAway.split(' ')[0])) {
                                       recommendation = '2'; // Away team is underdog
                                     }
                                   }
