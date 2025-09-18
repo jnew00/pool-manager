@@ -326,6 +326,77 @@ export default function PoolDetailPage() {
         const data = await response.json()
         console.log('[PoolDetail] Received recommendations:', data.data?.recommendations?.length, 'games')
         setRecommendations(data.data)
+
+        // Store AI recommendations in localStorage for Chrome extension
+        if (data.data?.recommendations && number1PoolGames.length > 0) {
+          const currentWeekGames = number1PoolGames.filter(game => game.week === selectedWeek);
+          const extensionData = currentWeekGames.map(game => {
+            // Find AI recommendation for this game
+            const gameRec = data.data.recommendations.find((rec: any) => {
+              const recHome = rec.game?.homeTeam?.name || '';
+              const recAway = rec.game?.awayTeam?.name || '';
+              return (
+                recHome.includes(game.homeTeam) ||
+                recAway.includes(game.awayTeam) ||
+                game.homeTeam.includes(recHome) ||
+                game.awayTeam.includes(recAway)
+              );
+            });
+
+            // Convert AI pick to extension format
+            let recommendation = null;
+            let recommendedTeam = null;
+
+            if (gameRec?.recommendation?.pick) {
+              recommendedTeam = gameRec.recommendation.team;
+              if (recommendedTeam === game.favorite) {
+                recommendation = '1';
+              } else if (recommendedTeam === game.underdog) {
+                recommendation = '2';
+              }
+            } else if (game.aiPick) {
+              if (game.aiPick === 'HOME') {
+                recommendedTeam = game.homeTeam;
+                const normalizedHome = game.homeTeam?.toLowerCase().replace(/[^a-z]/g, '') || '';
+                const normalizedFav = game.favorite?.toLowerCase().replace(/[^a-z]/g, '') || '';
+
+                if (normalizedHome.includes(normalizedFav.split(' ')[0]) || normalizedFav.includes(normalizedHome.split(' ')[0])) {
+                  recommendation = '1';
+                } else {
+                  recommendation = '2';
+                }
+              } else if (game.aiPick === 'AWAY') {
+                recommendedTeam = game.awayTeam;
+                const normalizedAway = game.awayTeam?.toLowerCase().replace(/[^a-z]/g, '') || '';
+                const normalizedFav = game.favorite?.toLowerCase().replace(/[^a-z]/g, '') || '';
+
+                if (normalizedAway.includes(normalizedFav.split(' ')[0]) || normalizedFav.includes(normalizedAway.split(' ')[0])) {
+                  recommendation = '1';
+                } else {
+                  recommendation = '2';
+                }
+              }
+            }
+
+            return {
+              ...game,
+              aiPick: gameRec?.recommendation?.pick || game.aiPick || null,
+              confidence: gameRec?.recommendation?.confidence || game.confidence || null,
+              recommendedTeam: recommendedTeam,
+              recommendation: recommendation
+            };
+          });
+
+          // Store in localStorage for Chrome extension
+          localStorage.setItem('poolmanagerExtensionData', JSON.stringify({
+            games: extensionData,
+            lastUpdate: Date.now(),
+            week: selectedWeek,
+            poolId: pool?.id
+          }));
+
+          console.log(`[PoolManager] Stored ${extensionData.length} games with AI picks in localStorage for Chrome extension`);
+        }
       } else {
         setRecommendations(null)
       }

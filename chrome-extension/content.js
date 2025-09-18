@@ -182,24 +182,41 @@ class PoolManagerAutoFill {
   async loadStoredData() {
     try {
       console.log('[PoolManager] Loading stored data...');
-      // Try to get data from Chrome storage (set by popup or PoolManager)
-      const result = await chrome.storage.local.get(['poolmanagerGames', 'lastUpdate']);
 
-      console.log('[PoolManager] Storage result:', result);
+      // First try to get data from localStorage (set automatically by PoolManager)
+      const localStorageData = localStorage.getItem('poolmanagerExtensionData');
+      if (localStorageData) {
+        try {
+          const data = JSON.parse(localStorageData);
+          if (data.games && data.games.length > 0) {
+            this.games = data.games;
+            this.updateUI();
+            this.updateStatus(`✅ ${this.games.length} games loaded automatically`, 'success');
+            console.log(`[PoolManager] Loaded ${this.games.length} games from localStorage automatically`);
+            return;
+          }
+        } catch (e) {
+          console.warn('[PoolManager] Failed to parse localStorage data:', e);
+        }
+      }
+
+      // Fallback: Try to get data from Chrome storage (manual popup method)
+      const result = await chrome.storage.local.get(['poolmanagerGames', 'lastUpdate']);
+      console.log('[PoolManager] Chrome storage result:', result);
 
       if (result.poolmanagerGames && result.poolmanagerGames.length > 0) {
         this.games = result.poolmanagerGames;
         this.updateUI();
-        this.updateStatus(`✅ ${this.games.length} games loaded from storage`, 'success');
-        console.log(`[PoolManager] Loaded ${this.games.length} games from storage`);
+        this.updateStatus(`✅ ${this.games.length} games loaded from extension storage`, 'success');
+        console.log(`[PoolManager] Loaded ${this.games.length} games from Chrome storage`);
       } else {
         console.log('[PoolManager] No stored data found');
         // Show message to load data via popup
-        this.updateStatus('Click extension icon to load game data', 'warning');
+        this.updateStatus('Generate AI recommendations in PoolManager first', 'warning');
       }
     } catch (error) {
       console.error('[PoolManager] Error loading data:', error);
-      this.updateStatus('Error loading data. Check extension popup.', 'error');
+      this.updateStatus('Error loading data. Check PoolManager AI recommendations.', 'error');
     }
   }
 
