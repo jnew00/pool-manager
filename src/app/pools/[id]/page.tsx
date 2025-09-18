@@ -960,25 +960,37 @@ export default function PoolDetailPage() {
                         Number1Pool
                       </button>
 
-                      {/* Extension Data Buttons */}
-                      {number1PoolGames.length > 0 && (
-                        <>
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(JSON.stringify(number1PoolGames, null, 2))
-                              alert(`Game data copied to clipboard!\n\n${number1PoolGames.length} games copied for Chrome extension use.`)
-                            }}
-                            className="px-2 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                            title="Copy game data for Chrome extension"
-                          >
-                            Copy for Ext
-                          </button>
+                      {/* Extension Data Buttons - Always visible */}
+                      <button
+                        onClick={() => {
+                          if (number1PoolGames.length === 0) {
+                            alert('Please import spreads first to copy game data.');
+                            return;
+                          }
+                          navigator.clipboard.writeText(JSON.stringify(number1PoolGames, null, 2))
+                          alert(`Game data copied to clipboard!\n\n${number1PoolGames.length} games copied for Chrome extension use.`)
+                        }}
+                        disabled={number1PoolGames.length === 0}
+                        className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                          number1PoolGames.length === 0
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                        }`}
+                        title={number1PoolGames.length === 0 ? "Import spreads first" : "Copy game data for Chrome extension"}
+                      >
+                        Copy for Ext
+                      </button>
 
-                          {/* Copy with Recommendations */}
-                          <button
-                            onClick={() => {
-                              // Enrich games with AI recommendations
-                              const gamesWithPicks = number1PoolGames.map(game => {
+                      {/* Copy with Recommendations - Always visible */}
+                      <button
+                        onClick={() => {
+                          if (number1PoolGames.length === 0) {
+                            alert('Please import spreads first to copy AI picks.');
+                            return;
+                          }
+
+                          // Enrich games with AI recommendations
+                          const gamesWithPicks = number1PoolGames.map(game => {
                                 // Find the recommendation for this game
                                 const gameRec = recommendations?.recommendations?.find((rec: any) => {
                                   const recHome = rec.game?.homeTeam?.name || '';
@@ -1017,13 +1029,16 @@ export default function PoolDetailPage() {
                               navigator.clipboard.writeText(JSON.stringify(gamesWithPicks, null, 2))
                               alert(`Game data with AI picks copied!\n\n${gamesWithPicks.filter(g => g.aiPick).length} games have AI recommendations.`)
                             }}
-                            className="px-2 py-1 text-xs bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
-                            title="Copy with AI recommendations"
+                            disabled={number1PoolGames.length === 0}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                              number1PoolGames.length === 0
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-purple-500 text-white hover:bg-purple-600'
+                            }`}
+                            title={number1PoolGames.length === 0 ? "Import spreads first" : "Copy with AI recommendations"}
                           >
                             + AI Picks
                           </button>
-                        </>
-                      )}
                     </div>
 
                     {/* Compact Image Upload */}

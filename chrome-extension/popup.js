@@ -41,16 +41,16 @@ class PopupManager {
     });
 
     // Auto-fill buttons
-    document.getElementById('fill-favorites').addEventListener('click', () => {
-      this.sendAutoFillMessage('favorites');
+    document.getElementById('fill-balanced').addEventListener('click', () => {
+      this.sendAutoFillMessage('balanced');
     });
 
-    document.getElementById('fill-underdogs').addEventListener('click', () => {
-      this.sendAutoFillMessage('underdogs');
+    document.getElementById('fill-aggressive').addEventListener('click', () => {
+      this.sendAutoFillMessage('aggressive');
     });
 
     document.getElementById('fill-ai').addEventListener('click', () => {
-      this.sendAutoFillMessage('custom');
+      this.sendAutoFillMessage('ai');
     });
 
     document.getElementById('clear-all').addEventListener('click', () => {
@@ -189,8 +189,8 @@ class PopupManager {
 
   updateUI() {
     const gamesInfoEl = document.getElementById('games-info');
-    const fillFavoritesBtn = document.getElementById('fill-favorites');
-    const fillUnderdogsBtn = document.getElementById('fill-underdogs');
+    const fillBalancedBtn = document.getElementById('fill-balanced');
+    const fillAggressiveBtn = document.getElementById('fill-aggressive');
     const fillAiBtn = document.getElementById('fill-ai');
     const clearAllBtn = document.getElementById('clear-all');
 
@@ -201,8 +201,8 @@ class PopupManager {
       gamesInfoEl.textContent = `${this.games.length} games loaded${hasAiPicks ? ' (with AI picks)' : ''}`;
 
       const buttonsEnabled = this.isNumber1PoolPage;
-      fillFavoritesBtn.disabled = !buttonsEnabled;
-      fillUnderdogsBtn.disabled = !buttonsEnabled;
+      fillBalancedBtn.disabled = !buttonsEnabled;
+      fillAggressiveBtn.disabled = !buttonsEnabled;
       fillAiBtn.disabled = !buttonsEnabled || !hasAiPicks;
       clearAllBtn.disabled = !buttonsEnabled;
 
@@ -211,8 +211,8 @@ class PopupManager {
       }
     } else {
       gamesInfoEl.textContent = 'No game data loaded';
-      fillFavoritesBtn.disabled = true;
-      fillUnderdogsBtn.disabled = true;
+      fillBalancedBtn.disabled = true;
+      fillAggressiveBtn.disabled = true;
       fillAiBtn.disabled = true;
       clearAllBtn.disabled = true;
     }

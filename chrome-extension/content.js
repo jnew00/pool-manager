@@ -97,16 +97,16 @@ class PoolManagerAutoFill {
         </div>
         <div class="pm-options">
           <label>
-            <input type="radio" name="pm-fill-type" value="favorites" checked>
-            Fill with Favorites (1)
+            <input type="radio" name="pm-fill-type" value="balanced" checked>
+            Balanced Strategy (mix of favorites/underdogs)
           </label>
           <label>
-            <input type="radio" name="pm-fill-type" value="underdogs">
-            Fill with Underdogs (2)
+            <input type="radio" name="pm-fill-type" value="aggressive">
+            Aggressive Strategy (higher risk/reward)
           </label>
           <label>
-            <input type="radio" name="pm-fill-type" value="custom">
-            Use PoolManager recommendations
+            <input type="radio" name="pm-fill-type" value="ai">
+            AI Recommendations (if available)
           </label>
         </div>
         <div id="pm-game-list" class="pm-game-list"></div>
@@ -228,6 +228,46 @@ class PoolManagerAutoFill {
     statusEl.className = `pm-status-${type}`;
   }
 
+  isPointsPlusPool(select) {
+    // Check if this is a Points Plus pool by examining select options
+    const options = Array.from(select.options);
+    const hasConfidenceLevels = options.some(option =>
+      option.value.match(/^[1-5]$/) && options.length >= 5
+    );
+    return hasConfidenceLevels;
+  }
+
+  getPointsPlusValue(fillType, game, index) {
+    // For Points Plus pools, return confidence levels (1-5)
+    switch (fillType) {
+      case 'balanced':
+        // Balanced: mostly 2s and 3s with some variety
+        const balancedOptions = ['2', '3', '2', '3', '4'];
+        return balancedOptions[index % balancedOptions.length];
+
+      case 'aggressive':
+        // Aggressive: higher confidence levels (4s and 5s)
+        const aggressiveOptions = ['4', '5', '4', '5', '3'];
+        return aggressiveOptions[index % aggressiveOptions.length];
+
+      case 'ai':
+        // AI: use confidence from AI if available, otherwise default
+        if (game.confidence) {
+          // Map AI confidence (0-1) to pool confidence (1-5)
+          const aiConfidence = parseFloat(game.confidence);
+          if (aiConfidence >= 0.8) return '5';
+          if (aiConfidence >= 0.6) return '4';
+          if (aiConfidence >= 0.4) return '3';
+          if (aiConfidence >= 0.2) return '2';
+          return '1';
+        }
+        return '3'; // Default medium confidence
+
+      default:
+        return '3'; // Default medium confidence
+    }
+  }
+
   autoFillGames() {
     const fillType = document.querySelector('input[name="pm-fill-type"]:checked').value;
     let filled = 0;
@@ -240,25 +280,50 @@ class PoolManagerAutoFill {
       if (select) {
         let value;
         switch (fillType) {
-          case 'favorites':
-            value = '1';
+          case 'balanced':
+            // Balanced strategy: alternate between favorites and underdogs based on spread
+            const spread = parseFloat(game.spread) || 0;
+            if (Math.abs(spread) <= 3) {
+              // Close games: slight preference for underdog
+              value = index % 2 === 0 ? '2' : '1';
+            } else {
+              // Bigger spreads: slight preference for favorite
+              value = index % 2 === 0 ? '1' : '2';
+            }
             break;
-          case 'underdogs':
-            value = '2';
+          case 'aggressive':
+            // Aggressive strategy: prefer underdogs for bigger payouts
+            const aggressiveSpread = parseFloat(game.spread) || 0;
+            if (Math.abs(aggressiveSpread) >= 7) {
+              // Big underdogs for high reward
+              value = '2';
+            } else if (Math.abs(aggressiveSpread) <= 2.5) {
+              // Pick 'em games, go with underdog
+              value = '2';
+            } else {
+              // Medium spreads, mix it up favoring underdogs
+              value = index % 3 === 0 ? '1' : '2';
+            }
             break;
-          case 'custom':
-            // Use PoolManager recommendation if available
+          case 'ai':
+            // Use PoolManager AI recommendation if available
             if (game.recommendation) {
               value = game.recommendation;
             } else if (game.aiPick && game.recommendedTeam) {
               // Fallback: determine pick from recommendedTeam
               value = game.recommendedTeam === game.favorite ? '1' : '2';
             } else {
-              value = '1'; // Default to favorite
+              value = '1'; // Default to favorite if no AI data
             }
             break;
           default:
             value = '1';
+        }
+
+        // Handle different pool types
+        if (this.isPointsPlusPool(select)) {
+          // Points Plus pools have different options (1-5 confidence levels)
+          value = this.getPointsPlusValue(fillType, game, index);
         }
 
         select.value = value;
@@ -277,7 +342,11 @@ class PoolManagerAutoFill {
 
     // Show result
     if (filled > 0) {
-      this.updateStatus(`✅ Filled ${filled} games with ${fillType}`, 'success');
+      const poolType = Object.values(this.gameSelects).some(select =>
+        this.isPointsPlusPool(select)
+      ) ? 'Points Plus' : 'ATS';
+
+      this.updateStatus(`✅ Filled ${filled} games (${poolType}) with ${fillType}`, 'success');
     }
 
     if (errors.length > 0) {
@@ -338,7 +407,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (window.poolManagerAutoFill) {
       // Set the fill type if specified
       if (message.fillType) {
-        const radioElement = document.querySelector(`input[name="pm-fill-type"][value="${message.fillType}"]`);
+        // Map old fillType values to new ones
+        let fillType = message.fillType;
+        if (fillType === 'custom') fillType = 'ai';
+        if (fillType === 'favorites') fillType = 'balanced';
+        if (fillType === 'underdogs') fillType = 'aggressive';
+
+        const radioElement = document.querySelector(`input[name="pm-fill-type"][value="${fillType}"]`);
         if (radioElement) {
           radioElement.checked = true;
         }
