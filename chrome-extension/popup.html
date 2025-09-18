@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PoolManager Auto-Fill</title>
+  <style>
+    body {
+      width: 350px;
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', roboto, oxygen, ubuntu, cantarell, sans-serif;
+      font-size: 14px;
+      background: #f9fafb;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+      color: #1f2937;
+    }
+
+    .header p {
+      margin: 4px 0 0 0;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .section h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 8px;
+    }
+
+    .btn:last-child {
+      margin-bottom: 0;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status {
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .status-info {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .status-success {
+      background: #d1fae5;
+      color: #047857;
+    }
+
+    .status-error {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .games-info {
+      font-size: 12px;
+      color: #6b7280;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .url-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-bottom: 8px;
+      box-sizing: border-box;
+    }
+
+    .help-text {
+      font-size: 11px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+
+    .keyboard-shortcut {
+      background: #f3f4f6;
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #374151;
+      text-align: center;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🏈 PoolManager Auto-Fill</h1>
+    <p>Auto-fill Number1Pool picks</p>
+  </div>
+
+  <div id="status" class="status status-info">
+    Checking for Number1Pool page...
+  </div>
+
+  <div class="section">
+    <h3>Load Game Data</h3>
+    <textarea id="game-data-input" class="url-input" rows="3"
+              placeholder="Paste game data from PoolManager here..."></textarea>
+    <button id="load-data" class="btn btn-primary">
+      Load Game Data
+    </button>
+    <div class="help-text">
+      1. Import spreads in PoolManager<br>
+      2. Click "Copy for Ext" button<br>
+      3. Paste the data above and click "Load Game Data"
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Auto-Fill Actions</h3>
+    <div id="games-info" class="games-info">
+      No game data loaded
+    </div>
+    <button id="fill-favorites" class="btn btn-primary" disabled>
+      Fill with Favorites
+    </button>
+    <button id="fill-underdogs" class="btn btn-secondary" disabled>
+      Fill with Underdogs
+    </button>
+    <button id="clear-all" class="btn btn-secondary" disabled>
+      Clear All Picks
+    </button>
+  </div>
+
+  <div class="section">
+    <h3>Instructions</h3>
+    <div class="help-text">
+      1. Import spreads in PoolManager first<br>
+      2. Open Number1Pool picks page<br>
+      3. Click "Fetch Game Data" above<br>
+      4. Use auto-fill buttons or press <strong>Ctrl+Shift+P</strong> on the page
+    </div>
+    <div class="keyboard-shortcut">
+      Shortcut: <strong>Ctrl + Shift + P</strong>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

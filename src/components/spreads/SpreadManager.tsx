@@ -219,40 +219,66 @@ export function SpreadManager({ poolId, season, week, onSpreadUpdate }: SpreadMa
       return
     }
 
+    // Create the auto-fill script
+    const autoFillScript = \`
+// Auto-fill script for Number1Pool - Generated ${new Date().toLocaleString()}
+console.log('🏈 Starting Number1Pool auto-fill...');
+
+const games = \${JSON.stringify(number1PoolGames)};
+let gamesProcessed = 0;
+
+games.forEach((game, index) => {
+  const gameNumber = game.sortOrder || (index + 1);
+  const selectName = 'Game_' + gameNumber.toString().padStart(2, '0');
+  const select = document.querySelector('select[name="' + selectName + '"]');
+
+  if (select) {
+    select.value = '1'; // 1 = Favorite
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    console.log('✅ Set ' + selectName + ' to FAVORITE (' + game.favorite + ' vs ' + game.underdog + ')');
+    gamesProcessed++;
+  } else {
+    console.warn('❌ Select not found: ' + selectName);
+  }
+});
+
+console.log('🎯 Auto-fill complete! Processed ' + gamesProcessed + '/' + games.length + ' games.');
+console.log('📝 All games set to FAVORITES (1). Change any to UNDERDOGS (2) if needed.');
+
+alert('Auto-fill complete! ' + gamesProcessed + ' games filled with FAVORITES.\\n\\nReview your picks and submit when ready!');
+\`;
+
+    // Copy to clipboard and show instructions
     try {
-      // Create auto-fill payload
-      const autoFillData = {
-        url: lastNumber1PoolUrl,
-        games: number1PoolGames,
-        defaultSelection: '1' // Default to favorites
-      }
+      await navigator.clipboard.writeText(autoFillScript)
 
-      const response = await fetch('/api/number1pool/autofill', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(autoFillData),
-      })
+      // Open Number1Pool in new tab
+      window.open(lastNumber1PoolUrl, '_blank')
 
-      const result = await response.json()
+      alert(\`🚀 Auto-fill ready!
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to auto-fill Number1Pool')
-      }
+✅ Number1Pool opened in new tab
+✅ Auto-fill script copied to clipboard
 
-      alert(\`Auto-fill completed!
+NEXT STEPS:
+1. On the Number1Pool tab, press F12 (open dev tools)
+2. Go to Console tab
+3. Paste the script (Ctrl+V) and press Enter
+4. All games will be set to FAVORITES
+5. Review and change any to UNDERDOGS if needed
+6. Submit your picks!
 
-Filled \${result.gamesProcessed} games with favorites by default.
-The Number1Pool website should now be open with your picks pre-selected.
-
-Please review and modify any picks before submitting.\`)
+The script will auto-fill \${number1PoolGames.length} games with all FAVORITES selected.\`)
 
     } catch (error) {
-      console.error('Auto-fill failed:', error)
-      alert(\`Auto-fill failed: \${error instanceof Error ? error.message : 'Unknown error'}
+      // Fallback if clipboard fails
+      console.log('Auto-fill script:', autoFillScript)
+      window.open(lastNumber1PoolUrl, '_blank')
 
-You can still manually fill the form at: \${lastNumber1PoolUrl}\`)
+      alert(\`Number1Pool opened in new tab!
+
+The auto-fill script is in the browser console.
+Copy it from there and paste it in the Number1Pool console.\`)
     }
   }
 
@@ -279,13 +305,9 @@ You can still manually fill the form at: \${lastNumber1PoolUrl}\`)
       }
 
       // Store the Number1Pool games data for auto-fill functionality
-      console.log('Number1Pool API result:', result)
       if (result.number1poolGames && result.number1poolGames.length > 0) {
-        console.log('Setting Number1Pool games:', result.number1poolGames)
         setNumber1PoolGames(result.number1poolGames)
         setLastNumber1PoolUrl(url)
-      } else {
-        console.log('No number1poolGames in result or empty array')
       }
 
       // Now save the scraped spreads to the pool
@@ -536,15 +558,15 @@ You can still manually fill the form at: \${lastNumber1PoolUrl}\`)
                 {scrapingNumber1Pool ? 'Importing...' : 'Import Spreads'}
               </button>
 
-              {/* Debug: Always show this section for now */}
-              <div className="border-t border-green-200 dark:border-green-600 pt-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-green-700 dark:text-green-300">
-                    Auto-fill Number1Pool ({number1PoolGames.length} games imported)
-                  </span>
-                </div>
-                {number1PoolGames.length > 0 ? (
-                  <>
+              {/* Auto-fill section - only show if games imported */}
+              {number1PoolGames.length > 0 && (
+                <div className="border-t border-green-200 dark:border-green-600 pt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-green-700 dark:text-green-300">
+                      Auto-fill Number1Pool ({number1PoolGames.length} games imported)
+                    </span>
+                  </div>
+                  <div className="space-y-2">
                     <button
                       onClick={autoFillNumber1Pool}
                       className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
@@ -552,16 +574,21 @@ You can still manually fill the form at: \${lastNumber1PoolUrl}\`)
                       <Globe className="w-4 h-4" />
                       <span>Auto-Fill Number1Pool</span>
                     </button>
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-2">
-                      Automatically opens and fills your picks on the Number1Pool website (defaults to all favorites)
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Import spreads first to enable auto-fill functionality
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(JSON.stringify(number1PoolGames, null, 2))
+                        alert('Game data copied to clipboard!\n\nYou can paste this into the Chrome extension or save it for later use.')
+                      }}
+                      className="w-full px-3 py-1.5 text-xs bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
+                    >
+                      Copy Data for Extension
+                    </button>
+                  </div>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                    Use the script method or Chrome extension for auto-filling
                   </p>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

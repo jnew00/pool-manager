@@ -1,0 +1,205 @@
+/* PoolManager Auto-Fill Extension Styles */
+
+#poolmanager-autofill-panel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 320px;
+  background: white;
+  border: 2px solid #2563eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', roboto, oxygen, ubuntu, cantarell, sans-serif;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.pm-header {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 10px 10px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pm-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.pm-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pm-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.pm-content {
+  padding: 16px;
+}
+
+.pm-status {
+  background: #f3f4f6;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.pm-status-ready {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.pm-status-error {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.pm-status-warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.pm-status-success {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.pm-games-count {
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.pm-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pm-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pm-btn-primary {
+  background: #2563eb;
+  color: white;
+}
+
+.pm-btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.pm-btn-secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.pm-btn-secondary:hover {
+  background: #d1d5db;
+}
+
+.pm-options {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+
+.pm-options label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.pm-options input[type="radio"] {
+  margin-right: 6px;
+}
+
+.pm-game-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f9fafb;
+}
+
+.pm-game {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 11px;
+}
+
+.pm-game:last-child {
+  border-bottom: none;
+}
+
+.pm-game-number {
+  background: #2563eb;
+  color: white;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-weight: 600;
+  margin-right: 8px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.pm-game-matchup {
+  flex: 1;
+  margin-right: 8px;
+}
+
+.pm-game-spread {
+  font-weight: 600;
+  color: #059669;
+}
+
+/* Animation for panel appearance */
+#poolmanager-autofill-panel {
+  animation: pmSlideIn 0.3s ease-out;
+}
+
+@keyframes pmSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

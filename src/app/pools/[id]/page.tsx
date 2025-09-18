@@ -136,12 +136,19 @@ export default function PoolDetailPage() {
 
       console.log(`[Number1Pool Frontend] API returned:`, result);
 
+      // Store Number1Pool games for Chrome extension
+      if (result.number1poolGames && result.number1poolGames.length > 0) {
+        setNumber1PoolGames(result.number1poolGames)
+        setLastNumber1PoolUrl(url)
+        console.log('Stored Number1Pool games for extension:', result.number1poolGames)
+      }
+
       // Show success message with details
       const message = [
         `Successfully scraped ${result.spreadsCount} spreads from Number1Pool`,
         `Matched ${result.matchedCount} spreads to existing games`,
         `${result.unmatchedCount} spreads could not be matched`,
-        result.unmatched && result.unmatched.length > 0 ? 
+        result.unmatched && result.unmatched.length > 0 ?
           '\nUnmatched spreads:\n' + result.unmatched.map((s: any) => `  ${s.away_team} @ ${s.home_team}`).join('\n') : ''
       ].filter(Boolean).join('\n');
 
@@ -937,20 +944,36 @@ export default function PoolDetailPage() {
                     </label>
 
                     {/* Compact Number1Pool Scraper */}
-                    <button
-                      onClick={() => {
-                        const url = prompt('Enter your Number1Pool weekly picks URL:', 'https://number1pool.com/picks_weekly.php?user=GatorBait&verify=970622f774ee22dcef22f41487b87fa3')
-                        if (url?.trim()) {
-                          handleNumber1PoolScrape(url.trim())
-                        }
-                      }}
-                      disabled={uploadingImage}
-                      className={`px-3 py-1.5 text-xs bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors ${
-                        uploadingImage ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      Number1Pool
-                    </button>
+                    <div className="flex flex-col space-y-1">
+                      <button
+                        onClick={() => {
+                          const url = prompt('Enter your Number1Pool weekly picks URL:', 'https://number1pool.com/picks_weekly.php?user=GatorBait&verify=970622f774ee22dcef22f41487b87fa3')
+                          if (url?.trim()) {
+                            handleNumber1PoolScrape(url.trim())
+                          }
+                        }}
+                        disabled={uploadingImage}
+                        className={`px-3 py-1.5 text-xs bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors ${
+                          uploadingImage ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      >
+                        Number1Pool
+                      </button>
+
+                      {/* Extension Data Button */}
+                      {number1PoolGames.length > 0 && (
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(JSON.stringify(number1PoolGames, null, 2))
+                            alert(`Game data copied to clipboard!\n\n${number1PoolGames.length} games copied for Chrome extension use.`)
+                          }}
+                          className="px-2 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                          title="Copy game data for Chrome extension"
+                        >
+                          Copy for Ext
+                        </button>
+                      )}
+                    </div>
 
                     {/* Compact Image Upload */}
                     <button

@@ -1,1017 +1,5 @@
 # SESSION.md (Auto-Compacted)
 
-**Modified:**
-- SESSION.md
-- src/components/spreads/SpreadManager.tsx
-
-**Created:**
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                               | 112 +++++++++++++++++++++++
- src/components/spreads/SpreadManager.tsx | 149 ++++++++++++++++++++++++++++++-
- 2 files changed, 260 insertions(+), 1 deletion(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 16:59
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-
-**Created:**
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                               | 1165 ++++--------------------------
- src/app/pools/[id]/page.tsx              |   81 +++
- src/components/spreads/SpreadManager.tsx |  149 +++-
- 3 files changed, 376 insertions(+), 1019 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 17:31
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-
-**Created:**
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                               | 1202 +++++-------------------------
- src/app/pools/[id]/page.tsx              |   81 ++
- src/components/spreads/SpreadManager.tsx |  149 +++-
- 3 files changed, 413 insertions(+), 1019 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 17:37
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-
-**Created:**
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                               | 1239 ++++++------------------------
- src/app/pools/[id]/page.tsx              |  102 +++
- src/components/spreads/SpreadManager.tsx |  149 +++-
- 3 files changed, 471 insertions(+), 1019 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 17:51
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-
-**Created:**
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                               | 1276 ++++++------------------------
- src/app/pools/[id]/page.tsx              |  102 +++
- src/components/spreads/SpreadManager.tsx |  149 +++-
- 3 files changed, 508 insertions(+), 1019 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 17:52
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-
-**Created:**
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                               | 1313 +++++++-----------------------
- src/app/pools/[id]/page.tsx              |  102 +++
- src/components/spreads/SpreadManager.tsx |  149 +++-
- 3 files changed, 545 insertions(+), 1019 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 18:07
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-
-**Created:**
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                               | 1378 ++++++++----------------------
- src/app/pools/[id]/page.tsx              |   64 ++
- src/components/spreads/SpreadManager.tsx |  149 +++-
- 3 files changed, 558 insertions(+), 1033 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 18:17
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-- src/features/uploads/services/game-matcher.service.ts
-
-**Created:**
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 1385 ++++++--------------
- src/app/pools/[id]/page.tsx                        |   64 +
- src/components/spreads/SpreadManager.tsx           |  149 ++-
- .../uploads/services/game-matcher.service.ts       |  137 +-
- 4 files changed, 683 insertions(+), 1052 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 18:35
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- scripts/test-team-matching.ts
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-- src/features/uploads/services/game-matcher.service.ts
-
-**Created:**
-- scripts/test-number1pool-matching.ts
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 1378 ++++++--------------
- scripts/test-team-matching.ts                      |   13 +
- src/app/pools/[id]/page.tsx                        |   64 +
- src/components/spreads/SpreadManager.tsx           |  149 ++-
- .../uploads/services/game-matcher.service.ts       |  107 +-
- 5 files changed, 680 insertions(+), 1031 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 18:39
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- scripts/test-team-matching.ts
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-- src/features/uploads/services/game-matcher.service.ts
-
-**Created:**
-- scripts/test-actual-number1pool.ts
-- scripts/test-bidirectional-matching.ts
-- scripts/test-number1pool-matching.ts
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 1392 ++++++--------------
- scripts/test-team-matching.ts                      |   13 +
- src/app/pools/[id]/page.tsx                        |   64 +
- src/components/spreads/SpreadManager.tsx           |  149 ++-
- .../uploads/services/game-matcher.service.ts       |  147 ++-
- 5 files changed, 741 insertions(+), 1024 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 18:50
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- scripts/test-team-matching.ts
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-- src/features/uploads/services/game-matcher.service.ts
-
-**Created:**
-- scripts/cleanup-duplicate-lines.ts
-- scripts/test-actual-number1pool.ts
-- scripts/test-bidirectional-matching.ts
-- scripts/test-number1pool-matching.ts
-- scripts/test-upsert-logic.ts
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 1420 ++++++--------------
- scripts/test-team-matching.ts                      |   13 +
- src/app/pools/[id]/page.tsx                        |   64 +
- src/components/spreads/SpreadManager.tsx           |  149 +-
- .../uploads/services/game-matcher.service.ts       |  195 ++-
- 5 files changed, 813 insertions(+), 1028 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 18:51
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- scripts/test-team-matching.ts
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-- src/features/uploads/services/game-matcher.service.ts
-
-**Created:**
-- scripts/cleanup-duplicate-lines.ts
-- scripts/test-actual-number1pool.ts
-- scripts/test-bidirectional-matching.ts
-- scripts/test-number1pool-matching.ts
-- scripts/test-upsert-logic.ts
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 1460 +++++++-------------
- scripts/test-team-matching.ts                      |   13 +
- src/app/pools/[id]/page.tsx                        |   64 +
- src/components/spreads/SpreadManager.tsx           |  149 +-
- .../uploads/services/game-matcher.service.ts       |  195 ++-
- 5 files changed, 856 insertions(+), 1025 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 18:54
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- scripts/test-team-matching.ts
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-- src/features/uploads/services/game-matcher.service.ts
-
-**Created:**
-- scripts/cleanup-duplicate-lines.ts
-- scripts/test-actual-number1pool.ts
-- scripts/test-bidirectional-matching.ts
-- scripts/test-number1pool-matching.ts
-- scripts/test-upsert-logic.ts
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 1500 +++++++-------------
- scripts/test-team-matching.ts                      |   13 +
- src/app/pools/[id]/page.tsx                        |   64 +
- src/components/spreads/SpreadManager.tsx           |  149 +-
- .../uploads/services/game-matcher.service.ts       |  195 ++-
- 5 files changed, 899 insertions(+), 1022 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 18:56
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- scripts/test-team-matching.ts
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-- src/features/uploads/services/game-matcher.service.ts
-
-**Created:**
-- scripts/cleanup-duplicate-lines.ts
-- scripts/clear-spreads.ts
-- scripts/test-actual-number1pool.ts
-- scripts/test-bidirectional-matching.ts
-- scripts/test-number1pool-matching.ts
-- scripts/test-upsert-logic.ts
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 1544 ++++++++------------
- scripts/test-team-matching.ts                      |   13 +
- src/app/pools/[id]/page.tsx                        |   64 +
- src/components/spreads/SpreadManager.tsx           |  149 +-
- .../uploads/services/game-matcher.service.ts       |  195 ++-
- 5 files changed, 944 insertions(+), 1021 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-08-28 20:53
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- scripts/test-team-matching.ts
-- src/app/pools/[id]/page.tsx
-- src/components/spreads/SpreadManager.tsx
-- src/features/uploads/services/game-matcher.service.ts
-
-**Created:**
-- scripts/cleanup-duplicate-lines.ts
-- scripts/clear-spreads.ts
-- scripts/test-actual-number1pool.ts
-- scripts/test-bidirectional-matching.ts
-- scripts/test-number1pool-matching.ts
-- scripts/test-upsert-logic.ts
-- src/app/api/upload/number1pool/
-- src/features/uploads/services/number1pool-scraper.service.ts
-- src/features/uploads/services/ocr-table-preprocessor.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 1587 ++++++++------------
- scripts/test-team-matching.ts                      |   13 +
- src/app/pools/[id]/page.tsx                        |   64 +
- src/components/spreads/SpreadManager.tsx           |  149 +-
- .../uploads/services/game-matcher.service.ts       |  195 ++-
- 5 files changed, 989 insertions(+), 1019 deletions(-)
-
-```
-
-### Recent Commits
-```
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-f25d2cd mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-09-04 17:33
-
-### Files Changed
-**Modified:**
-- src/app/survivor/[id]/page.tsx
-- src/lib/models/survivor-recommendations.ts
-- src/server/services/survivor-odds-service.ts
-- src/server/services/survivor-weather-service.ts
-
-### Git Statistics
-```
- src/app/survivor/[id]/page.tsx                  |   4 +-
- src/lib/models/survivor-recommendations.ts      | 199 ++++++++++++++++++++----
- src/server/services/survivor-odds-service.ts    | 184 +++++++++++++++++-----
- src/server/services/survivor-weather-service.ts |  71 +++++----
- 4 files changed, 360 insertions(+), 98 deletions(-)
-
-```
-
-### Recent Commits
-```
-b0a9867 real data recommendations
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-09-04 17:39
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/survivor/[id]/page.tsx
-- src/features/survivor/components/RecommendationPanel.tsx
-- src/lib/models/survivor-recommendations.ts
-- src/server/services/survivor-odds-service.ts
-- src/server/services/survivor-weather-service.ts
-
-### Git Statistics
-```
- SESSION.md                                         |  34 ++++
- src/app/survivor/[id]/page.tsx                     |  29 +--
- .../survivor/components/RecommendationPanel.tsx    |   7 +-
- src/lib/models/survivor-recommendations.ts         | 199 ++++++++++++++++++---
- src/server/services/survivor-odds-service.ts       | 184 ++++++++++++++-----
- src/server/services/survivor-weather-service.ts    |  71 +++++---
- 6 files changed, 417 insertions(+), 107 deletions(-)
-
-```
-
-### Recent Commits
-```
-b0a9867 real data recommendations
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-09-04 17:42
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/survivor/[id]/page.tsx
-- src/features/survivor/components/RecommendationPanel.tsx
-- src/lib/models/survivor-recommendations.ts
-- src/server/services/survivor-odds-service.ts
-- src/server/services/survivor-weather-service.ts
-
-### Git Statistics
-```
- SESSION.md                                         |  72 ++++++++
- src/app/survivor/[id]/page.tsx                     |  29 +--
- .../survivor/components/RecommendationPanel.tsx    |   7 +-
- src/lib/models/survivor-recommendations.ts         | 199 ++++++++++++++++++---
- src/server/services/survivor-odds-service.ts       | 184 ++++++++++++++-----
- src/server/services/survivor-weather-service.ts    |  71 +++++---
- 6 files changed, 455 insertions(+), 107 deletions(-)
-
-```
-
-### Recent Commits
-```
-b0a9867 real data recommendations
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-09-04 17:46
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/survivor/[id]/page.tsx
-- src/features/survivor/components/RecommendationPanel.tsx
-- src/lib/models/real-team-analysis.ts
-- src/lib/models/survivor-recommendations.ts
-- src/server/services/survivor-odds-service.ts
-- src/server/services/survivor-weather-service.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 110 +++++++++++
- src/app/survivor/[id]/page.tsx                     |  29 ++-
- .../survivor/components/RecommendationPanel.tsx    |   7 +-
- src/lib/models/real-team-analysis.ts               |   6 +-
- src/lib/models/survivor-recommendations.ts         | 209 ++++++++++++++++++---
- src/server/services/survivor-odds-service.ts       | 184 ++++++++++++++----
- src/server/services/survivor-weather-service.ts    |  71 ++++---
- 7 files changed, 506 insertions(+), 110 deletions(-)
-
-```
-
-### Recent Commits
-```
-b0a9867 real data recommendations
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-09-04 17:54
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/api/survivor/recommendations/route.ts
-- src/app/survivor/[id]/page.tsx
-- src/features/survivor/components/RecommendationPanel.tsx
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/models/real-team-analysis.ts
-- src/lib/models/survivor-recommendations.ts
-- src/server/services/survivor-odds-service.ts
-- src/server/services/survivor-weather-service.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 150 +++++++++++++++
- src/app/api/survivor/recommendations/route.ts      |   4 +
- src/app/survivor/[id]/page.tsx                     |  29 ++-
- .../survivor/components/RecommendationPanel.tsx    |  48 ++++-
- .../providers/espn-nfl-stats-provider.ts           |  10 +
- src/lib/models/real-team-analysis.ts               |  35 +++-
- src/lib/models/survivor-recommendations.ts         | 209 ++++++++++++++++++---
- src/server/services/survivor-odds-service.ts       | 184 ++++++++++++++----
- src/server/services/survivor-weather-service.ts    |  71 ++++---
- 9 files changed, 628 insertions(+), 112 deletions(-)
-
-```
-
-### Recent Commits
-```
-b0a9867 real data recommendations
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-09-04 18:05
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/api/survivor/recommendations/route.ts
-- src/app/survivor/[id]/page.tsx
-- src/features/survivor/components/RecommendationPanel.tsx
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/models/real-team-analysis.ts
-- src/lib/models/survivor-future-value.ts
-- src/lib/models/survivor-recommendations.ts
-- src/server/services/survivor-odds-service.ts
-- src/server/services/survivor-weather-service.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 194 +++++++++++++++
- src/app/api/survivor/recommendations/route.ts      |   4 +
- src/app/survivor/[id]/page.tsx                     |  29 ++-
- .../survivor/components/RecommendationPanel.tsx    |  48 +++-
- .../providers/espn-nfl-stats-provider.ts           |  10 +
- src/lib/models/real-team-analysis.ts               |  35 ++-
- src/lib/models/survivor-future-value.ts            | 129 ++++++++--
- src/lib/models/survivor-recommendations.ts         | 272 ++++++++++++++++++---
- src/server/services/survivor-odds-service.ts       | 184 +++++++++++---
- src/server/services/survivor-weather-service.ts    |  71 +++---
- 10 files changed, 838 insertions(+), 138 deletions(-)
-
-```
-
-### Recent Commits
-```
-b0a9867 real data recommendations
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-09-04 18:17
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/api/recommendations/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/survivor/[id]/page.tsx
-- src/features/survivor/components/RecommendationPanel.tsx
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/models/confidence-engine.ts
-- src/lib/models/real-team-analysis.ts
-- src/lib/models/survivor-future-value.ts
-- src/lib/models/survivor-recommendations.ts
-- src/server/services/survivor-odds-service.ts
-- src/server/services/survivor-weather-service.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 240 ++++++++++++++++++
- src/app/api/recommendations/route.ts               | 255 +++++++++++++++++--
- src/app/api/survivor/recommendations/route.ts      |   4 +
- src/app/survivor/[id]/page.tsx                     |  29 ++-
- .../survivor/components/RecommendationPanel.tsx    |  48 +++-
- .../providers/espn-nfl-stats-provider.ts           |  10 +
- src/lib/models/confidence-engine.ts                | 120 ++++++++-
- src/lib/models/real-team-analysis.ts               |  35 ++-
- src/lib/models/survivor-future-value.ts            | 129 ++++++++--
- src/lib/models/survivor-recommendations.ts         | 272 ++++++++++++++++++---
- src/server/services/survivor-odds-service.ts       | 184 +++++++++++---
- src/server/services/survivor-weather-service.ts    |  71 +++---
- 12 files changed, 1226 insertions(+), 171 deletions(-)
-
-```
-
-### Recent Commits
-```
-b0a9867 real data recommendations
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-09-04 18:28
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/api/recommendations/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/survivor/[id]/page.tsx
-- src/features/survivor/components/RecommendationPanel.tsx
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/models/confidence-engine.ts
-- src/lib/models/real-team-analysis.ts
-- src/lib/models/survivor-future-value.ts
-- src/lib/models/survivor-recommendations.ts
-- src/server/services/survivor-odds-service.ts
-- src/server/services/survivor-weather-service.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 290 +++++++++++++++++++++
- src/app/api/recommendations/route.ts               | 255 ++++++++++++++++--
- src/app/api/survivor/recommendations/route.ts      |   4 +
- src/app/survivor/[id]/page.tsx                     |  29 ++-
- .../survivor/components/RecommendationPanel.tsx    |  48 +++-
- .../providers/espn-nfl-stats-provider.ts           |  10 +
- src/lib/models/confidence-engine.ts                | 120 ++++++++-
- src/lib/models/real-team-analysis.ts               |  35 ++-
- src/lib/models/survivor-future-value.ts            | 129 ++++++++-
- src/lib/models/survivor-recommendations.ts         | 272 ++++++++++++++++---
- src/server/services/survivor-odds-service.ts       | 184 ++++++++++---
- src/server/services/survivor-weather-service.ts    |  71 ++---
- 12 files changed, 1276 insertions(+), 171 deletions(-)
-
-```
-
-### Recent Commits
-```
-b0a9867 real data recommendations
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-09-04 18:39
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/api/recommendations/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/survivor/[id]/page.tsx
-- src/features/survivor/components/RecommendationPanel.tsx
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/models/confidence-engine.ts
-- src/lib/models/real-team-analysis.ts
-- src/lib/models/survivor-future-value.ts
-- src/lib/models/survivor-recommendations.ts
-- src/server/services/survivor-odds-service.ts
-- src/server/services/survivor-weather-service.ts
-
-### Git Statistics
-```
- SESSION.md                                         | 340 +++++++++++++++++++++
- src/app/api/recommendations/route.ts               | 255 ++++++++++++++--
- src/app/api/survivor/recommendations/route.ts      |   4 +
- src/app/survivor/[id]/page.tsx                     |  29 +-
- .../survivor/components/RecommendationPanel.tsx    |  48 ++-
- .../providers/espn-nfl-stats-provider.ts           |  10 +
- src/lib/models/confidence-engine.ts                | 251 ++++++++++++---
- src/lib/models/real-team-analysis.ts               |  35 ++-
- src/lib/models/survivor-future-value.ts            | 129 +++++++-
- src/lib/models/survivor-recommendations.ts         | 272 ++++++++++++++---
- src/server/services/survivor-odds-service.ts       | 184 ++++++++---
- src/server/services/survivor-weather-service.ts    |  71 +++--
- 12 files changed, 1424 insertions(+), 204 deletions(-)
-
-```
-
-### Recent Commits
-```
-b0a9867 real data recommendations
-9627ed1 mvp
-2687716 mvp
-172b742 mvp
-602d31e mvp
-
-```
-
-*[Auto-generated from git history - No LLM used]*
-
----
-
-
-## Session - 2025-09-04 18:46
-
-### Files Changed
-**Modified:**
-- SESSION.md
-- src/app/api/recommendations/route.ts
-- src/app/api/survivor/recommendations/route.ts
-- src/app/survivor/[id]/page.tsx
-- src/features/survivor/components/RecommendationPanel.tsx
-- src/lib/data-sources/providers/espn-nfl-stats-provider.ts
-- src/lib/models/confidence-engine.ts
 - src/lib/models/real-team-analysis.ts
 - src/lib/models/survivor-future-value.ts
 - src/lib/models/survivor-recommendations.ts
@@ -1973,6 +961,151 @@ e0cdb1b fix
 2d8adca arbitrage
 0bf3885 arbitrage
 e7964bd arbitrage
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-17 20:33
+
+### Files Changed
+**Modified:**
+- src/components/spreads/SpreadManager.tsx
+
+**Deleted:**
+- src/app/api/number1pool/autofill/route.ts
+
+### Git Statistics
+```
+ src/app/api/number1pool/autofill/route.ts | 103 -------------------------
+ src/components/spreads/SpreadManager.tsx  | 124 +++++++++++++++++-------------
+ 2 files changed, 70 insertions(+), 157 deletions(-)
+
+```
+
+### Recent Commits
+```
+f5fbafb fix
+c9d73c8 fix
+e0cdb1b fix
+7036186 tiebreakers
+2d8adca arbitrage
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-17 20:43
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- src/components/spreads/SpreadManager.tsx
+
+**Created:**
+- chrome-extension/
+
+**Deleted:**
+- src/app/api/number1pool/autofill/route.ts
+
+### Git Statistics
+```
+ SESSION.md                                |  32 ++++++++
+ src/app/api/number1pool/autofill/route.ts | 103 -------------------------
+ src/components/spreads/SpreadManager.tsx  | 121 ++++++++++++++++++------------
+ 3 files changed, 106 insertions(+), 150 deletions(-)
+
+```
+
+### Recent Commits
+```
+f5fbafb fix
+c9d73c8 fix
+e0cdb1b fix
+7036186 tiebreakers
+2d8adca arbitrage
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-17 20:47
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- src/components/spreads/SpreadManager.tsx
+
+**Created:**
+- chrome-extension/
+
+**Deleted:**
+- src/app/api/number1pool/autofill/route.ts
+
+### Git Statistics
+```
+ SESSION.md                                | 1081 ++---------------------------
+ src/app/api/number1pool/autofill/route.ts |  103 ---
+ src/components/spreads/SpreadManager.tsx  |  121 ++--
+ 3 files changed, 143 insertions(+), 1162 deletions(-)
+
+```
+
+### Recent Commits
+```
+f5fbafb fix
+c9d73c8 fix
+e0cdb1b fix
+7036186 tiebreakers
+2d8adca arbitrage
+
+```
+
+*[Auto-generated from git history - No LLM used]*
+
+---
+
+
+## Session - 2025-09-17 21:01
+
+### Files Changed
+**Modified:**
+- SESSION.md
+- src/app/pools/[id]/page.tsx
+- src/components/spreads/SpreadManager.tsx
+
+**Created:**
+- chrome-extension/
+
+**Deleted:**
+- src/app/api/number1pool/autofill/route.ts
+
+### Git Statistics
+```
+ SESSION.md                                | 1118 +++--------------------------
+ src/app/api/number1pool/autofill/route.ts |  103 ---
+ src/app/pools/[id]/page.tsx               |   53 +-
+ src/components/spreads/SpreadManager.tsx  |  121 ++--
+ 4 files changed, 218 insertions(+), 1177 deletions(-)
+
+```
+
+### Recent Commits
+```
+f5fbafb fix
+c9d73c8 fix
+e0cdb1b fix
+7036186 tiebreakers
+2d8adca arbitrage
 
 ```
 
