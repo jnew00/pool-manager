@@ -329,7 +329,9 @@ export default function PoolDetailPage() {
 
         // Store AI recommendations in localStorage for Chrome extension
         if (data.data?.recommendations && number1PoolGames.length > 0) {
-          const currentWeekGames = number1PoolGames.filter(game => game.week === selectedWeek);
+          // Use all number1PoolGames - they're already for the current week
+          // The "week" field is actually game number (1-16), not NFL week
+          const currentWeekGames = number1PoolGames;
           const extensionData = currentWeekGames.map(game => {
             // Find AI recommendation for this game
             const gameRec = data.data.recommendations.find((rec: any) => {
@@ -1060,8 +1062,15 @@ export default function PoolDetailPage() {
                             return;
                           }
 
-                          // Filter to current week only
-                          const currentWeekGames = number1PoolGames.filter(game => game.week === selectedWeek);
+                          // Don't filter by week - Number1Pool imports ALL games for the current week
+                          // The "week" field in the data is actually the game number (1-16), not NFL week
+                          console.log('[AI Picks] Total games:', number1PoolGames.length);
+                          console.log('[AI Picks] First game:', number1PoolGames[0]);
+
+                          // Use all games - they're already for the current week
+                          const currentWeekGames = number1PoolGames;
+
+                          console.log('[AI Picks] Using all', currentWeekGames.length, 'games from Number1Pool import');
 
                           // Enrich games with AI recommendations
                           const gamesWithPicks = currentWeekGames.map(game => {

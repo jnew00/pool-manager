@@ -148,10 +148,25 @@ export class Number1PoolScraperService {
             homeSpread = -spreadValue;
           }
 
-          // The left team (team1) is always favored by the spread value
-          // So the favorite is always team1 (left column), underdog is team2 (right column)
+          // Determine favorite/underdog based on who is actually favored
           const leftTeam = this.cleanTeamName(team1Text);
           const rightTeam = this.cleanTeamName(team2Text);
+
+          // The team that is favored has the negative spread
+          // If homeSpread is negative, home team is favored
+          // If homeSpread is positive, away team is favored
+          let favorite: string;
+          let underdog: string;
+
+          if (homeSpread < 0) {
+            // Home team is favored (has negative spread)
+            favorite = homeTeam;
+            underdog = awayTeam;
+          } else {
+            // Away team is favored (home team has positive spread)
+            favorite = awayTeam;
+            underdog = homeTeam;
+          }
 
           // Parse actual week number
           const weekNumber = parseInt(weekText) || 1;
@@ -160,9 +175,9 @@ export class Number1PoolScraperService {
             week: weekNumber,
             day: gameTime.includes('Thu') ? 'Thursday' : gameTime.includes('Fri') ? 'Friday' : 'TBD',
             time: gameTime.replace(/^\w+\s/, ''), // Remove day, keep time
-            favorite: leftTeam, // Left team is always the favorite
-            underdog: rightTeam, // Right team is always the underdog
-            spread: spreadValue,
+            favorite: favorite,
+            underdog: underdog,
+            spread: Math.abs(spreadValue), // Always positive spread value
             homeTeam,
             awayTeam,
             homeSpread,
