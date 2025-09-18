@@ -980,7 +980,7 @@ export default function PoolDetailPage() {
                               // Enrich games with AI recommendations
                               const gamesWithPicks = number1PoolGames.map(game => {
                                 // Find the recommendation for this game
-                                const gameRec = recommendations?.find((rec: any) => {
+                                const gameRec = recommendations?.recommendations?.find((rec: any) => {
                                   const recHome = rec.game?.homeTeam?.name || '';
                                   const recAway = rec.game?.awayTeam?.name || '';
                                   return (
@@ -991,11 +991,26 @@ export default function PoolDetailPage() {
                                   );
                                 });
 
+                                // Convert AI pick to extension format (1=favorite, 2=underdog)
+                                let recommendation = null;
+                                if (gameRec?.recommendation?.pick) {
+                                  const aiPick = gameRec.recommendation.pick;
+                                  const recommendedTeam = gameRec.recommendation.team;
+
+                                  // Determine if the recommended team is the favorite or underdog
+                                  if (recommendedTeam === game.favorite) {
+                                    recommendation = '1'; // Favorite
+                                  } else if (recommendedTeam === game.underdog) {
+                                    recommendation = '2'; // Underdog
+                                  }
+                                }
+
                                 return {
                                   ...game,
                                   aiPick: gameRec?.recommendation?.pick || null,
                                   confidence: gameRec?.recommendation?.confidence || null,
-                                  recommendedTeam: gameRec?.recommendation?.team || null
+                                  recommendedTeam: gameRec?.recommendation?.team || null,
+                                  recommendation: recommendation // For extension compatibility
                                 };
                               });
 

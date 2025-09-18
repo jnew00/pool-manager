@@ -152,9 +152,20 @@ class PoolManagerAutoFill {
 
       // Show game list
       gameListEl.innerHTML = this.games.map((game, index) => {
-        const hasRecommendation = game.recommendation && game.recommendation !== '00';
-        const recText = hasRecommendation ?
-          (game.recommendation === '1' ? 'FAV' : game.recommendation === '2' ? 'DOG' : 'N/A') : '';
+        const hasRecommendation = (game.recommendation && game.recommendation !== '00') ||
+                                  (game.aiPick && game.recommendedTeam);
+
+        let recText = '';
+        if (hasRecommendation) {
+          if (game.recommendation === '1') {
+            recText = 'FAV';
+          } else if (game.recommendation === '2') {
+            recText = 'DOG';
+          } else if (game.aiPick && game.recommendedTeam) {
+            // Fallback: check if recommended team matches favorite/underdog
+            recText = game.recommendedTeam === game.favorite ? 'FAV' : 'DOG';
+          }
+        }
 
         return `
           <div class="pm-game">
@@ -162,7 +173,7 @@ class PoolManagerAutoFill {
             <span class="pm-game-matchup">
               <strong>${game.favorite}</strong> vs ${game.underdog}
             </span>
-            <span class="pm-game-spread">${game.spread}</span>
+            <span class="pm-game-spread">${game.spread || 'N/A'}</span>
             ${hasRecommendation ? `<span class="pm-game-rec">${recText}</span>` : ''}
           </div>
         `;
@@ -201,7 +212,14 @@ class PoolManagerAutoFill {
             break;
           case 'custom':
             // Use PoolManager recommendation if available
-            value = game.recommendation || '1';
+            if (game.recommendation) {
+              value = game.recommendation;
+            } else if (game.aiPick && game.recommendedTeam) {
+              // Fallback: determine pick from recommendedTeam
+              value = game.recommendedTeam === game.favorite ? '1' : '2';
+            } else {
+              value = '1'; // Default to favorite
+            }
             break;
           default:
             value = '1';

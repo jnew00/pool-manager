@@ -89,9 +89,13 @@ class PopupManager {
 
       // Validate the data structure
       const firstGame = gameData[0];
-      if (!firstGame.favorite || !firstGame.underdog || !firstGame.sortOrder) {
-        throw new Error('Game data missing required fields');
+      if (!firstGame.favorite || !firstGame.underdog) {
+        throw new Error('Game data missing required fields (favorite/underdog)');
       }
+
+      // Check if we have AI recommendations
+      const hasAiPicks = gameData.some(game => game.recommendation || game.aiPick);
+      console.log(`[PoolManager] Data loaded: ${gameData.length} games, AI picks: ${hasAiPicks}`);
 
       // Store the games
       this.games = gameData;
