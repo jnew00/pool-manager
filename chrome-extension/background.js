@@ -2,6 +2,14 @@
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('PoolManager Auto-Fill extension installed');
+
+  // Create context menu for easy access
+  chrome.contextMenus.create({
+    id: 'poolmanager-autofill',
+    title: 'PoolManager Auto-Fill',
+    contexts: ['page'],
+    documentUrlPatterns: ['https://number1pool.com/*']
+  });
 });
 
 // Handle messages from content scripts and popup
@@ -27,14 +35,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true; // Keep message channel open for async response
   }
-});
-
-// Context menu for easy access
-chrome.contextMenus.create({
-  id: 'poolmanager-autofill',
-  title: 'PoolManager Auto-Fill',
-  contexts: ['page'],
-  documentUrlPatterns: ['https://number1pool.com/*']
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {

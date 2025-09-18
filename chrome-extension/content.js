@@ -12,10 +12,19 @@ class PoolManagerAutoFill {
     if (window.location.hostname === 'number1pool.com' &&
         window.location.pathname.includes('picks_weekly.php')) {
       this.isNumber1PoolPage = true;
+      this.injectCSS();
       this.detectGameSelects();
       this.createUI();
       this.loadStoredData();
+
+      // Make this instance globally available
+      window.poolManagerAutoFill = this;
     }
+  }
+
+  injectCSS() {
+    // CSS is automatically injected via manifest.json content_scripts
+    // This method can be used for additional dynamic styling if needed
   }
 
   detectGameSelects() {
@@ -142,15 +151,22 @@ class PoolManagerAutoFill {
       autoFillBtn.disabled = false;
 
       // Show game list
-      gameListEl.innerHTML = this.games.map((game, index) => `
-        <div class="pm-game">
-          <span class="pm-game-number">${game.sortOrder || index + 1}</span>
-          <span class="pm-game-matchup">
-            <strong>${game.favorite}</strong> vs ${game.underdog}
-          </span>
-          <span class="pm-game-spread">${game.spread}</span>
-        </div>
-      `).join('');
+      gameListEl.innerHTML = this.games.map((game, index) => {
+        const hasRecommendation = game.recommendation && game.recommendation !== '00';
+        const recText = hasRecommendation ?
+          (game.recommendation === '1' ? 'FAV' : game.recommendation === '2' ? 'DOG' : 'N/A') : '';
+
+        return `
+          <div class="pm-game">
+            <span class="pm-game-number">${game.sortOrder || index + 1}</span>
+            <span class="pm-game-matchup">
+              <strong>${game.favorite}</strong> vs ${game.underdog}
+            </span>
+            <span class="pm-game-spread">${game.spread}</span>
+            ${hasRecommendation ? `<span class="pm-game-rec">${recText}</span>` : ''}
+          </div>
+        `;
+      }).join('');
     } else {
       statusEl.textContent = 'No game data available';
       statusEl.className = 'pm-status-error';
@@ -243,7 +259,7 @@ if (document.readyState === 'loading') {
   new PoolManagerAutoFill();
 }
 
-// Listen for messages from popup
+// Listen for messages from popup and background
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'SET_GAMES_DATA') {
     // Store the games data
@@ -255,14 +271,46 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       sendResponse({ success: true });
     });
+    return true; // Keep message channel open
   }
 
   if (message.type === 'AUTO_FILL_NOW') {
     if (window.poolManagerAutoFill) {
+      // Set the fill type if specified
+      if (message.fillType) {
+        const radioElement = document.querySelector(`input[name="pm-fill-type"][value="${message.fillType}"]`);
+        if (radioElement) {
+          radioElement.checked = true;
+        }
+      }
       window.poolManagerAutoFill.autoFillGames();
       sendResponse({ success: true });
     } else {
       sendResponse({ success: false, error: 'Auto-fill not initialized' });
     }
+    return true; // Keep message channel open
+  }
+
+  if (message.type === 'SHOW_AUTOFILL_PANEL') {
+    if (window.poolManagerAutoFill) {
+      const panel = document.getElementById('poolmanager-autofill-panel');
+      if (panel) {
+        panel.style.display = 'block';
+      }
+      sendResponse({ success: true });
+    } else {
+      sendResponse({ success: false, error: 'Auto-fill not initialized' });
+    }
+    return true; // Keep message channel open
+  }
+
+  if (message.type === 'CLEAR_ALL_PICKS') {
+    if (window.poolManagerAutoFill) {
+      window.poolManagerAutoFill.clearAllSelections();
+      sendResponse({ success: true });
+    } else {
+      sendResponse({ success: false, error: 'Auto-fill not initialized' });
+    }
+    return true; // Keep message channel open
   }
 });

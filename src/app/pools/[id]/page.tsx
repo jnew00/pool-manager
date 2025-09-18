@@ -960,18 +960,54 @@ export default function PoolDetailPage() {
                         Number1Pool
                       </button>
 
-                      {/* Extension Data Button */}
+                      {/* Extension Data Buttons */}
                       {number1PoolGames.length > 0 && (
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(JSON.stringify(number1PoolGames, null, 2))
-                            alert(`Game data copied to clipboard!\n\n${number1PoolGames.length} games copied for Chrome extension use.`)
-                          }}
-                          className="px-2 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                          title="Copy game data for Chrome extension"
-                        >
-                          Copy for Ext
-                        </button>
+                        <>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(JSON.stringify(number1PoolGames, null, 2))
+                              alert(`Game data copied to clipboard!\n\n${number1PoolGames.length} games copied for Chrome extension use.`)
+                            }}
+                            className="px-2 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                            title="Copy game data for Chrome extension"
+                          >
+                            Copy for Ext
+                          </button>
+
+                          {/* Copy with Recommendations */}
+                          <button
+                            onClick={() => {
+                              // Enrich games with AI recommendations
+                              const gamesWithPicks = number1PoolGames.map(game => {
+                                // Find the recommendation for this game
+                                const gameRec = recommendations?.find((rec: any) => {
+                                  const recHome = rec.game?.homeTeam?.name || '';
+                                  const recAway = rec.game?.awayTeam?.name || '';
+                                  return (
+                                    recHome.includes(game.homeTeam) ||
+                                    recAway.includes(game.awayTeam) ||
+                                    game.homeTeam.includes(recHome) ||
+                                    game.awayTeam.includes(recAway)
+                                  );
+                                });
+
+                                return {
+                                  ...game,
+                                  aiPick: gameRec?.recommendation?.pick || null,
+                                  confidence: gameRec?.recommendation?.confidence || null,
+                                  recommendedTeam: gameRec?.recommendation?.team || null
+                                };
+                              });
+
+                              navigator.clipboard.writeText(JSON.stringify(gamesWithPicks, null, 2))
+                              alert(`Game data with AI picks copied!\n\n${gamesWithPicks.filter(g => g.aiPick).length} games have AI recommendations.`)
+                            }}
+                            className="px-2 py-1 text-xs bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
+                            title="Copy with AI recommendations"
+                          >
+                            + AI Picks
+                          </button>
+                        </>
                       )}
                     </div>
 
