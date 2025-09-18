@@ -32,45 +32,80 @@ class PoolManagerAutoFill {
   }
 
   detectGameSelects() {
-    // Try multiple selectors to find game select elements
-    let selects = document.querySelectorAll('select[name^="Game_"]');
-    console.log(`[PoolManager] Found ${selects.length} selects with name^="Game_"`);
+    // Number1Pool uses hidden inputs + buttons, not select dropdowns
+    // Priority: Weekly ATS > Points Plus > Other pools
 
-    if (selects.length === 0) {
-      // Try alternative selectors
-      selects = document.querySelectorAll('select[name*="Game"]');
-      console.log(`[PoolManager] Found ${selects.length} selects with name*="Game"`);
+    // Try Weekly ATS picks first (Game_XX_Weekly hidden inputs)
+    let gameInputs = document.querySelectorAll('input[name^="Game_"][name*="Weekly"]');
+    console.log(`[PoolManager] Found ${gameInputs.length} Weekly ATS hidden inputs`);
+
+    if (gameInputs.length === 0) {
+      // Try Points Plus picks (Game_XX_Points_Plus hidden inputs)
+      gameInputs = document.querySelectorAll('input[name^="Game_"][name*="Points_Plus"]');
+      console.log(`[PoolManager] Found ${gameInputs.length} Points Plus hidden inputs`);
     }
 
-    if (selects.length === 0) {
-      // Try any select elements
-      selects = document.querySelectorAll('select');
-      console.log(`[PoolManager] Found ${selects.length} total select elements`);
-      // Log first few select names for debugging
+    if (gameInputs.length === 0) {
+      // Fallback: try any Game_ inputs
+      gameInputs = document.querySelectorAll('input[name^="Game_"]');
+      console.log(`[PoolManager] Found ${gameInputs.length} inputs with name^="Game_"`);
+    }
+
+    if (gameInputs.length === 0) {
+      // Last resort: try select elements (for other pool types)
+      const selects = document.querySelectorAll('select');
+      console.log(`[PoolManager] Found ${selects.length} select elements (fallback)`);
       Array.from(selects).slice(0, 5).forEach(select => {
         console.log(`[PoolManager] Select name: "${select.name}", id: "${select.id}"`);
       });
+      gameInputs = selects;
     }
 
-    // Store select elements with their game numbers
+    // Store game elements with their game numbers
     this.gameSelects = {};
-    selects.forEach((select, index) => {
+    this.gameButtons = {}; // Store corresponding buttons
+    this.poolType = 'unknown';
+
+    gameInputs.forEach((input, index) => {
       let gameNum = null;
 
-      // Try to extract game number from name
-      const nameMatch = select.name.match(/Game_?(\d+)/i);
-      if (nameMatch) {
-        gameNum = parseInt(nameMatch[1]);
+      // Extract game number from various naming patterns
+      if (input.name.includes('Weekly')) {
+        this.poolType = 'ATS';
+        const match = input.name.match(/Game_(\d+)_Weekly/);
+        gameNum = match ? parseInt(match[1]) : index + 1;
+
+        // Find corresponding button
+        const buttonName = `Weekly_${gameNum.toString().padStart(2, '0')}`;
+        const button = document.querySelector(`input[name="${buttonName}"]`);
+        if (button) {
+          this.gameButtons[gameNum] = button;
+        }
+      } else if (input.name.includes('Points_Plus')) {
+        this.poolType = 'Points Plus';
+        const match = input.name.match(/Game_(\d+)_Points_Plus/);
+        gameNum = match ? parseInt(match[1]) : index + 1;
+
+        // Find corresponding button
+        const buttonName = `PPlus_${gameNum.toString().padStart(2, '0')}`;
+        const button = document.querySelector(`input[name="${buttonName}"]`);
+        if (button) {
+          this.gameButtons[gameNum] = button;
+        }
+      } else if (input.name.includes('Game_')) {
+        const match = input.name.match(/Game_?(\d+)/i);
+        gameNum = match ? parseInt(match[1]) : index + 1;
       } else {
         // Use index as fallback
         gameNum = index + 1;
       }
 
-      this.gameSelects[gameNum] = select;
-      console.log(`[PoolManager] Mapped game ${gameNum} to select: ${select.name}`);
+      this.gameSelects[gameNum] = input;
+      console.log(`[PoolManager] Mapped game ${gameNum} to ${this.poolType} input: ${input.name}`);
     });
 
-    console.log(`[PoolManager] Total game selects mapped: ${Object.keys(this.gameSelects).length}`);
+    console.log(`[PoolManager] Total game inputs mapped: ${Object.keys(this.gameSelects).length}, Pool type: ${this.poolType}`);
+    console.log(`[PoolManager] Total buttons mapped: ${Object.keys(this.gameButtons).length}`);
   }
 
   createUI() {
@@ -228,14 +263,6 @@ class PoolManagerAutoFill {
     statusEl.className = `pm-status-${type}`;
   }
 
-  isPointsPlusPool(select) {
-    // Check if this is a Points Plus pool by examining select options
-    const options = Array.from(select.options);
-    const hasConfidenceLevels = options.some(option =>
-      option.value.match(/^[1-5]$/) && options.length >= 5
-    );
-    return hasConfidenceLevels;
-  }
 
   getPointsPlusValue(fillType, game, index) {
     // For Points Plus pools, return confidence levels (1-5)
@@ -275,9 +302,10 @@ class PoolManagerAutoFill {
 
     this.games.forEach((game, index) => {
       const gameNumber = game.sortOrder || (index + 1);
-      const select = this.gameSelects[gameNumber];
+      const gameInput = this.gameSelects[gameNumber];
+      const gameButton = this.gameButtons[gameNumber];
 
-      if (select) {
+      if (gameInput) {
         let value;
         switch (fillType) {
           case 'balanced':
@@ -321,32 +349,58 @@ class PoolManagerAutoFill {
         }
 
         // Handle different pool types
-        if (this.isPointsPlusPool(select)) {
+        if (this.poolType === 'Points Plus') {
           // Points Plus pools have different options (1-5 confidence levels)
           value = this.getPointsPlusValue(fillType, game, index);
         }
 
-        select.value = value;
-        select.dispatchEvent(new Event('change', { bubbles: true }));
-        filled++;
+        // Click the button to cycle to the desired value
+        if (gameButton) {
+          // First, check current value
+          const currentValue = gameInput.value || '0';
+          const targetValue = value;
 
-        // Visual feedback
-        select.style.background = '#e8f5e8';
-        setTimeout(() => {
-          select.style.background = '';
-        }, 2000);
+          // Calculate how many clicks needed
+          // Cycle is: 0 -> 1 -> 2 -> 0
+          let clicksNeeded = 0;
+
+          if (currentValue === '0') {
+            if (targetValue === '1') clicksNeeded = 1;
+            else if (targetValue === '2') clicksNeeded = 2;
+          } else if (currentValue === '1') {
+            if (targetValue === '2') clicksNeeded = 1;
+            else if (targetValue === '0') clicksNeeded = 2;
+          } else if (currentValue === '2') {
+            if (targetValue === '0') clicksNeeded = 1;
+            else if (targetValue === '1') clicksNeeded = 2;
+          }
+
+          // Click the button the required number of times
+          for (let i = 0; i < clicksNeeded; i++) {
+            gameButton.click();
+          }
+
+          filled++;
+
+          // Visual feedback
+          gameButton.style.background = '#e8f5e8';
+          setTimeout(() => {
+            gameButton.style.background = '';
+          }, 2000);
+        } else {
+          // Fallback: set value directly if no button found
+          gameInput.value = value;
+          gameInput.dispatchEvent(new Event('change', { bubbles: true }));
+          filled++;
+        }
       } else {
-        errors.push(`Game ${gameNumber} select not found`);
+        errors.push(`Game ${gameNumber} input not found`);
       }
     });
 
     // Show result
     if (filled > 0) {
-      const poolType = Object.values(this.gameSelects).some(select =>
-        this.isPointsPlusPool(select)
-      ) ? 'Points Plus' : 'ATS';
-
-      this.updateStatus(`✅ Filled ${filled} games (${poolType}) with ${fillType}`, 'success');
+      this.updateStatus(`✅ Filled ${filled} games (${this.poolType}) with ${fillType}`, 'success');
     }
 
     if (errors.length > 0) {
@@ -360,13 +414,33 @@ class PoolManagerAutoFill {
   }
 
   clearAllSelections() {
-    Object.values(this.gameSelects).forEach(select => {
-      select.value = '00'; // NO PICK
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-      select.style.background = '#ffe8e8';
-      setTimeout(() => {
-        select.style.background = '';
-      }, 1000);
+    Object.keys(this.gameSelects).forEach(gameNum => {
+      const gameInput = this.gameSelects[gameNum];
+      const gameButton = this.gameButtons[gameNum];
+
+      if (gameButton && gameInput) {
+        const currentValue = gameInput.value || '0';
+
+        // Calculate clicks needed to get back to 0
+        let clicksNeeded = 0;
+        if (currentValue === '1') clicksNeeded = 2;  // 1 -> 2 -> 0
+        else if (currentValue === '2') clicksNeeded = 1;  // 2 -> 0
+
+        // Click the button the required number of times
+        for (let i = 0; i < clicksNeeded; i++) {
+          gameButton.click();
+        }
+
+        // Visual feedback
+        gameButton.style.background = '#ffe8e8';
+        setTimeout(() => {
+          gameButton.style.background = '';
+        }, 1000);
+      } else if (gameInput) {
+        // Fallback: set value directly if no button found
+        gameInput.value = '0';
+        gameInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     });
 
     this.updateStatus('Cleared all selections', 'info');

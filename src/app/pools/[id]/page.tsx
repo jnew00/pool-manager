@@ -1005,9 +1005,11 @@ export default function PoolDetailPage() {
 
                                 // Convert AI pick to extension format (1=favorite, 2=underdog)
                                 let recommendation = null;
+                                let recommendedTeam = null;
+
                                 if (gameRec?.recommendation?.pick) {
                                   const aiPick = gameRec.recommendation.pick;
-                                  const recommendedTeam = gameRec.recommendation.team;
+                                  recommendedTeam = gameRec.recommendation.team;
 
                                   // Determine if the recommended team is the favorite or underdog
                                   if (recommendedTeam === game.favorite) {
@@ -1015,13 +1017,32 @@ export default function PoolDetailPage() {
                                   } else if (recommendedTeam === game.underdog) {
                                     recommendation = '2'; // Underdog
                                   }
+                                } else if (game.aiPick) {
+                                  // Handle aiPick field (HOME/AWAY format)
+                                  if (game.aiPick === 'HOME') {
+                                    recommendedTeam = game.homeTeam;
+                                    // Check if home team is favorite or underdog
+                                    if (game.homeTeam === game.favorite) {
+                                      recommendation = '1'; // Home team is favorite
+                                    } else {
+                                      recommendation = '2'; // Home team is underdog
+                                    }
+                                  } else if (game.aiPick === 'AWAY') {
+                                    recommendedTeam = game.awayTeam;
+                                    // Check if away team is favorite or underdog
+                                    if (game.awayTeam === game.favorite) {
+                                      recommendation = '1'; // Away team is favorite
+                                    } else {
+                                      recommendation = '2'; // Away team is underdog
+                                    }
+                                  }
                                 }
 
                                 return {
                                   ...game,
-                                  aiPick: gameRec?.recommendation?.pick || null,
-                                  confidence: gameRec?.recommendation?.confidence || null,
-                                  recommendedTeam: gameRec?.recommendation?.team || null,
+                                  aiPick: gameRec?.recommendation?.pick || game.aiPick || null,
+                                  confidence: gameRec?.recommendation?.confidence || game.confidence || null,
+                                  recommendedTeam: recommendedTeam,
                                   recommendation: recommendation // For extension compatibility
                                 };
                               });
