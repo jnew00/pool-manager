@@ -448,82 +448,54 @@ export class DataSnapshotJob {
 
   /**
    * Fetch game results from ESPN and update database
-   * Uses smart season parameter detection with fallback
+   * Uses the same approach as the working ESPN odds provider
    */
   private async fetchAndUpdateGameResults(week: number, season: number = 2025): Promise<number> {
     try {
-      console.log(`Fetching ESPN scores for Week ${week}, Season ${season}...`)
+      console.log(`Fetching ESPN scores for Week ${week}...`)
 
-      // Try multiple season parameter approaches for ESPN
-      const seasonsToTry = [
-        { season: season, description: 'Same year' },
-        { season: season - 1, description: 'Previous year' },
-      ]
+      // Use the EXACT same approach as ESPN odds provider - NO season parameter
+      // ESPN automatically uses the current season
+      const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`
 
-      let espnResults: any[] = []
-      let successfulSeason: number | null = null
+      console.log(`ESPN URL: ${url}`)
 
-      for (const { season: espnSeason, description } of seasonsToTry) {
-        console.log(`Trying ESPN season parameter: ${espnSeason} (${description})`)
+      const response = await axios.get(url, {
+        timeout: 10000,
+        headers: {
+          'User-Agent': 'PoolManager/1.0'
+        }
+      })
 
-        // ESPN API endpoint for NFL scores - use seasontype=2 for regular season
-        const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${week}&seasontype=2&season=${espnSeason}`
+      const games = response.data.events || []
+      console.log(`ESPN returned ${games.length} games`)
 
-        try {
-          const response = await axios.get(url, {
-            timeout: 10000,
-            headers: {
-              'User-Agent': 'PoolManager/1.0'
-            }
-          })
+      // Look for completed games
+      const espnResults = []
+      for (const game of games) {
+        const competition = game.competitions?.[0]
+        if (competition?.status?.type?.completed) {
+          const home = competition.competitors.find((c: any) => c.homeAway === 'home')
+          const away = competition.competitors.find((c: any) => c.homeAway === 'away')
 
-          const games = response.data.events || []
-          console.log(`ESPN returned ${games.length} games for season ${espnSeason}`)
-
-          // Look for completed games
-          const completedGames = []
-          for (const game of games) {
-            const competition = game.competitions?.[0]
-            if (competition?.status?.type?.completed) {
-              const home = competition.competitors.find((c: any) => c.homeAway === 'home')
-              const away = competition.competitors.find((c: any) => c.homeAway === 'away')
-
-              if (home && away) {
-                completedGames.push({
-                  homeTeam: home.team.abbreviation,
-                  awayTeam: away.team.abbreviation,
-                  homeScore: parseInt(home.score || '0'),
-                  awayScore: parseInt(away.score || '0'),
-                })
-              }
-            }
+          if (home && away) {
+            espnResults.push({
+              homeTeam: home.team.abbreviation,
+              awayTeam: away.team.abbreviation,
+              homeScore: parseInt(home.score || '0'),
+              awayScore: parseInt(away.score || '0'),
+            })
           }
-
-          if (completedGames.length > 0) {
-            console.log(`✅ Found ${completedGames.length} completed games with season=${espnSeason}`)
-            espnResults = completedGames
-            successfulSeason = espnSeason
-            break
-          } else if (games.length > 0) {
-            console.log(`Found ${games.length} games but none completed yet with season=${espnSeason}`)
-          } else {
-            console.log(`No games found with season=${espnSeason}`)
-          }
-        } catch (error) {
-          console.warn(`Failed to fetch with season=${espnSeason}:`, error instanceof Error ? error.message : error)
         }
       }
 
       if (espnResults.length === 0) {
-        console.log('❌ No completed games found on ESPN with any season parameter')
-        console.log('This could mean:')
-        console.log('- Games have not been played yet')
-        console.log('- ESPN API structure changed')
-        console.log('- Different seasontype needed (try seasontype=1 for preseason, 3 for playoffs)')
+        console.log(`Found ${games.length} games but none are completed yet`)
+        console.log('This likely means games for this week have not finished playing')
         return 0
       }
 
-      console.log(`✅ Successfully found ${espnResults.length} completed games using season=${successfulSeason}`)
+      console.log(`✅ Found ${espnResults.length} completed games from ESPN`)
 
       // Match with our database games and update results
       const dbGames = await prisma.game.findMany({
