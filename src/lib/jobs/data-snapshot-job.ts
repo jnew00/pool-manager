@@ -417,13 +417,7 @@ export class DataSnapshotJob {
             })
 
             // Mark game as Elo processed (we can add a flag to the game or result table later)
-            await prisma.result.update({
-              where: { gameId: game.id },
-              data: {
-                // We could add an "eloProcessed" field later, for now just update updatedAt
-                updatedAt: new Date(),
-              },
-            })
+            // TODO: Add eloProcessed field to Result model if needed
 
             processedCount++
             await this.sleep(100) // Small delay between processing
@@ -660,16 +654,13 @@ export class DataSnapshotJob {
           gte: sevenDaysAgo,
         },
         result: {
-          isNot: null,
           homeScore: {
             not: null,
           },
           awayScore: {
             not: null,
           },
-          status: {
-            in: ['FINAL', 'COMPLETED'],
-          },
+          status: 'FINAL',
         },
       },
       include: {
