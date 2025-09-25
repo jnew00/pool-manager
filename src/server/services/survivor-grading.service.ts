@@ -152,7 +152,10 @@ export class SurvivorGradingService {
         entry: {
           poolId,
         },
-        result: null, // Only grade ungraded picks
+        OR: [
+          { result: null }, // Ungraded picks
+          { result: 'PENDING' }, // Pending picks that need grading
+        ],
       },
       include: {
         game: {
