@@ -448,16 +448,31 @@ export class DataSnapshotJob {
 
   /**
    * Fetch game results from ESPN and update database
+   * Uses the existing ESPN implementation with proper season handling
    */
   private async fetchAndUpdateGameResults(week: number, season: number = 2025): Promise<number> {
     try {
       console.log(`Fetching ESPN scores for Week ${week}, Season ${season}...`)
 
-      // ESPN API endpoint for NFL scores
-      const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${week}&seasontype=2&season=${season}`
-      const response = await axios.get(url)
-      const games = response.data.events || []
+      // Use the NFL season year (e.g., for 2025 NFL season, ESPN uses 2024)
+      // NFL seasons are named by their end year, but ESPN uses the start year
+      const espnSeason = season === 2025 ? 2024 : season - 1
 
+      console.log(`Using ESPN season parameter: ${espnSeason}`)
+
+      // ESPN API endpoint for NFL scores - use seasontype=2 for regular season
+      const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${week}&seasontype=2&season=${espnSeason}`
+
+      console.log(`ESPN URL: ${url}`)
+
+      const response = await axios.get(url, {
+        timeout: 10000,
+        headers: {
+          'User-Agent': 'PoolManager/1.0'
+        }
+      })
+
+      const games = response.data.events || []
       console.log(`ESPN returned ${games.length} games`)
 
       const espnResults = []
@@ -471,15 +486,19 @@ export class DataSnapshotJob {
             espnResults.push({
               homeTeam: home.team.abbreviation,
               awayTeam: away.team.abbreviation,
-              homeScore: parseInt(home.score),
-              awayScore: parseInt(away.score),
+              homeScore: parseInt(home.score || '0'),
+              awayScore: parseInt(away.score || '0'),
             })
           }
         }
       }
 
       if (espnResults.length === 0) {
-        console.log('No completed games found on ESPN')
+        console.log('No completed games found on ESPN for this week/season combination')
+        console.log('This could mean:')
+        console.log('- Games have not been played yet')
+        console.log('- Wrong season parameter (try different year)')
+        console.log('- ESPN API structure changed')
         return 0
       }
 
@@ -495,6 +514,8 @@ export class DataSnapshotJob {
         },
       })
 
+      console.log(`Found ${dbGames.length} games in database for Week ${week}, Season ${season}`)
+
       let resultsUpdated = 0
       let resultsCreated = 0
 
@@ -508,6 +529,7 @@ export class DataSnapshotJob {
 
         if (!dbGame) {
           console.warn(`No matching game found for ${espnResult.awayTeam} @ ${espnResult.homeTeam}`)
+          console.warn(`Available DB games:`, dbGames.map(g => `${g.awayTeam.nflAbbr} @ ${g.homeTeam.nflAbbr}`))
           continue
         }
 
@@ -526,6 +548,8 @@ export class DataSnapshotJob {
             })
             resultsUpdated++
             console.log(`Updated: ${espnResult.awayTeam} ${espnResult.awayScore} - ${espnResult.homeScore} ${espnResult.homeTeam}`)
+          } else {
+            console.log(`Skipped (no change): ${espnResult.awayTeam} ${espnResult.awayScore} - ${espnResult.homeScore} ${espnResult.homeTeam}`)
           }
         } else {
           // Create new result
@@ -547,6 +571,9 @@ export class DataSnapshotJob {
 
     } catch (error) {
       console.error('Error fetching ESPN scores:', error)
+      if (error instanceof Error) {
+        console.error('Error details:', error.message)
+      }
       return 0
     }
   }
