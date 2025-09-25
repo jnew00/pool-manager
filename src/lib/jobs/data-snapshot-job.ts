@@ -5,6 +5,7 @@ import type { GameDataSnapshot } from '@/lib/data-sources/types'
 import { EloSystem } from '@/lib/models/elo-system'
 import { SurvivorGradingService } from '@/server/services/survivor-grading.service'
 import { getCurrentNFLWeek } from '@/lib/utils/nfl-week'
+import axios from 'axios'
 
 export interface SnapshotJobConfig {
   enabled: boolean
@@ -365,71 +366,188 @@ export class DataSnapshotJob {
   }
 
   /**
-   * Process completed week - Update Elo ratings and grade survivor pools
+   * Process completed week - Fetch game results, update Elo ratings, and grade survivor pools
    */
   private async processCompletedWeek(): Promise<void> {
     try {
       console.log('Starting post-game processing for completed week...')
 
-      // Get recently completed games (last 7 days) that have results but haven't had Elo processed
+      // Determine the week that just completed
+      const currentWeek = getCurrentNFLWeek()
+      const completedWeek = currentWeek > 1 ? currentWeek - 1 : currentWeek
+
+      console.log(`Processing completed week: ${completedWeek}`)
+
+      // STEP 1: Fetch and update game results from ESPN
+      console.log('\n=== STEP 1: Fetching Game Results from ESPN ===')
+      const resultsUpdated = await this.fetchAndUpdateGameResults(completedWeek)
+      console.log(`Updated ${resultsUpdated} game results from ESPN`)
+
+      // Get recently completed games that now have results
       const completedGames = await this.getRecentlyCompletedGames()
-      console.log(`Found ${completedGames.length} completed games to process`)
+      console.log(`Found ${completedGames.length} completed games for Elo processing`)
 
       if (completedGames.length === 0) {
-        console.log('No completed games found for processing')
-        return
+        console.log('No completed games found for Elo processing, but continuing with survivor grading...')
       }
 
-      // STEP 1: Update Elo ratings
-      console.log('\n=== STEP 1: Updating Elo Ratings ===')
-      const eloSystem = new EloSystem()
-      let processedCount = 0
-      let errorCount = 0
+      // STEP 2: Update Elo ratings
+      if (completedGames.length > 0) {
+        console.log('\n=== STEP 2: Updating Elo Ratings ===')
+        const eloSystem = new EloSystem()
+        let processedCount = 0
+        let errorCount = 0
 
-      for (const game of completedGames) {
-        try {
-          // Update Elo ratings based on game result
-          const result = await eloSystem.updateRatingsAfterGame(
-            game.homeTeamId,
-            game.awayTeamId,
-            game.result.homeScore,
-            game.result.awayScore,
-            game.lines[0]?.spread ? parseFloat(game.lines[0].spread.toString()) : undefined
-          )
+        for (const game of completedGames) {
+          try {
+            // Update Elo ratings based on game result
+            const result = await eloSystem.updateRatingsAfterGame(
+              game.homeTeamId,
+              game.awayTeamId,
+              game.result.homeScore,
+              game.result.awayScore,
+              game.lines[0]?.spread ? parseFloat(game.lines[0].spread.toString()) : undefined
+            )
 
-          console.log(`Updated Elo ratings for ${game.homeTeam.nflAbbr} vs ${game.awayTeam.nflAbbr}:`, {
-            homeChange: result.homeRatingChange,
-            awayChange: result.awayRatingChange,
-            homeNewRating: result.homeNewRating,
-            awayNewRating: result.awayNewRating,
-          })
+            console.log(`Updated Elo ratings for ${game.homeTeam.nflAbbr} vs ${game.awayTeam.nflAbbr}:`, {
+              homeChange: result.homeRatingChange,
+              awayChange: result.awayRatingChange,
+              homeNewRating: result.homeNewRating,
+              awayNewRating: result.awayNewRating,
+            })
 
-          // Mark game as Elo processed (we can add a flag to the game or result table later)
-          await prisma.result.update({
-            where: { gameId: game.id },
-            data: {
-              // We could add an "eloProcessed" field later, for now just update updatedAt
-              updatedAt: new Date(),
-            },
-          })
+            // Mark game as Elo processed (we can add a flag to the game or result table later)
+            await prisma.result.update({
+              where: { gameId: game.id },
+              data: {
+                // We could add an "eloProcessed" field later, for now just update updatedAt
+                updatedAt: new Date(),
+              },
+            })
 
-          processedCount++
-          await this.sleep(100) // Small delay between processing
-        } catch (error) {
-          console.error(`Failed to process Elo for game ${game.id}:`, error)
-          errorCount++
+            processedCount++
+            await this.sleep(100) // Small delay between processing
+          } catch (error) {
+            console.error(`Failed to process Elo for game ${game.id}:`, error)
+            errorCount++
+          }
         }
+
+        console.log(`Elo processing completed: ${processedCount} games processed, ${errorCount} errors`)
       }
 
-      console.log(`Elo processing completed: ${processedCount} games processed, ${errorCount} errors`)
-
-      // STEP 2: Grade Survivor Pools
-      console.log('\n=== STEP 2: Grading Survivor Pools ===')
+      // STEP 3: Grade Survivor Pools
+      console.log('\n=== STEP 3: Grading Survivor Pools ===')
       await this.gradeSurvivorPools()
 
       console.log('\n=== Post-game processing completed successfully ===')
     } catch (error) {
       console.error('Error in post-game processing job:', error)
+    }
+  }
+
+  /**
+   * Fetch game results from ESPN and update database
+   */
+  private async fetchAndUpdateGameResults(week: number, season: number = 2025): Promise<number> {
+    try {
+      console.log(`Fetching ESPN scores for Week ${week}, Season ${season}...`)
+
+      // ESPN API endpoint for NFL scores
+      const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${week}&seasontype=2&season=${season}`
+      const response = await axios.get(url)
+      const games = response.data.events || []
+
+      console.log(`ESPN returned ${games.length} games`)
+
+      const espnResults = []
+      for (const game of games) {
+        const competition = game.competitions?.[0]
+        if (competition?.status?.type?.completed) {
+          const home = competition.competitors.find((c: any) => c.homeAway === 'home')
+          const away = competition.competitors.find((c: any) => c.homeAway === 'away')
+
+          if (home && away) {
+            espnResults.push({
+              homeTeam: home.team.abbreviation,
+              awayTeam: away.team.abbreviation,
+              homeScore: parseInt(home.score),
+              awayScore: parseInt(away.score),
+            })
+          }
+        }
+      }
+
+      if (espnResults.length === 0) {
+        console.log('No completed games found on ESPN')
+        return 0
+      }
+
+      console.log(`Found ${espnResults.length} completed games on ESPN`)
+
+      // Match with our database games and update results
+      const dbGames = await prisma.game.findMany({
+        where: { week, season },
+        include: {
+          homeTeam: { select: { nflAbbr: true } },
+          awayTeam: { select: { nflAbbr: true } },
+          result: true,
+        },
+      })
+
+      let resultsUpdated = 0
+      let resultsCreated = 0
+
+      for (const espnResult of espnResults) {
+        // Find matching game in database
+        const dbGame = dbGames.find(
+          (g) =>
+            g.homeTeam.nflAbbr === espnResult.homeTeam &&
+            g.awayTeam.nflAbbr === espnResult.awayTeam
+        )
+
+        if (!dbGame) {
+          console.warn(`No matching game found for ${espnResult.awayTeam} @ ${espnResult.homeTeam}`)
+          continue
+        }
+
+        // Update or create result
+        if (dbGame.result) {
+          // Update existing result if scores are different
+          if (dbGame.result.homeScore !== espnResult.homeScore ||
+              dbGame.result.awayScore !== espnResult.awayScore) {
+            await prisma.result.update({
+              where: { gameId: dbGame.id },
+              data: {
+                homeScore: espnResult.homeScore,
+                awayScore: espnResult.awayScore,
+                status: 'FINAL',
+              },
+            })
+            resultsUpdated++
+            console.log(`Updated: ${espnResult.awayTeam} ${espnResult.awayScore} - ${espnResult.homeScore} ${espnResult.homeTeam}`)
+          }
+        } else {
+          // Create new result
+          await prisma.result.create({
+            data: {
+              gameId: dbGame.id,
+              homeScore: espnResult.homeScore,
+              awayScore: espnResult.awayScore,
+              status: 'FINAL',
+            },
+          })
+          resultsCreated++
+          console.log(`Created: ${espnResult.awayTeam} ${espnResult.awayScore} - ${espnResult.homeScore} ${espnResult.homeTeam}`)
+        }
+      }
+
+      console.log(`ESPN sync complete: ${resultsCreated} created, ${resultsUpdated} updated`)
+      return resultsCreated + resultsUpdated
+
+    } catch (error) {
+      console.error('Error fetching ESPN scores:', error)
+      return 0
     }
   }
 
@@ -600,6 +718,11 @@ export class DataSnapshotJob {
     console.log(`Manually triggering survivor grading${week ? ` for week ${week}` : ''}...`)
 
     if (week) {
+      // Fetch ESPN results for specific week first
+      console.log(`Fetching ESPN results for week ${week}...`)
+      const resultsUpdated = await this.fetchAndUpdateGameResults(week)
+      console.log(`Updated ${resultsUpdated} game results from ESPN`)
+
       // Grade specific week across all pools
       const survivorPools = await prisma.pool.findMany({
         where: {
@@ -615,9 +738,15 @@ export class DataSnapshotJob {
         console.log(`Graded ${results.length} picks`)
       }
     } else {
-      // Use existing automatic logic
+      // Use existing automatic logic (includes ESPN fetching)
       await this.gradeSurvivorPools()
     }
+  }
+
+  async triggerESPNResultsFetch(week: number): Promise<void> {
+    console.log(`Manually triggering ESPN results fetch for week ${week}...`)
+    const resultsUpdated = await this.fetchAndUpdateGameResults(week)
+    console.log(`ESPN fetch completed: ${resultsUpdated} results updated`)
   }
 }
 
