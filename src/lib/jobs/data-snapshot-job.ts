@@ -6,6 +6,9 @@ import { EloSystem } from '@/lib/models/elo-system'
 import { SurvivorGradingService } from '@/server/services/survivor-grading.service'
 import { getCurrentNFLWeek } from '@/lib/utils/nfl-week'
 import axios from 'axios'
+import { EspnOddsProvider } from '@/lib/data-sources/providers/espn-odds-provider'
+import { OpenWeatherProvider } from '@/lib/data-sources/providers/openweather-provider'
+import { MockOddsProvider, MockWeatherProvider } from '@/lib/data-sources/providers'
 
 export interface SnapshotJobConfig {
   enabled: boolean
@@ -23,9 +26,35 @@ export class DataSnapshotJob {
   private config: SnapshotJobConfig
   private isRunning = false
   private scheduledTasks: Map<string, cron.ScheduledTask> = new Map()
+  private providersInitialized = false
 
   constructor(config: SnapshotJobConfig) {
     this.config = config
+  }
+
+  /**
+   * Initialize data providers (ESPN, weather, etc.)
+   */
+  private initializeProviders(): void {
+    if (this.providersInitialized) return
+
+    // Initialize providers
+    const espnProvider = new EspnOddsProvider()
+    const weatherProvider = new OpenWeatherProvider({
+      apiKey: process.env.OPENWEATHER_API_KEY,
+    })
+    const mockOddsProvider = new MockOddsProvider()
+    const mockWeatherProvider = new MockWeatherProvider()
+
+    // Register providers (use ESPN for odds always, use real weather if API key available)
+    dataProviderRegistry.registerOddsProvider(espnProvider, true)
+    dataProviderRegistry.registerWeatherProvider(
+      process.env.OPENWEATHER_API_KEY ? weatherProvider : mockWeatherProvider,
+      true
+    )
+
+    this.providersInitialized = true
+    console.log('Data providers initialized for DataSnapshotJob')
   }
 
   /**
@@ -434,6 +463,26 @@ export class DataSnapshotJob {
       console.log('\n=== STEP 3: Grading Survivor Pools ===')
       await this.gradeSurvivorPools()
 
+      // STEP 4: Load Schedule and Fetch Lines for Next Week
+      console.log('\n=== STEP 4: Loading Schedule & Betting Lines for Next Week ===')
+      const nextWeek = currentWeek // Next week to play
+      console.log(`Processing week ${nextWeek} schedule and lines...`)
+
+      try {
+        // First ensure games exist for next week
+        const gamesCreated = await this.ensureScheduleForWeek(nextWeek)
+        if (gamesCreated > 0) {
+          console.log(`Created ${gamesCreated} games for week ${nextWeek}`)
+        }
+
+        // Then fetch lines for those games
+        const linesUpdated = await this.fetchLinesForWeek(nextWeek)
+        console.log(`Updated ${linesUpdated} betting lines for week ${nextWeek}`)
+      } catch (error) {
+        console.error('Error updating schedule/lines:', error)
+        // Don't fail the entire job if schedule/lines update fails
+      }
+
       console.log('\n=== Post-game processing completed successfully ===')
     } catch (error) {
       console.error('Error in post-game processing job:', error)
@@ -751,6 +800,205 @@ export class DataSnapshotJob {
     } else {
       // Use existing automatic logic (includes ESPN fetching)
       await this.gradeSurvivorPools()
+    }
+  }
+
+  /**
+   * Fetch betting lines for all games in a specific week
+   * Uses the same ESPN odds provider as other parts of the system
+   */
+  private async fetchLinesForWeek(week: number, season: number = 2025): Promise<number> {
+    try {
+      console.log(`Fetching betting lines from ESPN for week ${week}, season ${season}...`)
+
+      // Initialize providers if not already done
+      this.initializeProviders()
+
+      // Use the dataProviderRegistry to get odds from ESPN
+      const allOddsResponse = await dataProviderRegistry.getAllCurrentOdds('ESPN', season, week)
+
+      if (!allOddsResponse.success || !allOddsResponse.data) {
+        console.log('❌ Failed to fetch odds from ESPN:', allOddsResponse.error?.message)
+        return 0
+      }
+
+      console.log(`✅ ESPN returned odds for ${allOddsResponse.data.length} games`)
+
+      // Get existing games in database for this week
+      const existingGames = await prisma.game.findMany({
+        where: { week, season },
+        include: {
+          homeTeam: { select: { nflAbbr: true } },
+          awayTeam: { select: { nflAbbr: true } }
+        }
+      })
+
+      console.log(`Found ${existingGames.length} existing games in database for week ${week}`)
+
+      let linesCreated = 0
+      let linesUpdated = 0
+
+      // Match ESPN odds to database games and create/update lines
+      for (const game of existingGames) {
+        const matchingOdds = allOddsResponse.data.find((odds) => {
+          return odds.homeTeam === game.homeTeam.nflAbbr &&
+                 odds.awayTeam === game.awayTeam.nflAbbr
+        })
+
+        if (matchingOdds) {
+          // Check if line already exists for this game
+          const existingLine = await prisma.line.findFirst({
+            where: { gameId: game.id },
+            orderBy: { capturedAt: 'desc' }
+          })
+
+          if (existingLine) {
+            // Update existing line if odds changed significantly
+            const spreadChanged = Math.abs((existingLine.spread || 0) - (matchingOdds.spread || 0)) > 0.5
+            const moneylineChanged = Math.abs((existingLine.moneylineHome || 0) - (matchingOdds.moneylineHome || 0)) > 10
+
+            if (spreadChanged || moneylineChanged) {
+              await prisma.line.create({
+                data: {
+                  gameId: game.id,
+                  source: matchingOdds.source || 'ESPN',
+                  spread: matchingOdds.spread,
+                  total: matchingOdds.total,
+                  moneylineHome: matchingOdds.moneylineHome,
+                  moneylineAway: matchingOdds.moneylineAway,
+                  capturedAt: new Date(),
+                  isUserProvided: false,
+                }
+              })
+              linesUpdated++
+              console.log(`📊 Updated lines for ${game.awayTeam.nflAbbr} @ ${game.homeTeam.nflAbbr}`)
+            }
+          } else {
+            // Create new line
+            await prisma.line.create({
+              data: {
+                gameId: game.id,
+                source: matchingOdds.source || 'ESPN',
+                spread: matchingOdds.spread,
+                total: matchingOdds.total,
+                moneylineHome: matchingOdds.moneylineHome,
+                moneylineAway: matchingOdds.moneylineAway,
+                capturedAt: new Date(),
+                isUserProvided: false,
+              }
+            })
+            linesCreated++
+            console.log(`✅ Created lines for ${game.awayTeam.nflAbbr} @ ${game.homeTeam.nflAbbr}`)
+          }
+
+          await this.sleep(100) // Rate limiting
+        } else {
+          console.log(`❌ No ESPN odds found for ${game.awayTeam.nflAbbr} @ ${game.homeTeam.nflAbbr}`)
+        }
+      }
+
+      console.log(`Lines update complete: ${linesCreated} created, ${linesUpdated} updated`)
+      return linesCreated + linesUpdated
+
+    } catch (error) {
+      console.error('Error fetching lines for week:', error)
+      return 0
+    }
+  }
+
+  /**
+   * Ensure games exist for a specific week, creating them from ESPN if needed
+   * Uses the same ESPN API as lines fetching to get schedule data
+   */
+  private async ensureScheduleForWeek(week: number, season: number = 2025): Promise<number> {
+    try {
+      // Check if games already exist for this week
+      const existingGames = await prisma.game.findMany({
+        where: { week, season }
+      })
+
+      if (existingGames.length > 0) {
+        console.log(`✅ Week ${week} schedule already exists (${existingGames.length} games)`)
+        return 0
+      }
+
+      console.log(`📅 Loading schedule from ESPN for week ${week}, season ${season}...`)
+
+      // Initialize providers if not already done
+      this.initializeProviders()
+
+      // Fetch schedule data from ESPN (same endpoint as odds)
+      const allOddsResponse = await dataProviderRegistry.getAllCurrentOdds('ESPN', season, week)
+
+      if (!allOddsResponse.success || !allOddsResponse.data || allOddsResponse.data.length === 0) {
+        console.log('❌ No schedule data available from ESPN')
+        return 0
+      }
+
+      console.log(`📊 ESPN returned ${allOddsResponse.data.length} games for week ${week}`)
+
+      let gamesCreated = 0
+
+      // Create games from ESPN data
+      for (const espnGame of allOddsResponse.data) {
+        if (!espnGame.homeTeam || !espnGame.awayTeam) {
+          console.log(`⚠️  Skipping game with missing team data`)
+          continue
+        }
+
+        try {
+          // Find or create teams
+          const homeTeam = await prisma.team.upsert({
+            where: { nflAbbr: espnGame.homeTeam },
+            update: {},
+            create: {
+              nflAbbr: espnGame.homeTeam,
+              name: espnGame.homeTeam, // ESPN uses abbreviations, we'll use them as names for now
+            }
+          })
+
+          const awayTeam = await prisma.team.upsert({
+            where: { nflAbbr: espnGame.awayTeam },
+            update: {},
+            create: {
+              nflAbbr: espnGame.awayTeam,
+              name: espnGame.awayTeam,
+            }
+          })
+
+          // Create the game
+          const game = await prisma.game.create({
+            data: {
+              season,
+              week,
+              kickoff: espnGame.kickoff || new Date(),
+              homeTeamId: homeTeam.id,
+              awayTeamId: awayTeam.id,
+              status: 'SCHEDULED',
+              venue: `${espnGame.homeTeam} Stadium`, // Simple venue naming
+              apiRefs: {
+                espnSource: 'auto-schedule-load',
+                createdBy: 'tuesday-job'
+              }
+            }
+          })
+
+          console.log(`✅ Created game: ${espnGame.awayTeam} @ ${espnGame.homeTeam}`)
+          gamesCreated++
+
+          await this.sleep(50) // Small delay between creations
+
+        } catch (error) {
+          console.error(`❌ Error creating game ${espnGame.awayTeam} @ ${espnGame.homeTeam}:`, error)
+        }
+      }
+
+      console.log(`📅 Schedule loading complete: ${gamesCreated} games created for week ${week}`)
+      return gamesCreated
+
+    } catch (error) {
+      console.error('Error ensuring schedule for week:', error)
+      return 0
     }
   }
 

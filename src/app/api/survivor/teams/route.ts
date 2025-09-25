@@ -100,10 +100,10 @@ export async function GET(request: NextRequest) {
           kickoff: game.kickoff,
           spread: line?.spread ? parseFloat(line.spread.toString()) : null,
           moneyline: line?.moneylineHome || null,
-          winProbability: calculateWinProbability(line?.moneylineHome),
+          winProbability: calculateWinProbability(line?.moneylineHome, line?.spread ? parseFloat(line.spread.toString()) : null, true),
           publicPickPercentage: Math.floor(Math.random() * 30) + 5, // Mock for now
           expectedValue: calculateExpectedValue(
-            calculateWinProbability(line?.moneylineHome),
+            calculateWinProbability(line?.moneylineHome, line?.spread ? parseFloat(line.spread.toString()) : null, true),
             Math.floor(Math.random() * 30) + 5
           ),
           futureValue: Math.random() * 5, // 1-5 scale
@@ -128,10 +128,10 @@ export async function GET(request: NextRequest) {
           kickoff: game.kickoff,
           spread: line?.spread ? -parseFloat(line.spread.toString()) : null,
           moneyline: line?.moneylineAway || null,
-          winProbability: calculateWinProbability(line?.moneylineAway),
+          winProbability: calculateWinProbability(line?.moneylineAway, line?.spread ? parseFloat(line.spread.toString()) : null, false),
           publicPickPercentage: Math.floor(Math.random() * 30) + 5, // Mock for now
           expectedValue: calculateExpectedValue(
-            calculateWinProbability(line?.moneylineAway),
+            calculateWinProbability(line?.moneylineAway, line?.spread ? parseFloat(line.spread.toString()) : null, false),
             Math.floor(Math.random() * 30) + 5
           ),
           futureValue: Math.random() * 5, // 1-5 scale
@@ -160,15 +160,32 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function calculateWinProbability(moneyline: number | null): number {
-  if (!moneyline) return 0.5
-
-  // Convert moneyline to implied probability
-  if (moneyline < 0) {
-    return Math.abs(moneyline) / (Math.abs(moneyline) + 100)
-  } else {
-    return 100 / (moneyline + 100)
+function calculateWinProbability(moneyline: number | null, spread: number | null = null, isHome: boolean = true): number {
+  // First try to use moneyline if available
+  if (moneyline) {
+    if (moneyline < 0) {
+      return Math.abs(moneyline) / (Math.abs(moneyline) + 100)
+    } else {
+      return 100 / (moneyline + 100)
+    }
   }
+
+  // Fall back to spread-based calculation if no moneyline
+  if (spread !== null) {
+    // Convert spread to win probability using standard formula
+    // Roughly: Win% = 50% + (spread * 2.5%)
+    // For home team, spread is already correct
+    // For away team, flip the spread
+    const adjustedSpread = isHome ? spread : -spread
+    const baseProbability = 0.5
+    const spreadImpact = (adjustedSpread * 0.025) // 2.5% per point
+    const winProbability = Math.max(0.1, Math.min(0.9, baseProbability + spreadImpact))
+
+    return winProbability
+  }
+
+  // If no moneyline or spread data, default to 50%
+  return 0.5
 }
 
 function calculateExpectedValue(
