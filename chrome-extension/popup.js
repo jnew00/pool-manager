@@ -18,13 +18,13 @@ class PopupManager {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
       if (tab && tab.url) {
-        this.isNumber1PoolPage = tab.url.includes('number1pool.com') &&
-                                tab.url.includes('picks_weekly.php');
+        // More flexible detection - allow any number1pool page
+        this.isNumber1PoolPage = tab.url.includes('number1pool.com');
 
         this.updateStatus(
           this.isNumber1PoolPage
             ? '✅ Number1Pool page detected'
-            : '⚠️ Not on Number1Pool picks page',
+            : '⚠️ Not on Number1Pool page',
           this.isNumber1PoolPage ? 'success' : 'error'
         );
       }
@@ -47,6 +47,11 @@ class PopupManager {
 
     document.getElementById('clear-all').addEventListener('click', () => {
       this.sendClearMessage();
+    });
+
+    // Show panel button
+    document.getElementById('show-panel').addEventListener('click', () => {
+      this.showPanelOnPage();
     });
   }
 
@@ -177,6 +182,37 @@ class PopupManager {
     const statusEl = document.getElementById('status');
     statusEl.textContent = message;
     statusEl.className = `status status-${type}`;
+  }
+
+  async showPanelOnPage() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+      // First, ensure the content script is injected
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['content.js']
+      });
+
+      // Add styles too
+      await chrome.scripting.insertCSS({
+        target: { tabId: tab.id },
+        files: ['styles.css']
+      });
+
+      // Send message to show the panel
+      await chrome.tabs.sendMessage(tab.id, {
+        type: 'SHOW_PANEL'
+      });
+
+      this.updateStatus('✅ Panel shown on page', 'success');
+
+      // Close the popup
+      window.close();
+    } catch (error) {
+      console.error('Error showing panel:', error);
+      this.updateStatus('Error showing panel on page', 'error');
+    }
   }
 
   updateUI() {

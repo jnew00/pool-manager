@@ -86,7 +86,8 @@ export async function GET(
         const usedTeams = await prisma.survivorPick.findMany({
           where: {
             entryId: entry.id,
-            result: { in: ['WIN', 'PENDING'] },
+            // Include ALL teams that have been picked, regardless of result
+            // This prevents reusing teams that lost
           },
           select: {
             teamId: true,

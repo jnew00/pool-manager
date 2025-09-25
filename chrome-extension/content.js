@@ -11,19 +11,94 @@ class PoolManagerAutoFill {
     // Make this instance globally available for debugging
     window.poolManagerAutoFill = this;
 
-    // Check if this is a Number1Pool picks page
-    if (window.location.hostname === 'number1pool.com' &&
-        window.location.pathname.includes('picks_weekly.php')) {
-      this.isNumber1PoolPage = true;
-      this.injectCSS();
-      this.detectGameSelects();
-      this.createUI();
-      this.loadStoredData();
+    // Check if this is a Number1Pool page - be more flexible with URL detection
+    const isNumber1Pool = window.location.hostname === 'number1pool.com' ||
+                         window.location.hostname.includes('number1pool');
 
-      console.log('[PoolManager] Extension initialized on Number1Pool picks page');
+    // Check for various picks page patterns
+    const isPicksPage = window.location.pathname.includes('picks') ||
+                       window.location.pathname.includes('weekly') ||
+                       window.location.pathname.includes('entry') ||
+                       window.location.pathname.includes('game') ||
+                       document.querySelector('input[name^="Game_"]') !== null ||
+                       document.querySelector('select[name*="game"]') !== null;
+
+    console.log('[PoolManager] Page detection:', {
+      hostname: window.location.hostname,
+      pathname: window.location.pathname,
+      isNumber1Pool,
+      isPicksPage,
+      hasGameInputs: document.querySelector('input[name^="Game_"]') !== null
+    });
+
+    if (isNumber1Pool && (isPicksPage || window.location.pathname === '/')) {
+      this.isNumber1PoolPage = true;
+
+      // Wait a bit for dynamic content to load
+      setTimeout(() => {
+        this.injectCSS();
+        this.detectGameSelects();
+        this.createUI();
+        this.loadStoredData();
+
+        console.log('[PoolManager] Extension initialized on Number1Pool page');
+
+        // Show a notification that the extension is ready
+        this.showNotification();
+      }, 1000);
+    } else if (isNumber1Pool) {
+      console.log('[PoolManager] On Number1Pool but not a picks page. Initializing anyway...');
+      this.isNumber1PoolPage = true;
+
+      setTimeout(() => {
+        this.injectCSS();
+        this.detectGameSelects();
+        if (Object.keys(this.gameSelects).length > 0) {
+          this.createUI();
+          this.loadStoredData();
+          console.log('[PoolManager] Found game inputs, extension initialized');
+        } else {
+          console.log('[PoolManager] No game inputs found on this page');
+        }
+      }, 1000);
     } else {
-      console.log('[PoolManager] Not on Number1Pool picks page:', window.location.href);
+      console.log('[PoolManager] Not on Number1Pool:', window.location.href);
     }
+  }
+
+  showNotification() {
+    // Create a small notification badge to show the extension is active
+    const badge = document.createElement('div');
+    badge.id = 'pm-active-badge';
+    badge.innerHTML = '🏈 PM Ready';
+    badge.style.cssText = `
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #4CAF50;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 10000;
+      cursor: pointer;
+      animation: slideIn 0.3s ease-out;
+    `;
+
+    badge.onclick = () => {
+      const panel = document.getElementById('poolmanager-autofill-panel');
+      if (panel) {
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      }
+    };
+
+    document.body.appendChild(badge);
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      badge.style.opacity = '0.3';
+    }, 3000);
   }
 
   injectCSS() {
@@ -574,16 +649,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Keep message channel open
   }
 
-  if (message.type === 'SHOW_AUTOFILL_PANEL') {
-    if (window.poolManagerAutoFill) {
+  if (message.type === 'SHOW_AUTOFILL_PANEL' || message.type === 'SHOW_PANEL') {
+    // Initialize the extension if not already done
+    if (!window.poolManagerAutoFill) {
+      window.poolManagerAutoFill = new PoolManagerAutoFill();
+    }
+
+    // Wait a moment for initialization
+    setTimeout(() => {
       const panel = document.getElementById('poolmanager-autofill-panel');
       if (panel) {
         panel.style.display = 'block';
       }
-      sendResponse({ success: true });
-    } else {
-      sendResponse({ success: false, error: 'Auto-fill not initialized' });
-    }
+    }, 500);
+
+    sendResponse({ success: true });
     return true; // Keep message channel open
   }
 
