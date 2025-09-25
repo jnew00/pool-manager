@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { dataProviderRegistry } from '@/lib/data-sources'
 import type { GameDataSnapshot } from '@/lib/data-sources/types'
 import { EloSystem } from '@/lib/models/elo-system'
+import { SurvivorGradingService } from '@/server/services/survivor-grading.service'
+import { getCurrentNFLWeek } from '@/lib/utils/nfl-week'
 
 export interface SnapshotJobConfig {
   enabled: boolean
@@ -363,21 +365,23 @@ export class DataSnapshotJob {
   }
 
   /**
-   * Process completed week - Update Elo ratings for finished games
+   * Process completed week - Update Elo ratings and grade survivor pools
    */
   private async processCompletedWeek(): Promise<void> {
     try {
       console.log('Starting post-game processing for completed week...')
-      
+
       // Get recently completed games (last 7 days) that have results but haven't had Elo processed
       const completedGames = await this.getRecentlyCompletedGames()
       console.log(`Found ${completedGames.length} completed games to process`)
 
       if (completedGames.length === 0) {
-        console.log('No completed games found for Elo processing')
+        console.log('No completed games found for processing')
         return
       }
 
+      // STEP 1: Update Elo ratings
+      console.log('\n=== STEP 1: Updating Elo Ratings ===')
       const eloSystem = new EloSystem()
       let processedCount = 0
       let errorCount = 0
@@ -417,9 +421,91 @@ export class DataSnapshotJob {
         }
       }
 
-      console.log(`Post-game processing completed: ${processedCount} games processed, ${errorCount} errors`)
+      console.log(`Elo processing completed: ${processedCount} games processed, ${errorCount} errors`)
+
+      // STEP 2: Grade Survivor Pools
+      console.log('\n=== STEP 2: Grading Survivor Pools ===')
+      await this.gradeSurvivorPools()
+
+      console.log('\n=== Post-game processing completed successfully ===')
     } catch (error) {
       console.error('Error in post-game processing job:', error)
+    }
+  }
+
+  /**
+   * Grade all active survivor pools for the completed week
+   */
+  private async gradeSurvivorPools(): Promise<void> {
+    try {
+      // Determine the week that just completed
+      const currentWeek = getCurrentNFLWeek()
+      const completedWeek = currentWeek > 1 ? currentWeek - 1 : currentWeek
+
+      console.log(`Grading survivor pools for Week ${completedWeek}`)
+
+      // Get all active survivor pools
+      const survivorPools = await prisma.pool.findMany({
+        where: {
+          type: 'SURVIVOR',
+          isActive: true,
+        },
+      })
+
+      if (survivorPools.length === 0) {
+        console.log('No active survivor pools found')
+        return
+      }
+
+      const gradingService = new SurvivorGradingService()
+      let totalGraded = 0
+      let totalEliminated = 0
+
+      for (const pool of survivorPools) {
+        console.log(`\nGrading pool: ${pool.name} (${pool.id})`)
+
+        // Get current pool stats before grading
+        const entriesBefore = await prisma.survivorEntry.findMany({
+          where: { poolId: pool.id },
+          select: { id: true, isActive: true },
+        })
+        const activeBefore = entriesBefore.filter((e) => e.isActive).length
+
+        // Grade all picks for this pool and week
+        const results = await gradingService.gradeWeekSurvivorPicks(pool.id, completedWeek)
+        totalGraded += results.length
+
+        // Get updated pool stats
+        const entriesAfter = await prisma.survivorEntry.findMany({
+          where: { poolId: pool.id },
+          select: { id: true, isActive: true, eliminatedWeek: true },
+        })
+        const activeAfter = entriesAfter.filter((e) => e.isActive).length
+        const eliminatedThisWeek = activeBefore - activeAfter
+
+        totalEliminated += eliminatedThisWeek
+
+        console.log(`  - Graded ${results.length} picks`)
+        console.log(`  - Active entries: ${activeAfter}/${entriesAfter.length}`)
+
+        if (eliminatedThisWeek > 0) {
+          console.log(`  - ⚠️  Eliminated this week: ${eliminatedThisWeek}`)
+        }
+
+        const survivalRate = entriesAfter.length > 0
+          ? ((activeAfter / entriesAfter.length) * 100).toFixed(1)
+          : '0'
+        console.log(`  - Survival rate: ${survivalRate}%`)
+      }
+
+      console.log('\n--- Survivor Grading Summary ---')
+      console.log(`Total picks graded: ${totalGraded}`)
+      console.log(`Total entries eliminated: ${totalEliminated}`)
+      console.log(`Pools processed: ${survivorPools.length}`)
+
+    } catch (error) {
+      console.error('Error grading survivor pools:', error)
+      // Don't throw - allow the job to continue even if survivor grading fails
     }
   }
 
@@ -508,6 +594,30 @@ export class DataSnapshotJob {
   async triggerPostGameProcessing(): Promise<void> {
     console.log('Manually triggering post-game processing...')
     await this.processCompletedWeek()
+  }
+
+  async triggerSurvivorGrading(week?: number): Promise<void> {
+    console.log(`Manually triggering survivor grading${week ? ` for week ${week}` : ''}...`)
+
+    if (week) {
+      // Grade specific week across all pools
+      const survivorPools = await prisma.pool.findMany({
+        where: {
+          type: 'SURVIVOR',
+          isActive: true,
+        },
+      })
+
+      const gradingService = new SurvivorGradingService()
+      for (const pool of survivorPools) {
+        console.log(`Grading pool: ${pool.name} for week ${week}`)
+        const results = await gradingService.gradeWeekSurvivorPicks(pool.id, week)
+        console.log(`Graded ${results.length} picks`)
+      }
+    } else {
+      // Use existing automatic logic
+      await this.gradeSurvivorPools()
+    }
   }
 }
 
