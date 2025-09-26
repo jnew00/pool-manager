@@ -174,9 +174,11 @@ function calculateWinProbability(moneyline: number | null, spread: number | null
   if (spread !== null) {
     // Convert spread to win probability using standard formula
     // Roughly: Win% = 50% + (spread * 2.5%)
-    // For home team, spread is already correct
-    // For away team, flip the spread
-    const adjustedSpread = isHome ? spread : -spread
+    // IMPORTANT: Spread is from HOME team's perspective
+    // Negative spread = home team favored, Positive = away team favored
+    // For home team: negative spread increases win%, positive decreases
+    // For away team: we need to flip it
+    const adjustedSpread = isHome ? -spread : spread
     const baseProbability = 0.5
     const spreadImpact = (adjustedSpread * 0.025) // 2.5% per point
     const winProbability = Math.max(0.1, Math.min(0.9, baseProbability + spreadImpact))
