@@ -137,6 +137,15 @@ export default function TeamSelector({
     fetchTeams()
   }, [week, poolId])
 
+  // Debug logging to see what usedTeams we're getting
+  useEffect(() => {
+    console.log('🔍 TeamSelector usedTeams debug:', {
+      usedTeamsSize: usedTeams.size,
+      usedTeamsArray: Array.from(usedTeams),
+      hasUsedTeams: usedTeams.size > 0
+    })
+  }, [usedTeams])
+
   const fetchTeams = async () => {
     try {
       const response = await fetch(
@@ -148,6 +157,15 @@ export default function TeamSelector({
           ...team,
           available: !usedTeams.has(team.id),
         }))
+
+        // Debug logging to see how many teams are being marked as unavailable
+        const unavailableTeams = teamsWithAvailability.filter(t => !t.available)
+        console.log('🔍 TeamSelector fetchTeams debug:', {
+          totalTeams: teamsWithAvailability.length,
+          unavailableCount: unavailableTeams.length,
+          unavailableTeams: unavailableTeams.map(t => t.abbr)
+        })
+
         setTeams(teamsWithAvailability)
       }
     } catch (error) {
