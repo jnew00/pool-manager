@@ -135,7 +135,7 @@ export default function TeamSelector({
 
   useEffect(() => {
     fetchTeams()
-  }, [week, poolId])
+  }, [week, poolId, usedTeams])
 
   // Debug logging to see what usedTeams we're getting
   useEffect(() => {
