@@ -135,7 +135,7 @@ model Pick {
   sourceUpload   Upload?          @relation(fields: [sourceUploadId], references: [id])
   team           Team?            @relation(fields: [teamId], references: [id])
 
-  @@unique([entryId, gameId])
+  @@unique([entryId, gameId, teamId, overUnderPick])
   @@index([gameId])
   @@index([teamId])
   @@map("picks")
