@@ -118,17 +118,29 @@ export class Number1PoolScraperService {
 
       console.log(`[Number1Pool] Structured parse: Left="${leftTeamText}" vs Right="${rightTeamText}" Spread="${spreadText}" Time="${gameTime}"`);
 
-      // Check if this is an over/under game
+      // Check if this is a game with over/under INCLUDED (not replacing spread)
       // Format: "Lions/BENGALS OVER" | "Lions/BENGALS UNDER" | "49.5"
-      const isOverUnderGame = leftTeamText.includes('OVER') || rightTeamText.includes('OVER');
+      // This means the game ALSO has an over/under in addition to the spread
+      const hasOverUnder = leftTeamText.includes('OVER') || leftTeamText.includes('UNDER') ||
+                           rightTeamText.includes('OVER') || rightTeamText.includes('UNDER');
 
-      if (isOverUnderGame) {
-        console.log(`[Number1Pool] Detected over/under game`);
+      let totalValue: number | undefined = undefined;
+
+      if (hasOverUnder) {
+        console.log(`[Number1Pool] Detected game with over/under option`);
+
+        // Extract total from spreadText column
+        totalValue = parseFloat(spreadText);
+        if (isNaN(totalValue) || totalValue < 30 || totalValue > 70) {
+          console.log(`[Number1Pool] Invalid total value: "${spreadText}" -> ${totalValue}`);
+          return null;
+        }
 
         // Extract team names from "Lions/BENGALS OVER" format
-        const teamMatch = leftTeamText.match(/^(.+?)\s+(OVER|UNDER)$/i);
+        const teamMatch = (leftTeamText.match(/^(.+?)\s+(OVER|UNDER)$/i) ||
+                          rightTeamText.match(/^(.+?)\s+(OVER|UNDER)$/i));
         if (!teamMatch) {
-          console.log(`[Number1Pool] Could not parse over/under team format: "${leftTeamText}"`);
+          console.log(`[Number1Pool] Could not parse over/under team format`);
           return null;
         }
 
@@ -137,12 +149,6 @@ export class Number1PoolScraperService {
 
         if (teams.length !== 2) {
           console.log(`[Number1Pool] Expected 2 teams in over/under format, got: ${teams.length}`);
-          return null;
-        }
-
-        const totalValue = parseFloat(spreadText);
-        if (isNaN(totalValue) || totalValue < 30 || totalValue > 70) {
-          console.log(`[Number1Pool] Invalid total value: "${spreadText}" -> ${totalValue}`);
           return null;
         }
 
@@ -165,13 +171,15 @@ export class Number1PoolScraperService {
 
         const weekNumber = parseInt(weekText) || 1;
 
+        // NOTE: For games with over/under, we need to ALSO look for the spread game row
+        // For now, just return the over/under info and mark it
         return {
           week: weekNumber,
           day: gameTime.includes('Thu') ? 'Thursday' : gameTime.includes('Fri') ? 'Friday' : 'TBD',
           time: gameTime.replace(/^\w+\s/, ''),
-          favorite: '', // Not applicable for over/under
-          underdog: '', // Not applicable for over/under
-          spread: null,
+          favorite: '', // Will be filled from spread row if it exists
+          underdog: '', // Will be filled from spread row if it exists
+          spread: null, // No spread in over/under-only row
           total: totalValue,
           isOverUnder: true,
           homeTeam,
