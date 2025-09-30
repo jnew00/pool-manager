@@ -286,7 +286,7 @@ export default function PoolDetailPage() {
   const fetchGames = async () => {
     try {
       const response = await fetch(
-        `/api/games?season=${pool?.season}&week=${selectedWeek}`
+        `/api/games?season=${pool?.season}&week=${selectedWeek}&poolId=${poolId}`
       )
       if (response.ok) {
         const data = await response.json()
