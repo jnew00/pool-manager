@@ -47,7 +47,7 @@ export class GradingService extends BaseService {
     const grades: Grade[] = []
 
     for (const pick of picks) {
-      const gradingResult = this.calculatePickGrade(pick, result)
+      const gradingResult = await this.calculatePickGrade(pick, result)
 
       // Upsert grade (create or update)
       const grade = await prisma.grade.upsert({
@@ -74,14 +74,14 @@ export class GradingService extends BaseService {
   /**
    * Calculate the grade for a single pick based on game result
    */
-  private calculatePickGrade(
+  private async calculatePickGrade(
     pick: any,
     result: any
-  ): {
+  ): Promise<{
     outcome: PickOutcome
     points: number
     details?: Record<string, any>
-  } {
+  }> {
     const poolType: PoolType = pick.entry.pool.type
     const game = result.game
 
@@ -105,7 +105,25 @@ export class GradingService extends BaseService {
 
     const homeScore = result.homeScore
     const awayScore = result.awayScore
+
+    // Check if this is an over/under pick
+    if (pick.overUnderPick) {
+      return this.calculateOverUnderGrade(
+        pick.overUnderPick,
+        homeScore,
+        awayScore,
+        game,
+        poolType,
+        pick.confidence
+      )
+    }
+
     const pickedTeamId = pick.teamId
+
+    // Validate team-based pick
+    if (!pickedTeamId) {
+      throw new ValidationError('Pick must have either teamId or overUnderPick', 'pick')
+    }
 
     // Determine if picked team won, lost, or tied
     let didWin: boolean | null = null
@@ -169,6 +187,98 @@ export class GradingService extends BaseService {
       return {
         outcome: 'LOSS',
         points: 0.0,
+      }
+    }
+  }
+
+  /**
+   * Calculate over/under pick grading
+   */
+  private async calculateOverUnderGrade(
+    overUnderPick: 'OVER' | 'UNDER',
+    homeScore: number,
+    awayScore: number,
+    game: any,
+    poolType: PoolType,
+    confidence: number
+  ): Promise<{
+    outcome: PickOutcome
+    points: number
+    details?: Record<string, any>
+  }> {
+    // Get the line for this game to find the total
+    const line = await prisma.line.findFirst({
+      where: {
+        gameId: game.id,
+        total: { not: null }
+      },
+      orderBy: { capturedAt: 'desc' }
+    })
+
+    if (!line || !line.total) {
+      return {
+        outcome: 'VOID',
+        points: 0.0,
+        details: { reason: 'No total line available' },
+      }
+    }
+
+    const totalScore = homeScore + awayScore
+    const lineTotal = Number(line.total)
+
+    let didWin: boolean | null = null
+
+    if (totalScore > lineTotal) {
+      // Actual score went over
+      didWin = overUnderPick === 'OVER'
+    } else if (totalScore < lineTotal) {
+      // Actual score went under
+      didWin = overUnderPick === 'UNDER'
+    } else {
+      // Push - exact total
+      didWin = null
+    }
+
+    // Handle push
+    if (didWin === null) {
+      return {
+        outcome: 'PUSH',
+        points: 0.5,
+        details: {
+          totalScore,
+          lineTotal,
+          homeScore,
+          awayScore,
+        },
+      }
+    }
+
+    // Handle win/loss
+    if (didWin) {
+      const points = this.calculateWinPoints(poolType, confidence)
+      return {
+        outcome: 'WIN',
+        points,
+        details: {
+          totalScore,
+          lineTotal,
+          homeScore,
+          awayScore,
+          overUnderPick,
+          confidenceUsed: confidence,
+        },
+      }
+    } else {
+      return {
+        outcome: 'LOSS',
+        points: 0.0,
+        details: {
+          totalScore,
+          lineTotal,
+          homeScore,
+          awayScore,
+          overUnderPick,
+        },
       }
     }
   }

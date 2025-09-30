@@ -24,6 +24,12 @@ export interface GameWithTeams extends Game {
     nflAbbr: string
     name: string
   }
+  lines?: Array<{
+    id: string
+    spread: any
+    total: any
+    source: string
+  }>
 }
 
 export class GameService extends BaseService {

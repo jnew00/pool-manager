@@ -120,19 +120,20 @@ model Entry {
 }
 
 model Pick {
-  id             String          @id @default(cuid())
+  id             String           @id @default(cuid())
   entryId        String
   gameId         String
-  teamId         String
+  teamId         String?
+  overUnderPick  OverUnderChoice?
   lockedAt       DateTime?
   confidence     Decimal
   sourceUploadId String?
   gradeOverrides GradeOverride[]
   grade          Grade?
-  entry          Entry           @relation(fields: [entryId], references: [id])
-  game           Game            @relation(fields: [gameId], references: [id])
-  sourceUpload   Upload?         @relation(fields: [sourceUploadId], references: [id])
-  team           Team            @relation(fields: [teamId], references: [id])
+  entry          Entry            @relation(fields: [entryId], references: [id])
+  game           Game             @relation(fields: [gameId], references: [id])
+  sourceUpload   Upload?          @relation(fields: [sourceUploadId], references: [id])
+  team           Team?            @relation(fields: [teamId], references: [id])
 
   @@unique([entryId, gameId])
   @@index([gameId])
@@ -370,4 +371,9 @@ enum DataSourceType {
   MOCK
   SIMULATED
   UNAVAILABLE
+}
+
+enum OverUnderChoice {
+  OVER
+  UNDER
 }

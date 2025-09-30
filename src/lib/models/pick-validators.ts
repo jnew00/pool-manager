@@ -301,8 +301,9 @@ export class PickValidators {
   async validateATSPick(
     entryId: string,
     gameId: string,
-    teamId: string,
-    week: number
+    teamId: string | undefined,
+    week: number,
+    overUnderPick?: 'OVER' | 'UNDER'
   ): Promise<PickValidationResult> {
     const errors: string[] = []
     const warnings: string[] = []
@@ -316,12 +317,28 @@ export class PickValidators {
         errors.push('You have already made a pick for this game')
       }
 
-      // Game must exist and have spread
+      // Validate pick has either team or over/under
+      if (!teamId && !overUnderPick) {
+        errors.push('Must select either a team or over/under')
+      }
+
+      if (teamId && overUnderPick) {
+        errors.push('Cannot select both team and over/under for the same pick')
+      }
+
+      // Game must exist and have appropriate data
       const game = await this.getGameWithMarketData(gameId)
       if (!game) {
         errors.push('Game not found')
-      } else if (!game.marketData?.spread) {
-        warnings.push('No point spread available for this game')
+      } else {
+        // If picking over/under, need total line
+        if (overUnderPick && !game.marketData?.total) {
+          errors.push('No total line available for over/under pick')
+        }
+        // If picking team, should have spread
+        if (teamId && !game.marketData?.spread) {
+          warnings.push('No point spread available for this game')
+        }
       }
 
       return {

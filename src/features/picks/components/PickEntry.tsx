@@ -6,7 +6,8 @@ import type { Pool } from '@/lib/types/database'
 
 interface PickData {
   gameId: string
-  teamId: string
+  teamId?: string
+  overUnderPick?: 'OVER' | 'UNDER'
   confidence: number
 }
 
@@ -40,10 +41,27 @@ export function PickEntry({
         [gameId]: {
           gameId,
           teamId,
+          overUnderPick: undefined, // Clear over/under if selecting team
           confidence: prev[gameId]?.confidence || 50,
         },
       }))
     }
+    // Clear errors when user makes a selection
+    if (errors.submit) {
+      setErrors({})
+    }
+  }
+
+  const handleOverUnderSelection = (gameId: string, choice: 'OVER' | 'UNDER') => {
+    setPicks((prev) => ({
+      ...prev,
+      [gameId]: {
+        gameId,
+        teamId: undefined, // Clear team selection if selecting over/under
+        overUnderPick: choice,
+        confidence: prev[gameId]?.confidence || 50,
+      },
+    }))
     // Clear errors when user makes a selection
     if (errors.submit) {
       setErrors({})
@@ -140,6 +158,16 @@ export function PickEntry({
     return picks[gameId]?.teamId === teamId
   }
 
+  const isOverUnderSelected = (gameId: string, choice: 'OVER' | 'UNDER') => {
+    return picks[gameId]?.overUnderPick === choice
+  }
+
+  const isOverUnderGame = (game: GameWithTeams) => {
+    // A game is over/under only if it has a total line but no teams can be picked
+    // For now, we'll check if the game has lines with total
+    return game.lines && game.lines.length > 0 && game.lines[0].total !== null
+  }
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -175,52 +203,95 @@ export function PickEntry({
             </div>
 
             <div className="space-y-3">
-              {/* Away Team Option */}
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type={pool.type === 'SURVIVOR' ? 'radio' : 'radio'}
-                  name={
-                    pool.type === 'SURVIVOR'
-                      ? 'survivor-pick'
-                      : `game-${game.id}`
-                  }
-                  checked={isTeamSelected(game.id, game.awayTeamId)}
-                  onChange={() => handleTeamSelection(game.id, game.awayTeamId)}
-                  aria-label={game.awayTeam.name}
-                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span className="text-gray-900">
-                  {game.awayTeam.name} ({game.awayTeam.nflAbbr})
-                </span>
-              </label>
+              {isOverUnderGame(game) && pool.type === 'ATS' ? (
+                // Over/Under Options
+                <>
+                  {game.lines && game.lines[0]?.total && (
+                    <div className="mb-2 text-sm font-medium text-gray-700">
+                      Total: {Number(game.lines[0].total).toFixed(1)}
+                    </div>
+                  )}
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`game-${game.id}`}
+                      checked={isOverUnderSelected(game.id, 'OVER')}
+                      onChange={() => handleOverUnderSelection(game.id, 'OVER')}
+                      aria-label="Over"
+                      className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-900">
+                      Over {game.lines && game.lines[0]?.total ? Number(game.lines[0].total).toFixed(1) : ''}
+                    </span>
+                  </label>
 
-              {/* Home Team Option */}
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type={pool.type === 'SURVIVOR' ? 'radio' : 'radio'}
-                  name={
-                    pool.type === 'SURVIVOR'
-                      ? 'survivor-pick'
-                      : `game-${game.id}`
-                  }
-                  checked={isTeamSelected(game.id, game.homeTeamId)}
-                  onChange={() => handleTeamSelection(game.id, game.homeTeamId)}
-                  aria-label={game.homeTeam.name}
-                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span className="text-gray-900">
-                  {game.homeTeam.name} ({game.homeTeam.nflAbbr})
-                </span>
-              </label>
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`game-${game.id}`}
+                      checked={isOverUnderSelected(game.id, 'UNDER')}
+                      onChange={() => handleOverUnderSelection(game.id, 'UNDER')}
+                      aria-label="Under"
+                      className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-900">
+                      Under {game.lines && game.lines[0]?.total ? Number(game.lines[0].total).toFixed(1) : ''}
+                    </span>
+                  </label>
+                </>
+              ) : (
+                // Team Selection Options
+                <>
+                  {/* Away Team Option */}
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type={pool.type === 'SURVIVOR' ? 'radio' : 'radio'}
+                      name={
+                        pool.type === 'SURVIVOR'
+                          ? 'survivor-pick'
+                          : `game-${game.id}`
+                      }
+                      checked={isTeamSelected(game.id, game.awayTeamId)}
+                      onChange={() => handleTeamSelection(game.id, game.awayTeamId)}
+                      aria-label={game.awayTeam.name}
+                      className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-900">
+                      {game.awayTeam.name} ({game.awayTeam.nflAbbr})
+                    </span>
+                  </label>
+
+                  {/* Home Team Option */}
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type={pool.type === 'SURVIVOR' ? 'radio' : 'radio'}
+                      name={
+                        pool.type === 'SURVIVOR'
+                          ? 'survivor-pick'
+                          : `game-${game.id}`
+                      }
+                      checked={isTeamSelected(game.id, game.homeTeamId)}
+                      onChange={() => handleTeamSelection(game.id, game.homeTeamId)}
+                      aria-label={game.homeTeam.name}
+                      className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-900">
+                      {game.homeTeam.name} ({game.homeTeam.nflAbbr})
+                    </span>
+                  </label>
+                </>
+              )}
 
               {/* Confidence Slider (only for non-Survivor pools) */}
               {pool.type !== 'SURVIVOR' && picks[game.id] && (
                 <div className="mt-3">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Confidence for{' '}
-                    {picks[game.id].teamId === game.awayTeamId
-                      ? game.awayTeam.name
-                      : game.homeTeam.name}
+                    {picks[game.id].overUnderPick
+                      ? picks[game.id].overUnderPick
+                      : picks[game.id].teamId === game.awayTeamId
+                        ? game.awayTeam.name
+                        : game.homeTeam.name}
                     : {picks[game.id].confidence}%
                   </label>
                   <input
@@ -231,7 +302,7 @@ export function PickEntry({
                     onChange={(e) =>
                       handleConfidenceChange(game.id, parseInt(e.target.value))
                     }
-                    aria-label={`Confidence for ${picks[game.id].teamId === game.awayTeamId ? game.awayTeam.name : game.homeTeam.name}`}
+                    aria-label={`Confidence for ${picks[game.id].overUnderPick || (picks[game.id].teamId === game.awayTeamId ? game.awayTeam.name : game.homeTeam.name)}`}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                   />
                 </div>

@@ -15,6 +15,7 @@ export type {
   GameStatus,
   PickOutcome,
   UploadKind,
+  OverUnderChoice,
 } from '@prisma/client'
 
 // Common error types
