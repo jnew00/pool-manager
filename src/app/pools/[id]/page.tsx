@@ -54,6 +54,12 @@ interface Game {
     name: string
   }
   venue?: string
+  lines?: Array<{
+    id: string
+    spread: string
+    total: string
+    source: string
+  }>
 }
 
 export default function PoolDetailPage() {

@@ -29,7 +29,7 @@ export function WeeklyPickScreen({
       setIsLoadingGames(true)
       setError(null)
 
-      const response = await fetch(`/api/games?season=${season}&week=${week}`)
+      const response = await fetch(`/api/games?season=${season}&week=${week}&poolId=${pool.id}`)
       const data = await response.json()
 
       if (!response.ok) {
