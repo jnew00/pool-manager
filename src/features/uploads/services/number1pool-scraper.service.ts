@@ -6,10 +6,12 @@ export interface Number1PoolGame {
   time: string;
   favorite: string;
   underdog: string;
-  spread: number;
+  spread: number | null; // null for over/under games
+  total?: number; // For over/under games
+  isOverUnder?: boolean; // Flag to identify over/under games
   homeTeam: string;
   awayTeam: string;
-  homeSpread: number;
+  homeSpread: number | null; // null for over/under games
   sortOrder: number; // Preserve Number1Pool ordering
 }
 
@@ -116,7 +118,70 @@ export class Number1PoolScraperService {
 
       console.log(`[Number1Pool] Structured parse: Left="${leftTeamText}" vs Right="${rightTeamText}" Spread="${spreadText}" Time="${gameTime}"`);
 
-      // Key rules:
+      // Check if this is an over/under game
+      // Format: "Lions/BENGALS OVER" | "Lions/BENGALS UNDER" | "49.5"
+      const isOverUnderGame = leftTeamText.includes('OVER') || rightTeamText.includes('OVER');
+
+      if (isOverUnderGame) {
+        console.log(`[Number1Pool] Detected over/under game`);
+
+        // Extract team names from "Lions/BENGALS OVER" format
+        const teamMatch = leftTeamText.match(/^(.+?)\s+(OVER|UNDER)$/i);
+        if (!teamMatch) {
+          console.log(`[Number1Pool] Could not parse over/under team format: "${leftTeamText}"`);
+          return null;
+        }
+
+        const teamsText = teamMatch[1]; // e.g., "Lions/BENGALS"
+        const teams = teamsText.split('/').map(t => t.trim());
+
+        if (teams.length !== 2) {
+          console.log(`[Number1Pool] Expected 2 teams in over/under format, got: ${teams.length}`);
+          return null;
+        }
+
+        const totalValue = parseFloat(spreadText);
+        if (isNaN(totalValue) || totalValue < 30 || totalValue > 70) {
+          console.log(`[Number1Pool] Invalid total value: "${spreadText}" -> ${totalValue}`);
+          return null;
+        }
+
+        // Determine home/away based on capitalization
+        const leftIsHome = this.isHomeTeam(teams[0]);
+        const rightIsHome = this.isHomeTeam(teams[1]);
+
+        let homeTeam: string, awayTeam: string;
+        if (leftIsHome && !rightIsHome) {
+          homeTeam = this.cleanTeamName(teams[0]);
+          awayTeam = this.cleanTeamName(teams[1]);
+        } else if (rightIsHome && !leftIsHome) {
+          homeTeam = this.cleanTeamName(teams[1]);
+          awayTeam = this.cleanTeamName(teams[0]);
+        } else {
+          // Fallback: assume right is home
+          homeTeam = this.cleanTeamName(teams[1]);
+          awayTeam = this.cleanTeamName(teams[0]);
+        }
+
+        const weekNumber = parseInt(weekText) || 1;
+
+        return {
+          week: weekNumber,
+          day: gameTime.includes('Thu') ? 'Thursday' : gameTime.includes('Fri') ? 'Friday' : 'TBD',
+          time: gameTime.replace(/^\w+\s/, ''),
+          favorite: '', // Not applicable for over/under
+          underdog: '', // Not applicable for over/under
+          spread: null,
+          total: totalValue,
+          isOverUnder: true,
+          homeTeam,
+          awayTeam,
+          homeSpread: null,
+          sortOrder: weekNumber
+        };
+      }
+
+      // Key rules for regular spread games:
       // - Left column = ALWAYS favorite
       // - Right column = ALWAYS underdog
       // - ALL CAPS = home team
@@ -217,13 +282,19 @@ export class Number1PoolScraperService {
       home_team: game.homeTeam,
       away_team: game.awayTeam,
       spread_for_home: game.homeSpread,
+      total: game.total,
+      is_over_under: game.isOverUnder || false,
       source: 'number1pool-scraper',
       issues: []
     }));
 
     console.log('[Number1Pool] Converted to normalized format for GameMatcher:');
     result.slice(0, 3).forEach((spread, i) => {
-      console.log(`[Number1Pool]   ${i + 1}. ${spread.away_team} @ ${spread.home_team} (${spread.spread_for_home})`);
+      if (spread.is_over_under) {
+        console.log(`[Number1Pool]   ${i + 1}. ${spread.away_team} @ ${spread.home_team} (O/U: ${spread.total})`);
+      } else {
+        console.log(`[Number1Pool]   ${i + 1}. ${spread.away_team} @ ${spread.home_team} (${spread.spread_for_home})`);
+      }
     });
 
     return result;

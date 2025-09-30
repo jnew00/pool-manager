@@ -6,6 +6,8 @@ export interface GameMatchResult {
   homeTeam: string
   awayTeam: string
   spread: number | null
+  total?: number | null
+  isOverUnder?: boolean
   matched: boolean
   issues: string[]
 }
@@ -70,6 +72,8 @@ export class GameMatcherService {
             homeTeam: matchResult.homeTeam.nflAbbr,
             awayTeam: matchResult.awayTeam.nflAbbr,
             spread: spread.spread_for_home,
+            total: spread.total,
+            isOverUnder: spread.is_over_under,
             matched: true,
             issues: spread.issues,
           })
@@ -491,8 +495,51 @@ export class GameMatcherService {
 
     for (const match of matches) {
       try {
-        if (match.spread !== null) {
-          // Check if line already exists for this game, pool, and source
+        // Check if this is an over/under game or spread game
+        if (match.isOverUnder && match.total !== null && match.total !== undefined) {
+          // Over/Under game
+          const existingLine = await prisma.line.findFirst({
+            where: {
+              gameId: match.gameId,
+              poolId: poolId,
+              source: source,
+            }
+          })
+
+          if (existingLine) {
+            // Update existing line
+            await prisma.line.update({
+              where: { id: existingLine.id },
+              data: {
+                spread: null, // Over/under games have no spread
+                total: match.total,
+                capturedAt: new Date(),
+              },
+            })
+            console.log(
+              `[GameMatcher] Updated existing over/under line for ${match.awayTeam} @ ${match.homeTeam}: total ${match.total}`
+            )
+          } else {
+            // Create new over/under line
+            await prisma.line.create({
+              data: {
+                gameId: match.gameId,
+                poolId: poolId,
+                source: source,
+                spread: null, // Over/under games have no spread
+                total: match.total,
+                moneylineHome: null,
+                moneylineAway: null,
+                isUserProvided: true,
+              },
+            })
+            console.log(
+              `[GameMatcher] Created over/under line for ${match.awayTeam} @ ${match.homeTeam}: total ${match.total}`
+            )
+          }
+          created++
+        } else if (match.spread !== null) {
+          // Regular spread game
           const existingLine = await prisma.line.findFirst({
             where: {
               gameId: match.gameId,
@@ -507,7 +554,8 @@ export class GameMatcherService {
               where: { id: existingLine.id },
               data: {
                 spread: match.spread,
-                capturedAt: new Date(), // Update timestamp
+                total: match.total || null, // Include total if available
+                capturedAt: new Date(),
               },
             })
             console.log(
@@ -521,7 +569,7 @@ export class GameMatcherService {
                 poolId: poolId,
                 source: source,
                 spread: match.spread,
-                total: null, // Only spreads for pool uploads
+                total: match.total || null, // Include total if available
                 moneylineHome: null,
                 moneylineAway: null,
                 isUserProvided: true,
