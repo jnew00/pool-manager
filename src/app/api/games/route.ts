@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const week = searchParams.get('week')
     const season = searchParams.get('season')
+    const poolId = searchParams.get('poolId')
 
     if (week && season) {
       const games = await gameService.getGamesBySeasonAndWeek(
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (week) {
-      const games = await gameService.getGamesByWeek(parseInt(week, 10))
+      const games = await gameService.getGamesByWeek(parseInt(week, 10), poolId || undefined)
       return createSuccessResponse(games)
     }
 

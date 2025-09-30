@@ -90,7 +90,7 @@ export class GameService extends BaseService {
     })
   }
 
-  async getGamesByWeek(week: number): Promise<GameWithTeams[]> {
+  async getGamesByWeek(week: number, poolId?: string): Promise<GameWithTeams[]> {
     return await prisma.game.findMany({
       where: { week },
       include: {
@@ -109,6 +109,9 @@ export class GameService extends BaseService {
           },
         },
         lines: {
+          where: poolId ? {
+            poolId: poolId,
+          } : undefined,
           select: {
             id: true,
             spread: true,
@@ -118,7 +121,7 @@ export class GameService extends BaseService {
           orderBy: {
             capturedAt: 'desc',
           },
-          take: 1, // Only get the most recent line
+          take: 1, // Only get the most recent line for this pool
         },
       },
       orderBy: { kickoff: 'asc' },
