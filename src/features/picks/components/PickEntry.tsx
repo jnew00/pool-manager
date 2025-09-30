@@ -163,9 +163,16 @@ export function PickEntry({
   }
 
   const isOverUnderGame = (game: GameWithTeams) => {
-    // A game is over/under only if it has a total line but no teams can be picked
-    // For now, we'll check if the game has lines with total
-    return game.lines && game.lines.length > 0 && game.lines[0].total !== null
+    // A game is over/under only if:
+    // 1. It has lines with a total, AND
+    // 2. The spread is null (indicating it's an over/under-only game during bye weeks)
+    // This prevents all games from showing as over/under
+    return (
+      game.lines &&
+      game.lines.length > 0 &&
+      game.lines[0].total !== null &&
+      game.lines[0].spread === null
+    )
   }
 
   return (

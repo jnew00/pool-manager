@@ -108,6 +108,18 @@ export class GameService extends BaseService {
             name: true,
           },
         },
+        lines: {
+          select: {
+            id: true,
+            spread: true,
+            total: true,
+            source: true,
+          },
+          orderBy: {
+            capturedAt: 'desc',
+          },
+          take: 1, // Only get the most recent line
+        },
       },
       orderBy: { kickoff: 'asc' },
     })
