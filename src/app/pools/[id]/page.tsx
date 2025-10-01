@@ -153,6 +153,38 @@ export default function PoolDetailPage() {
     }
   }
 
+  // Auto-update picks when AI recommendations change
+  useEffect(() => {
+    if (!recommendations?.recommendations || !userEntry) return
+
+    const updatePicks = async () => {
+      const newPicks = new Map(userPicks)
+      let hasChanges = false
+
+      for (const rec of recommendations.recommendations) {
+        const gameId = rec.game.id
+        const recommendedTeamId = rec.recommendation.pick === 'HOME'
+          ? rec.game.homeTeam.id
+          : rec.game.awayTeam.id
+
+        // If user hasn't manually picked this game yet, update to new recommendation
+        if (!userPicks.has(gameId)) {
+          newPicks.set(gameId, {
+            teamId: recommendedTeamId,
+            confidence: rec.recommendation.confidence || 50
+          })
+          hasChanges = true
+        }
+      }
+
+      if (hasChanges) {
+        setUserPicks(newPicks)
+      }
+    }
+
+    updatePicks()
+  }, [recommendations])
+
   const handleWeightsChange = (newWeights: any) => {
     console.log('[PoolDetail] Weights changed, fetching fresh recommendations:', newWeights)
     setCustomWeights(newWeights)
@@ -2064,86 +2096,100 @@ export default function PoolDetailPage() {
                               <td className="py-4 px-4 text-right">
                                 {rec ? (
                                   (() => {
-                                    const isPicked = userPicks.has(game.id)
-                                    const pickedTeamId = userPicks.get(game.id)?.teamId
                                     const recommendedTeamId = rec.recommendation.pick === 'HOME' ? game.homeTeam.id : game.awayTeam.id
-                                    const isRecommendedPicked = isPicked && pickedTeamId === recommendedTeamId
+                                    const pickedTeamId = userPicks.get(game.id)?.teamId || recommendedTeamId
+                                    const confidence = rec.recommendation.confidence || 50
+
+                                    const handleTeamClick = async (teamId: string, teamAbbr: string) => {
+                                      if (!userEntry) {
+                                        Swal.fire({
+                                          icon: 'error',
+                                          title: 'No Entry Found',
+                                          text: 'Please create an entry first',
+                                        })
+                                        return
+                                      }
+
+                                      try {
+                                        const response = await fetch('/api/picks', {
+                                          method: 'POST',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                          },
+                                          body: JSON.stringify({
+                                            entryId: userEntry.id,
+                                            gameId: game.id,
+                                            teamId,
+                                            confidence,
+                                          }),
+                                        })
+
+                                        if (!response.ok) {
+                                          const errorData = await response.json()
+                                          throw new Error(errorData.error || 'Failed to save pick')
+                                        }
+
+                                        // Update local state
+                                        const newPicks = new Map(userPicks)
+                                        newPicks.set(game.id, { teamId, confidence })
+                                        setUserPicks(newPicks)
+
+                                        Swal.fire({
+                                          icon: 'success',
+                                          title: 'Pick Saved!',
+                                          text: `${teamAbbr} selected`,
+                                          timer: 1000,
+                                          showConfirmButton: false,
+                                          toast: true,
+                                          position: 'top-end'
+                                        })
+                                      } catch (error) {
+                                        Swal.fire({
+                                          icon: 'error',
+                                          title: 'Failed to Save Pick',
+                                          text: error instanceof Error ? error.message : 'Please try again',
+                                        })
+                                      }
+                                    }
 
                                     return (
-                                      <button
-                                        onClick={async () => {
-                                          if (!userEntry) {
-                                            Swal.fire({
-                                              icon: 'error',
-                                              title: 'No Entry Found',
-                                              text: 'Please create an entry first',
-                                            })
-                                            return
-                                          }
+                                      <div className="flex items-center justify-end gap-2">
+                                        {/* Away Team Button */}
+                                        <button
+                                          onClick={() => handleTeamClick(game.awayTeam.id, game.awayTeam.nflAbbr)}
+                                          className={`px-3 py-2 rounded-lg font-bold text-sm transition-all relative ${
+                                            pickedTeamId === game.awayTeam.id
+                                              ? 'bg-purple-600 text-white shadow-lg scale-105 ring-2 ring-purple-400'
+                                              : 'bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300'
+                                          }`}
+                                        >
+                                          {pickedTeamId === game.awayTeam.id && recommendedTeamId === game.awayTeam.id && (
+                                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
+                                              ✓
+                                            </span>
+                                          )}
+                                          {game.awayTeam.nflAbbr}
+                                        </button>
 
-                                          const teamId = recommendedTeamId
-                                          const confidence = rec.recommendation.confidence || 50
+                                        <span className="text-gray-400 dark:text-gray-600 font-medium">@</span>
 
-                                          try {
-                                            const response = await fetch('/api/picks', {
-                                              method: 'POST',
-                                              headers: {
-                                                'Content-Type': 'application/json',
-                                              },
-                                              body: JSON.stringify({
-                                                entryId: userEntry.id,
-                                                gameId: game.id,
-                                                teamId,
-                                                confidence,
-                                              }),
-                                            })
-
-                                            if (!response.ok) {
-                                              const errorData = await response.json()
-                                              throw new Error(errorData.error || 'Failed to save pick')
-                                            }
-
-                                            // Update local state
-                                            const newPicks = new Map(userPicks)
-                                            newPicks.set(game.id, { teamId, confidence })
-                                            setUserPicks(newPicks)
-
-                                            Swal.fire({
-                                              icon: 'success',
-                                              title: 'Pick Saved!',
-                                              text: `${game.pickedTeam} selected`,
-                                              timer: 1500,
-                                              showConfirmButton: false,
-                                              toast: true,
-                                              position: 'top-end'
-                                            })
-                                          } catch (error) {
-                                            Swal.fire({
-                                              icon: 'error',
-                                              title: 'Failed to Save Pick',
-                                              text: error instanceof Error ? error.message : 'Please try again',
-                                            })
-                                          }
-                                        }}
-                                        className={`px-4 py-2 rounded-lg text-lg font-bold transition-all hover:scale-105 hover:shadow-lg cursor-pointer relative ${
-                                          isRecommendedPicked
-                                            ? 'ring-4 ring-green-500 ring-offset-2'
-                                            : ''
-                                        } ${
-                                          game.pickType === 'OVER_UNDER'
-                                            ? 'bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-300 hover:bg-orange-200'
-                                            : rec.recommendation.pick === 'HOME'
-                                            ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-200'
-                                            : 'bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200'
-                                        }`}
-                                      >
-                                        {isRecommendedPicked && (
-                                          <span className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
-                                            ✓
-                                          </span>
-                                        )}
-                                        {game.pickType === 'OVER_UNDER' ? 'OVER' : game.pickedTeam}
-                                      </button>
+                                        {/* Home Team Button */}
+                                        <button
+                                          onClick={() => handleTeamClick(game.homeTeam.id, game.homeTeam.nflAbbr)}
+                                          className={`px-3 py-2 rounded-lg font-bold text-sm transition-all relative ${
+                                            pickedTeamId === game.homeTeam.id
+                                              ? 'bg-blue-600 text-white shadow-lg scale-105 ring-2 ring-blue-400'
+                                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300'
+                                          }`}
+                                        >
+                                          {pickedTeamId === game.homeTeam.id && recommendedTeamId === game.homeTeam.id && (
+                                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
+                                              ✓
+                                            </span>
+                                          )}
+                                          {game.homeTeam.nflAbbr}
+                                        </button>
+                                      </div>
                                     )
                                   })()
                                 ) : (
