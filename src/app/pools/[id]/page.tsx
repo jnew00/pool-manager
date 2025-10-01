@@ -2104,6 +2104,20 @@ export default function PoolDetailPage() {
                                     const confidence = rec.recommendation.confidence || 50
                                     const isLocked = userPicks.has(game.id)
 
+                                    // Debug logging for NYG NO game
+                                    if (game.awayTeam.nflAbbr === 'NYG' || game.homeTeam.nflAbbr === 'NYG') {
+                                      console.log('NYG game debug:', {
+                                        game: `${game.awayTeam.nflAbbr} @ ${game.homeTeam.nflAbbr}`,
+                                        gameId: game.id,
+                                        recommendedTeamId,
+                                        pickedTeamId,
+                                        hasPendingPick: pendingPicks.has(game.id),
+                                        pendingPick: pendingPicks.get(game.id),
+                                        isLocked,
+                                        rec: rec.recommendation
+                                      })
+                                    }
+
                                     const handleTeamClick = (teamId: string) => {
                                       if (isLocked) {
                                         console.log('Pick is locked for game:', game.id, game.awayTeam.nflAbbr, '@', game.homeTeam.nflAbbr)
@@ -2161,11 +2175,62 @@ export default function PoolDetailPage() {
                                       </div>
                                     )
                                   })()
+                                ) : pool?.type === 'SU' ? (
+                                  // No recommendation available, but still allow manual selection for SU pools
+                                  (() => {
+                                    const pickedTeamId = pendingPicks.get(game.id)?.teamId || game.homeTeam.id // Default to home team
+                                    const isLocked = userPicks.has(game.id)
+
+                                    const handleTeamClick = (teamId: string) => {
+                                      if (isLocked) {
+                                        console.log('Pick is locked for game:', game.id, game.awayTeam.nflAbbr, '@', game.homeTeam.nflAbbr)
+                                        return
+                                      }
+                                      const newPicks = new Map(pendingPicks)
+                                      newPicks.set(game.id, { teamId, confidence: 50 })
+                                      setPendingPicks(newPicks)
+                                      console.log('Updated pending pick (no rec):', game.awayTeam.nflAbbr, '@', game.homeTeam.nflAbbr, 'to', teamId === game.homeTeam.id ? game.homeTeam.nflAbbr : game.awayTeam.nflAbbr)
+                                    }
+
+                                    return (
+                                      <div className="flex items-center justify-end gap-2">
+                                        {/* Away Team Button */}
+                                        <button
+                                          onClick={() => handleTeamClick(game.awayTeam.id)}
+                                          disabled={isLocked}
+                                          className={`px-3 py-2 rounded-lg font-bold text-sm transition-all relative ${
+                                            isLocked ? 'opacity-60 cursor-not-allowed' : ''
+                                          } ${
+                                            pickedTeamId === game.awayTeam.id
+                                              ? 'bg-purple-600 text-white shadow-lg scale-105 ring-2 ring-purple-400'
+                                              : 'bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300'
+                                          }`}
+                                        >
+                                          {game.awayTeam.nflAbbr}
+                                        </button>
+
+                                        <span className="text-gray-400 dark:text-gray-600 font-medium">@</span>
+
+                                        {/* Home Team Button */}
+                                        <button
+                                          onClick={() => handleTeamClick(game.homeTeam.id)}
+                                          disabled={isLocked}
+                                          className={`px-3 py-2 rounded-lg font-bold text-sm transition-all relative ${
+                                            isLocked ? 'opacity-60 cursor-not-allowed' : ''
+                                          } ${
+                                            pickedTeamId === game.homeTeam.id
+                                              ? 'bg-blue-600 text-white shadow-lg scale-105 ring-2 ring-blue-400'
+                                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300'
+                                          }`}
+                                        >
+                                          {game.homeTeam.nflAbbr}
+                                        </button>
+                                      </div>
+                                    )
+                                  })()
                                 ) : (
                                   <div className="text-xs text-gray-400 dark:text-gray-500 text-right">
-                                    {pool?.type === 'SU'
-                                      ? 'Ready'
-                                      : 'Upload spreads'}
+                                    Upload spreads
                                   </div>
                                 )}
                               </td>
