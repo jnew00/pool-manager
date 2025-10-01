@@ -2362,6 +2362,25 @@ export default function PoolDetailPage() {
 
                   setIsSavingPicks(true)
                   try {
+                    // First, delete all existing picks for this week's games
+                    const gameIds = Array.from(pendingPicks.keys())
+                    const existingPicks = await fetch(`/api/picks?entryId=${userEntry.id}`)
+                      .then(r => r.json())
+                      .then(data => data.data || [])
+
+                    const picksToDelete = existingPicks.filter((pick: any) =>
+                      gameIds.includes(pick.gameId)
+                    )
+
+                    console.log('Deleting existing picks:', picksToDelete.length)
+
+                    // Delete existing picks
+                    for (const pick of picksToDelete) {
+                      await fetch(`/api/picks/${pick.id}`, {
+                        method: 'DELETE',
+                      })
+                    }
+
                     // Convert pending picks to API format
                     const picks = Array.from(pendingPicks.entries()).map(([gameId, pick]) => ({
                       gameId,
