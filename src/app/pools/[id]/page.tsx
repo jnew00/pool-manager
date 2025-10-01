@@ -2146,7 +2146,6 @@ export default function PoolDetailPage() {
                                       </button>
                                     )
                                   })()
-                                )
                                 ) : (
                                   <div className="text-xs text-gray-400 dark:text-gray-500 text-right">
                                     {pool?.type === 'SU'
