@@ -2033,17 +2033,66 @@ export default function PoolDetailPage() {
                               </td>
                               <td className="py-4 px-4 text-right">
                                 {rec ? (
-                                  <span
-                                    className={`px-4 py-2 rounded-lg text-lg font-bold ${
+                                  <button
+                                    onClick={async () => {
+                                      if (!userEntry) {
+                                        Swal.fire({
+                                          icon: 'error',
+                                          title: 'No Entry Found',
+                                          text: 'Please create an entry first',
+                                        })
+                                        return
+                                      }
+
+                                      const teamId = rec.recommendation.pick === 'HOME' ? game.homeTeam.id : game.awayTeam.id
+                                      const confidence = rec.recommendation.confidence || 50
+
+                                      try {
+                                        const response = await fetch('/api/picks', {
+                                          method: 'POST',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                          },
+                                          body: JSON.stringify({
+                                            entryId: userEntry.id,
+                                            gameId: game.id,
+                                            teamId,
+                                            confidence,
+                                          }),
+                                        })
+
+                                        if (!response.ok) {
+                                          const errorData = await response.json()
+                                          throw new Error(errorData.error || 'Failed to save pick')
+                                        }
+
+                                        Swal.fire({
+                                          icon: 'success',
+                                          title: 'Pick Saved!',
+                                          text: `${game.pickedTeam} selected`,
+                                          timer: 1500,
+                                          showConfirmButton: false,
+                                          toast: true,
+                                          position: 'top-end'
+                                        })
+                                      } catch (error) {
+                                        Swal.fire({
+                                          icon: 'error',
+                                          title: 'Failed to Save Pick',
+                                          text: error instanceof Error ? error.message : 'Please try again',
+                                        })
+                                      }
+                                    }}
+                                    className={`px-4 py-2 rounded-lg text-lg font-bold transition-all hover:scale-105 hover:shadow-lg cursor-pointer ${
                                       game.pickType === 'OVER_UNDER'
-                                        ? 'bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-300'
+                                        ? 'bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-300 hover:bg-orange-200'
                                         : rec.recommendation.pick === 'HOME'
-                                        ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300'
-                                        : 'bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-300'
+                                        ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-200'
+                                        : 'bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200'
                                     }`}
                                   >
                                     {game.pickType === 'OVER_UNDER' ? 'OVER' : game.pickedTeam}
-                                  </span>
+                                  </button>
                                 ) : (
                                   <div className="text-xs text-gray-400 dark:text-gray-500 text-right">
                                     {pool?.type === 'SU'
