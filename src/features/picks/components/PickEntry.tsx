@@ -36,6 +36,12 @@ export function PickEntry({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
 
+  console.log('[PickEntry] Rendering with:', {
+    poolType: pool.type,
+    gamesCount: games.length,
+    games: games.map(g => ({ id: g.id, home: g.homeTeam.nflAbbr, away: g.awayTeam.nflAbbr }))
+  })
+
   const handleTeamSelection = (gameId: string, teamId: string) => {
     if (pool.type === 'SURVIVOR') {
       // For survivor, only one pick allowed per week
@@ -229,8 +235,8 @@ export function PickEntry({
               </p>
             </div>
 
-            {/* Spread Pick Section */}
-            {hasSpread(game) && pool.type !== 'SURVIVOR' && (
+            {/* Spread Pick Section (ATS, POINTS_PLUS) */}
+            {hasSpread(game) && pool.type !== 'SURVIVOR' && pool.type !== 'SU' && (
               <div className="space-y-3 mb-4">
                 <h4 className="text-sm font-semibold text-gray-700">Spread Pick</h4>
 
@@ -285,6 +291,63 @@ export function PickEntry({
                         handleSpreadConfidenceChange(game.id, parseInt(e.target.value))
                       }
                       aria-label="Spread pick confidence"
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Straight Up Pick Section (SU pools) */}
+            {pool.type === 'SU' && (
+              <div className="space-y-3 mb-4">
+                <h4 className="text-sm font-semibold text-gray-700">Pick the Winner</h4>
+
+                {/* Away Team Option */}
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`su-${game.id}`}
+                    checked={isTeamSelected(game.id, game.awayTeamId)}
+                    onChange={() => handleTeamSelection(game.id, game.awayTeamId)}
+                    aria-label={game.awayTeam.name}
+                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-gray-900">
+                    {game.awayTeam.name} ({game.awayTeam.nflAbbr})
+                  </span>
+                </label>
+
+                {/* Home Team Option */}
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`su-${game.id}`}
+                    checked={isTeamSelected(game.id, game.homeTeamId)}
+                    onChange={() => handleTeamSelection(game.id, game.homeTeamId)}
+                    aria-label={game.homeTeam.name}
+                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-gray-900">
+                    {game.homeTeam.name} ({game.homeTeam.nflAbbr})
+                  </span>
+                </label>
+
+                {/* Confidence Slider for SU Pick */}
+                {spreadPicks[game.id] && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Confidence: {spreadPicks[game.id].confidence}%
+                    </label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="100"
+                      value={spreadPicks[game.id].confidence}
+                      onChange={(e) =>
+                        handleSpreadConfidenceChange(game.id, parseInt(e.target.value))
+                      }
+                      aria-label="Straight up pick confidence"
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                     />
                   </div>

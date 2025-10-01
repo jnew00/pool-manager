@@ -25,6 +25,7 @@ import ControlPanel from './control-panel'
 import { GameProjection } from '@/features/projections/components/GameProjection'
 import { PointsPlusStrategyAdvisor } from '@/features/pools/components/PointsPlusStrategyAdvisor'
 import { EditableSpreadsTable } from '@/components/spreads/EditableSpreadsTable'
+import { WeeklyPickScreen } from '@/features/picks/components/WeeklyPickScreen'
 import type { ModelOutput } from '@/lib/models/types'
 import { getCurrentNFLWeek } from '@/lib/utils/nfl-week'
 
@@ -89,10 +90,22 @@ export default function PoolDetailPage() {
   const [showEditableSpreads, setShowEditableSpreads] = useState(false)
   const [number1PoolGames, setNumber1PoolGames] = useState<any[]>([])
   const [lastNumber1PoolUrl, setLastNumber1PoolUrl] = useState<string>('')
+  const [userEntry, setUserEntry] = useState<any>(null)
+  const [showPickEntry, setShowPickEntry] = useState(false)
+
+  // Generate or get a consistent user ID
+  const userId = typeof window !== 'undefined'
+    ? localStorage.getItem('userId') || (() => {
+        const id = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        localStorage.setItem('userId', id)
+        return id
+      })()
+    : 'user-default'
 
   useEffect(() => {
     if (poolId) {
       fetchPool()
+      fetchOrCreateUserEntry()
     }
   }, [poolId])
 
@@ -102,6 +115,10 @@ export default function PoolDetailPage() {
       fetchRecommendations(customWeights)
       if (pool.type === 'ATS') {
         fetchSpreadsData()
+      }
+      // Try to create entry again now that pool is loaded
+      if (!userEntry) {
+        fetchOrCreateUserEntry()
       }
     }
   }, [pool, selectedWeek])
@@ -325,19 +342,70 @@ export default function PoolDetailPage() {
     }
   }
 
-  const fetchGames = async () => {
+  const fetchOrCreateUserEntry = async () => {
     try {
-      const response = await fetch(
-        `/api/games?season=${pool?.season}&week=${selectedWeek}&poolId=${poolId}`
-      )
+      // First, try to get existing entries for this user
+      const response = await fetch(`/api/entries?poolId=${poolId}&userId=${userId}`)
       if (response.ok) {
         const data = await response.json()
-        setGames(data.data || [])
+        if (data.data && data.data.length > 0) {
+          setUserEntry(data.data[0]) // Use first entry
+          return
+        }
+      }
+
+      // If no entry exists, wait for pool to be loaded then create one
+      if (!pool) {
+        console.log('[PoolDetail] Waiting for pool to load before creating entry')
+        return
+      }
+
+      // If no entry exists, create one
+      const createResponse = await fetch('/api/entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          poolId,
+          userId,
+          name: `Entry ${Date.now()}`,
+          season: pool.season
+        })
+      })
+
+      if (createResponse.ok) {
+        const createData = await createResponse.json()
+        setUserEntry(createData.data)
+        console.log('[PoolDetail] Created new entry:', createData.data.id)
       } else {
-        setGames([])
+        const errorData = await createResponse.json()
+        console.error('[PoolDetail] Failed to create entry:', errorData)
       }
     } catch (err) {
-      console.error('Failed to fetch games:', err)
+      console.error('[PoolDetail] Failed to fetch/create entry:', err)
+    }
+  }
+
+  const fetchGames = async () => {
+    try {
+      const url = `/api/games?season=${pool?.season}&week=${selectedWeek}&poolId=${poolId}`
+      console.log('[PoolDetail] fetchGames called:', url)
+      const response = await fetch(url)
+      const data = await response.json()
+      console.log('[PoolDetail] fetchGames response:', {
+        ok: response.ok,
+        status: response.status,
+        gamesCount: data.data?.length || 0
+      })
+
+      if (response.ok) {
+        setGames(data.data || [])
+        console.log('[PoolDetail] Games state set to:', data.data?.length || 0, 'games')
+      } else {
+        setGames([])
+        console.log('[PoolDetail] Response not OK, games set to empty')
+      }
+    } catch (err) {
+      console.error('[PoolDetail] Failed to fetch games:', err)
       setGames([])
     }
   }
@@ -1351,7 +1419,26 @@ export default function PoolDetailPage() {
 
                   const rows = []
 
-                  // If game has spread, add spread row
+                  // For SU pools, show all games regardless of lines
+                  if (pool?.type === 'SU') {
+                    rows.push({
+                      ...game,
+                      pickType: 'SU',
+                      recommendation: rec,
+                      confidence: rec?.recommendation.confidence || 0,
+                      spread: null,
+                      uploadedSpread: null,
+                      strength: rec?.recommendation.strength || null,
+                      pickedTeam:
+                        rec?.recommendation.pick === 'HOME'
+                          ? game.homeTeam.nflAbbr
+                          : game.awayTeam.nflAbbr,
+                      weather: null,
+                    })
+                    return rows
+                  }
+
+                  // If game has spread, add spread row (for ATS/POINTS_PLUS)
                   if (hasSpread) {
                     rows.push({
                       ...game,
@@ -2124,6 +2211,32 @@ export default function PoolDetailPage() {
                 </div>
               )
             })()}
+          </div>
+        )}
+
+        {/* Make Picks Section */}
+        {pool && pool.type !== 'POINTS_PLUS' && userEntry && games.length > 0 && (
+          <div className="mt-8 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Make Your Picks
+              </h2>
+              <button
+                onClick={() => setShowPickEntry(!showPickEntry)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                {showPickEntry ? 'Hide Picks' : 'Show Pick Entry'}
+              </button>
+            </div>
+
+            {showPickEntry && (
+              <WeeklyPickScreen
+                pool={pool}
+                entry={userEntry}
+                season={pool.season}
+                week={selectedWeek}
+              />
+            )}
           </div>
         )}
       </main>

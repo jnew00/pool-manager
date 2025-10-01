@@ -29,15 +29,26 @@ export function WeeklyPickScreen({
       setIsLoadingGames(true)
       setError(null)
 
-      const response = await fetch(`/api/games?season=${season}&week=${week}&poolId=${pool.id}`)
+      const url = `/api/games?season=${season}&week=${week}&poolId=${pool.id}`
+      console.log('[WeeklyPickScreen] Fetching games:', url)
+      const response = await fetch(url)
       const data = await response.json()
+
+      console.log('[WeeklyPickScreen] API Response:', {
+        ok: response.ok,
+        status: response.status,
+        dataCount: data.data?.length || 0,
+        data: data
+      })
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to load games')
       }
 
       setGames(data.data || [])
+      console.log('[WeeklyPickScreen] Games set to state:', data.data?.length || 0)
     } catch (err) {
+      console.error('[WeeklyPickScreen] Error loading games:', err)
       setError(err instanceof Error ? err.message : 'Failed to load games')
     } finally {
       setIsLoadingGames(false)
