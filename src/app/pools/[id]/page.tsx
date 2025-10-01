@@ -20,6 +20,8 @@ import {
   Thermometer,
   Droplets,
   Eye,
+  Lock,
+  Unlock,
 } from 'lucide-react'
 import ControlPanel from './control-panel'
 import { GameProjection } from '@/features/projections/components/GameProjection'
@@ -92,6 +94,9 @@ export default function PoolDetailPage() {
   const [lastNumber1PoolUrl, setLastNumber1PoolUrl] = useState<string>('')
   const [userEntry, setUserEntry] = useState<any>(null)
   const [showPickEntry, setShowPickEntry] = useState(false)
+  const [userPicks, setUserPicks] = useState<Map<string, { teamId: string; confidence: number }>>(new Map())
+  const [pendingPicks, setPendingPicks] = useState<Map<string, { teamId: string; confidence: number }>>(new Map())
+  const [isSavingPicks, setIsSavingPicks] = useState(false)
 
   // Generate or get a consistent user ID
   const userId = typeof window !== 'undefined'
@@ -122,6 +127,75 @@ export default function PoolDetailPage() {
       }
     }
   }, [pool, selectedWeek])
+
+  // Load existing picks when entry is available
+  useEffect(() => {
+    if (userEntry) {
+      loadUserPicks()
+    }
+  }, [userEntry, selectedWeek])
+
+  const loadUserPicks = async () => {
+    if (!userEntry) return
+
+    try {
+      const response = await fetch(`/api/picks?entryId=${userEntry.id}`)
+      const data = await response.json()
+
+      if (response.ok && data.data) {
+        const picksMap = new Map()
+        data.data.forEach((pick: any) => {
+          picksMap.set(pick.gameId, {
+            id: pick.id,
+            teamId: pick.teamId,
+            confidence: pick.confidence,
+            lockedAt: pick.lockedAt // Track if pick is locked
+          })
+        })
+        setUserPicks(picksMap)
+        console.log('Loaded picks:', {
+          count: picksMap.size,
+          lockedCount: Array.from(picksMap.values()).filter(p => p.lockedAt).length,
+          samplePick: data.data[0] // Show first pick structure
+        })
+      }
+    } catch (err) {
+      console.error('Error loading user picks:', err)
+    }
+  }
+
+  // Auto-populate pending picks when AI recommendations change
+  useEffect(() => {
+    if (!recommendations?.recommendations) return
+
+    const newPendingPicks = new Map<string, { teamId: string; confidence: number }>()
+
+    for (const rec of recommendations.recommendations) {
+      const gameId = rec.game.id
+      const recommendedTeamId = rec.recommendation.pick === 'HOME'
+        ? rec.game.homeTeam.id
+        : rec.game.awayTeam.id
+
+      // Check if user has already saved a pick for this game
+      const existingSavedPick = userPicks.get(gameId)
+      if (existingSavedPick) {
+        // Keep the saved pick
+        newPendingPicks.set(gameId, existingSavedPick)
+      } else {
+        // Use AI recommendation - ensure confidence is a number
+        const confidence = typeof rec.recommendation.confidence === 'number'
+          ? rec.recommendation.confidence
+          : parseFloat(rec.recommendation.confidence) || 50
+
+        newPendingPicks.set(gameId, {
+          teamId: recommendedTeamId,
+          confidence
+        })
+      }
+    }
+
+    setPendingPicks(newPendingPicks)
+  }, [recommendations, userPicks])
 
   const handleWeightsChange = (newWeights: any) => {
     console.log('[PoolDetail] Weights changed, fetching fresh recommendations:', newWeights)
@@ -2033,22 +2107,147 @@ export default function PoolDetailPage() {
                               </td>
                               <td className="py-4 px-4 text-right">
                                 {rec ? (
-                                  <span
-                                    className={`px-4 py-2 rounded-lg text-lg font-bold ${
-                                      game.pickType === 'OVER_UNDER'
-                                        ? 'bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-300'
-                                        : rec.recommendation.pick === 'HOME'
-                                        ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300'
-                                        : 'bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-300'
-                                    }`}
-                                  >
-                                    {game.pickType === 'OVER_UNDER' ? 'OVER' : game.pickedTeam}
-                                  </span>
+                                  (() => {
+                                    const recommendedTeamId = rec.recommendation.pick === 'HOME' ? game.homeTeam.id : game.awayTeam.id
+                                    const pickedTeamId = pendingPicks.get(game.id)?.teamId || recommendedTeamId
+                                    const confidence = rec.recommendation.confidence || 50
+                                    const savedPick = userPicks.get(game.id)
+                                    const isLocked = savedPick?.lockedAt !== null && savedPick?.lockedAt !== undefined
+
+                                    // Debug logging for NYG NO game
+                                    if (game.awayTeam.nflAbbr === 'NYG' || game.homeTeam.nflAbbr === 'NYG') {
+                                      console.log('NYG game debug:', {
+                                        game: `${game.awayTeam.nflAbbr} @ ${game.homeTeam.nflAbbr}`,
+                                        gameId: game.id,
+                                        recommendedTeamId,
+                                        pickedTeamId,
+                                        hasPendingPick: pendingPicks.has(game.id),
+                                        pendingPick: pendingPicks.get(game.id),
+                                        isLocked,
+                                        rec: rec.recommendation
+                                      })
+                                    }
+
+                                    const handleTeamClick = (teamId: string) => {
+                                      if (isLocked) {
+                                        console.log('Pick is locked for game:', game.id, game.awayTeam.nflAbbr, '@', game.homeTeam.nflAbbr)
+                                        return
+                                      }
+                                      const newPicks = new Map(pendingPicks)
+                                      newPicks.set(game.id, { teamId, confidence })
+                                      setPendingPicks(newPicks)
+                                      console.log('Updated pending pick:', game.awayTeam.nflAbbr, '@', game.homeTeam.nflAbbr, 'to', teamId === game.homeTeam.id ? game.homeTeam.nflAbbr : game.awayTeam.nflAbbr)
+                                    }
+
+                                    return (
+                                      <div className="flex items-center justify-end gap-2">
+                                        {/* Away Team Button */}
+                                        <button
+                                          onClick={() => handleTeamClick(game.awayTeam.id)}
+                                          disabled={isLocked}
+                                          className={`px-3 py-2 rounded-lg font-bold text-sm transition-all relative ${
+                                            isLocked ? 'opacity-60 cursor-not-allowed' : ''
+                                          } ${
+                                            pickedTeamId === game.awayTeam.id
+                                              ? 'bg-purple-600 text-white shadow-lg scale-105 ring-2 ring-purple-400'
+                                              : 'bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300'
+                                          }`}
+                                        >
+                                          {pickedTeamId === game.awayTeam.id && recommendedTeamId === game.awayTeam.id && !isLocked && (
+                                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
+                                              ✓
+                                            </span>
+                                          )}
+                                          {isLocked && pickedTeamId === game.awayTeam.id && (
+                                            <Lock className="absolute -top-1 -right-1 w-3 h-3 text-gray-400" />
+                                          )}
+                                          {game.awayTeam.nflAbbr}
+                                        </button>
+
+                                        <span className="text-gray-400 dark:text-gray-600 font-medium">@</span>
+
+                                        {/* Home Team Button */}
+                                        <button
+                                          onClick={() => handleTeamClick(game.homeTeam.id)}
+                                          disabled={isLocked}
+                                          className={`px-3 py-2 rounded-lg font-bold text-sm transition-all relative ${
+                                            isLocked ? 'opacity-60 cursor-not-allowed' : ''
+                                          } ${
+                                            pickedTeamId === game.homeTeam.id
+                                              ? 'bg-blue-600 text-white shadow-lg scale-105 ring-2 ring-blue-400'
+                                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300'
+                                          }`}
+                                        >
+                                          {pickedTeamId === game.homeTeam.id && recommendedTeamId === game.homeTeam.id && !isLocked && (
+                                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
+                                              ✓
+                                            </span>
+                                          )}
+                                          {isLocked && pickedTeamId === game.homeTeam.id && (
+                                            <Lock className="absolute -top-1 -right-1 w-3 h-3 text-gray-400" />
+                                          )}
+                                          {game.homeTeam.nflAbbr}
+                                        </button>
+                                      </div>
+                                    )
+                                  })()
+                                ) : pool?.type === 'SU' ? (
+                                  // No recommendation available, but still allow manual selection for SU pools
+                                  (() => {
+                                    const pickedTeamId = pendingPicks.get(game.id)?.teamId || game.homeTeam.id // Default to home team
+                                    const savedPick = userPicks.get(game.id)
+                                    const isLocked = savedPick?.lockedAt !== null && savedPick?.lockedAt !== undefined
+
+                                    const handleTeamClick = (teamId: string) => {
+                                      if (isLocked) {
+                                        console.log('Pick is locked for game:', game.id, game.awayTeam.nflAbbr, '@', game.homeTeam.nflAbbr)
+                                        return
+                                      }
+                                      const newPicks = new Map(pendingPicks)
+                                      newPicks.set(game.id, { teamId, confidence: 50 })
+                                      setPendingPicks(newPicks)
+                                      console.log('Updated pending pick (no rec):', game.awayTeam.nflAbbr, '@', game.homeTeam.nflAbbr, 'to', teamId === game.homeTeam.id ? game.homeTeam.nflAbbr : game.awayTeam.nflAbbr)
+                                    }
+
+                                    return (
+                                      <div className="flex items-center justify-end gap-2">
+                                        {/* Away Team Button */}
+                                        <button
+                                          onClick={() => handleTeamClick(game.awayTeam.id)}
+                                          disabled={isLocked}
+                                          className={`px-3 py-2 rounded-lg font-bold text-sm transition-all relative ${
+                                            isLocked ? 'opacity-60 cursor-not-allowed' : ''
+                                          } ${
+                                            pickedTeamId === game.awayTeam.id
+                                              ? 'bg-purple-600 text-white shadow-lg scale-105 ring-2 ring-purple-400'
+                                              : 'bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300'
+                                          }`}
+                                        >
+                                          {game.awayTeam.nflAbbr}
+                                        </button>
+
+                                        <span className="text-gray-400 dark:text-gray-600 font-medium">@</span>
+
+                                        {/* Home Team Button */}
+                                        <button
+                                          onClick={() => handleTeamClick(game.homeTeam.id)}
+                                          disabled={isLocked}
+                                          className={`px-3 py-2 rounded-lg font-bold text-sm transition-all relative ${
+                                            isLocked ? 'opacity-60 cursor-not-allowed' : ''
+                                          } ${
+                                            pickedTeamId === game.homeTeam.id
+                                              ? 'bg-blue-600 text-white shadow-lg scale-105 ring-2 ring-blue-400'
+                                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300'
+                                          }`}
+                                        >
+                                          {game.homeTeam.nflAbbr}
+                                        </button>
+                                      </div>
+                                    )
+                                  })()
                                 ) : (
                                   <div className="text-xs text-gray-400 dark:text-gray-500 text-right">
-                                    {pool?.type === 'SU'
-                                      ? 'Ready'
-                                      : 'Upload spreads'}
+                                    Upload spreads
                                   </div>
                                 )}
                               </td>
@@ -2214,29 +2413,209 @@ export default function PoolDetailPage() {
           </div>
         )}
 
-        {/* Make Picks Section */}
-        {pool && pool.type !== 'POINTS_PLUS' && userEntry && games.length > 0 && (
+        {/* Lock In Picks Button */}
+        {pool && pool.type === 'SU' && userEntry && recommendations?.recommendations && pendingPicks.size > 0 && (
           <div className="mt-8 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Make Your Picks
-              </h2>
-              <button
-                onClick={() => setShowPickEntry(!showPickEntry)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                {showPickEntry ? 'Hide Picks' : 'Show Pick Entry'}
-              </button>
-            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Ready to Lock In?
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  {pendingPicks.size} pick{pendingPicks.size !== 1 ? 's' : ''} selected • {Array.from(userPicks.values()).filter(p => p.lockedAt).length} locked
+                </p>
+              </div>
+              <div className="flex gap-3">
+                {/* Unlock All Button */}
+                {Array.from(userPicks.values()).some(p => p.lockedAt) && (
+                  <button
+                    onClick={async () => {
+                      const result = await Swal.fire({
+                        title: 'Unlock All Picks?',
+                        text: 'This will allow you to edit your picks again.',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#f59e0b',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'Yes, Unlock',
+                        cancelButtonText: 'Cancel'
+                      })
 
-            {showPickEntry && (
-              <WeeklyPickScreen
-                pool={pool}
-                entry={userEntry}
-                season={pool.season}
-                week={selectedWeek}
-              />
-            )}
+                      if (!result.isConfirmed) return
+
+                      try {
+                        // Delete all locked picks for this week
+                        const lockedPicks = Array.from(userPicks.entries())
+                          .filter(([_, pick]) => pick.lockedAt)
+                          .map(([gameId, pick]) => pick)
+
+                        console.log('Unlocking picks:', lockedPicks.length)
+
+                        for (const pick of lockedPicks) {
+                          await fetch(`/api/picks/${pick.id}`, {
+                            method: 'DELETE',
+                          })
+                        }
+
+                        // Clear local state and reload
+                        setUserPicks(new Map())
+                        await loadUserPicks()
+
+                        Swal.fire({
+                          icon: 'success',
+                          title: 'Picks Unlocked!',
+                          text: `Deleted ${lockedPicks.length} locked pick(s). You can now make new selections.`,
+                          timer: 2000,
+                          showConfirmButton: false
+                        })
+                      } catch (error) {
+                        Swal.fire({
+                          icon: 'error',
+                          title: 'Failed to Unlock',
+                          text: 'Please try again',
+                          confirmButtonColor: '#ef4444'
+                        })
+                      }
+                    }}
+                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2"
+                  >
+                    <Unlock className="w-4 h-4" />
+                    Unlock All
+                  </button>
+                )}
+
+                {/* Lock In Button */}
+                <button
+                onClick={async () => {
+                  const result = await Swal.fire({
+                    title: 'Lock In Your Picks?',
+                    text: `Save ${pendingPicks.size} pick(s) for Week ${selectedWeek}. This cannot be undone.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Yes, Lock In!',
+                    cancelButtonText: 'Cancel'
+                  })
+
+                  if (!result.isConfirmed) {
+                    return
+                  }
+
+                  setIsSavingPicks(true)
+                  try {
+                    // First, delete all existing picks for this week's games
+                    const gameIds = Array.from(pendingPicks.keys())
+                    const existingPicks = await fetch(`/api/picks?entryId=${userEntry.id}`)
+                      .then(r => r.json())
+                      .then(data => data.data || [])
+
+                    const picksToDelete = existingPicks.filter((pick: any) =>
+                      gameIds.includes(pick.gameId)
+                    )
+
+                    console.log('Deleting existing picks:', picksToDelete.length)
+
+                    // Delete existing picks
+                    for (const pick of picksToDelete) {
+                      await fetch(`/api/picks/${pick.id}`, {
+                        method: 'DELETE',
+                      })
+                    }
+
+                    // Clear the locked picks from local state since we just deleted them
+                    const newUserPicks = new Map(userPicks)
+                    for (const pick of picksToDelete) {
+                      newUserPicks.delete(pick.gameId)
+                    }
+                    setUserPicks(newUserPicks)
+
+                    // Convert pending picks to API format
+                    const picks = Array.from(pendingPicks.entries()).map(([gameId, pick]) => ({
+                      gameId,
+                      teamId: pick.teamId,
+                      confidence: typeof pick.confidence === 'string' ? parseFloat(pick.confidence) : pick.confidence,
+                    }))
+
+                    console.log('Saving picks:', { entryId: userEntry.id, pickCount: picks.length, picks })
+
+                    const response = await fetch('/api/picks', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        entryId: userEntry.id,
+                        picks,
+                      }),
+                    })
+
+                    if (!response.ok) {
+                      const errorData = await response.json()
+                      console.error('API Error:', errorData)
+
+                      // Extract error message (handle both string and object formats)
+                      let errorMsg = 'Failed to save picks'
+                      if (typeof errorData.error === 'string') {
+                        errorMsg = errorData.error
+                      } else if (errorData.error && typeof errorData.error === 'object') {
+                        errorMsg = errorData.error.message || JSON.stringify(errorData.error)
+                      }
+
+                      throw new Error(errorMsg)
+                    }
+
+                    const responseData = await response.json()
+                    console.log('Picks saved successfully:', responseData)
+
+                    // Now lock the picks using the lock API
+                    console.log('Locking picks for week:', selectedWeek)
+                    const lockResponse = await fetch('/api/picks/lock', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        entryId: userEntry.id,
+                        season: pool.season,
+                        week: selectedWeek,
+                      }),
+                    })
+
+                    if (!lockResponse.ok) {
+                      const lockErrorData = await lockResponse.json()
+                      console.error('Failed to lock picks:', lockErrorData)
+                      throw new Error(lockErrorData.error || 'Failed to lock picks')
+                    }
+
+                    const lockData = await lockResponse.json()
+                    console.log('Picks locked successfully:', lockData)
+
+                    // Reload picks to get the updated lockedAt timestamps
+                    await loadUserPicks()
+
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Picks Locked In!',
+                      text: `Successfully saved and locked ${picks.length} pick(s)`,
+                      timer: 2000,
+                      showConfirmButton: false
+                    })
+                  } catch (error) {
+                    console.error('Lock in error:', error)
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Failed to Save Picks',
+                      text: error instanceof Error ? error.message : JSON.stringify(error),
+                      confirmButtonColor: '#ef4444'
+                    })
+                  } finally {
+                    setIsSavingPicks(false)
+                  }
+                }}
+                disabled={isSavingPicks || pendingPicks.size === 0}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              >
+                {isSavingPicks ? 'Locking In...' : `Lock In ${pendingPicks.size} Picks`}
+              </button>
+              </div>
+            </div>
           </div>
         )}
       </main>
