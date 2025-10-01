@@ -2444,15 +2444,28 @@ export default function PoolDetailPage() {
                       if (!result.isConfirmed) return
 
                       try {
-                        // Just reload picks - they won't have lockedAt anymore after deleting
+                        // Delete all locked picks for this week
+                        const lockedPicks = Array.from(userPicks.entries())
+                          .filter(([_, pick]) => pick.lockedAt)
+                          .map(([gameId, pick]) => pick)
+
+                        console.log('Unlocking picks:', lockedPicks.length)
+
+                        for (const pick of lockedPicks) {
+                          await fetch(`/api/picks/${pick.id}`, {
+                            method: 'DELETE',
+                          })
+                        }
+
+                        // Clear local state and reload
                         setUserPicks(new Map())
                         await loadUserPicks()
 
                         Swal.fire({
                           icon: 'success',
                           title: 'Picks Unlocked!',
-                          text: 'You can now edit your selections',
-                          timer: 1500,
+                          text: `Deleted ${lockedPicks.length} locked pick(s). You can now make new selections.`,
+                          timer: 2000,
                           showConfirmButton: false
                         })
                       } catch (error) {
@@ -2553,13 +2566,34 @@ export default function PoolDetailPage() {
                     const responseData = await response.json()
                     console.log('Picks saved successfully:', responseData)
 
-                    // Update saved picks
-                    setUserPicks(new Map(pendingPicks))
+                    // Now lock the picks using the lock API
+                    console.log('Locking picks for week:', selectedWeek)
+                    const lockResponse = await fetch('/api/picks/lock', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        entryId: userEntry.id,
+                        season: pool.season,
+                        week: selectedWeek,
+                      }),
+                    })
+
+                    if (!lockResponse.ok) {
+                      const lockErrorData = await lockResponse.json()
+                      console.error('Failed to lock picks:', lockErrorData)
+                      throw new Error(lockErrorData.error || 'Failed to lock picks')
+                    }
+
+                    const lockData = await lockResponse.json()
+                    console.log('Picks locked successfully:', lockData)
+
+                    // Reload picks to get the updated lockedAt timestamps
+                    await loadUserPicks()
 
                     Swal.fire({
                       icon: 'success',
                       title: 'Picks Locked In!',
-                      text: `Successfully saved ${picks.length} pick(s)`,
+                      text: `Successfully saved and locked ${picks.length} pick(s)`,
                       timer: 2000,
                       showConfirmButton: false
                     })
