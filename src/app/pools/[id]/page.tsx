@@ -92,6 +92,7 @@ export default function PoolDetailPage() {
   const [lastNumber1PoolUrl, setLastNumber1PoolUrl] = useState<string>('')
   const [userEntry, setUserEntry] = useState<any>(null)
   const [showPickEntry, setShowPickEntry] = useState(false)
+  const [userPicks, setUserPicks] = useState<Map<string, { teamId: string; confidence: number }>>(new Map())
 
   // Generate or get a consistent user ID
   const userId = typeof window !== 'undefined'
@@ -122,6 +123,35 @@ export default function PoolDetailPage() {
       }
     }
   }, [pool, selectedWeek])
+
+  // Load existing picks when entry is available
+  useEffect(() => {
+    if (userEntry) {
+      loadUserPicks()
+    }
+  }, [userEntry, selectedWeek])
+
+  const loadUserPicks = async () => {
+    if (!userEntry) return
+
+    try {
+      const response = await fetch(`/api/picks?entryId=${userEntry.id}`)
+      const data = await response.json()
+
+      if (response.ok && data.data) {
+        const picksMap = new Map()
+        data.data.forEach((pick: any) => {
+          picksMap.set(pick.gameId, {
+            teamId: pick.teamId,
+            confidence: pick.confidence
+          })
+        })
+        setUserPicks(picksMap)
+      }
+    } catch (err) {
+      console.error('Error loading user picks:', err)
+    }
+  }
 
   const handleWeightsChange = (newWeights: any) => {
     console.log('[PoolDetail] Weights changed, fetching fresh recommendations:', newWeights)
@@ -2033,66 +2063,90 @@ export default function PoolDetailPage() {
                               </td>
                               <td className="py-4 px-4 text-right">
                                 {rec ? (
-                                  <button
-                                    onClick={async () => {
-                                      if (!userEntry) {
-                                        Swal.fire({
-                                          icon: 'error',
-                                          title: 'No Entry Found',
-                                          text: 'Please create an entry first',
-                                        })
-                                        return
-                                      }
+                                  (() => {
+                                    const isPicked = userPicks.has(game.id)
+                                    const pickedTeamId = userPicks.get(game.id)?.teamId
+                                    const recommendedTeamId = rec.recommendation.pick === 'HOME' ? game.homeTeam.id : game.awayTeam.id
+                                    const isRecommendedPicked = isPicked && pickedTeamId === recommendedTeamId
 
-                                      const teamId = rec.recommendation.pick === 'HOME' ? game.homeTeam.id : game.awayTeam.id
-                                      const confidence = rec.recommendation.confidence || 50
+                                    return (
+                                      <button
+                                        onClick={async () => {
+                                          if (!userEntry) {
+                                            Swal.fire({
+                                              icon: 'error',
+                                              title: 'No Entry Found',
+                                              text: 'Please create an entry first',
+                                            })
+                                            return
+                                          }
 
-                                      try {
-                                        const response = await fetch('/api/picks', {
-                                          method: 'POST',
-                                          headers: {
-                                            'Content-Type': 'application/json',
-                                          },
-                                          body: JSON.stringify({
-                                            entryId: userEntry.id,
-                                            gameId: game.id,
-                                            teamId,
-                                            confidence,
-                                          }),
-                                        })
+                                          const teamId = recommendedTeamId
+                                          const confidence = rec.recommendation.confidence || 50
 
-                                        if (!response.ok) {
-                                          const errorData = await response.json()
-                                          throw new Error(errorData.error || 'Failed to save pick')
-                                        }
+                                          try {
+                                            const response = await fetch('/api/picks', {
+                                              method: 'POST',
+                                              headers: {
+                                                'Content-Type': 'application/json',
+                                              },
+                                              body: JSON.stringify({
+                                                entryId: userEntry.id,
+                                                gameId: game.id,
+                                                teamId,
+                                                confidence,
+                                              }),
+                                            })
 
-                                        Swal.fire({
-                                          icon: 'success',
-                                          title: 'Pick Saved!',
-                                          text: `${game.pickedTeam} selected`,
-                                          timer: 1500,
-                                          showConfirmButton: false,
-                                          toast: true,
-                                          position: 'top-end'
-                                        })
-                                      } catch (error) {
-                                        Swal.fire({
-                                          icon: 'error',
-                                          title: 'Failed to Save Pick',
-                                          text: error instanceof Error ? error.message : 'Please try again',
-                                        })
-                                      }
-                                    }}
-                                    className={`px-4 py-2 rounded-lg text-lg font-bold transition-all hover:scale-105 hover:shadow-lg cursor-pointer ${
-                                      game.pickType === 'OVER_UNDER'
-                                        ? 'bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-300 hover:bg-orange-200'
-                                        : rec.recommendation.pick === 'HOME'
-                                        ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-200'
-                                        : 'bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200'
-                                    }`}
-                                  >
-                                    {game.pickType === 'OVER_UNDER' ? 'OVER' : game.pickedTeam}
-                                  </button>
+                                            if (!response.ok) {
+                                              const errorData = await response.json()
+                                              throw new Error(errorData.error || 'Failed to save pick')
+                                            }
+
+                                            // Update local state
+                                            const newPicks = new Map(userPicks)
+                                            newPicks.set(game.id, { teamId, confidence })
+                                            setUserPicks(newPicks)
+
+                                            Swal.fire({
+                                              icon: 'success',
+                                              title: 'Pick Saved!',
+                                              text: `${game.pickedTeam} selected`,
+                                              timer: 1500,
+                                              showConfirmButton: false,
+                                              toast: true,
+                                              position: 'top-end'
+                                            })
+                                          } catch (error) {
+                                            Swal.fire({
+                                              icon: 'error',
+                                              title: 'Failed to Save Pick',
+                                              text: error instanceof Error ? error.message : 'Please try again',
+                                            })
+                                          }
+                                        }}
+                                        className={`px-4 py-2 rounded-lg text-lg font-bold transition-all hover:scale-105 hover:shadow-lg cursor-pointer relative ${
+                                          isRecommendedPicked
+                                            ? 'ring-4 ring-green-500 ring-offset-2'
+                                            : ''
+                                        } ${
+                                          game.pickType === 'OVER_UNDER'
+                                            ? 'bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-300 hover:bg-orange-200'
+                                            : rec.recommendation.pick === 'HOME'
+                                            ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-200'
+                                            : 'bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-200'
+                                        }`}
+                                      >
+                                        {isRecommendedPicked && (
+                                          <span className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
+                                            ✓
+                                          </span>
+                                        )}
+                                        {game.pickType === 'OVER_UNDER' ? 'OVER' : game.pickedTeam}
+                                      </button>
+                                    )
+                                  })()
+                                )
                                 ) : (
                                   <div className="text-xs text-gray-400 dark:text-gray-500 text-right">
                                     {pool?.type === 'SU'
