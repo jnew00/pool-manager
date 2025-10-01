@@ -2336,30 +2336,42 @@ export default function PoolDetailPage() {
               </div>
               <button
                 onClick={async () => {
-                  if (!confirm(`Lock in ${pendingPicks.size} pick(s) for Week ${selectedWeek}? This cannot be undone.`)) {
+                  const result = await Swal.fire({
+                    title: 'Lock In Your Picks?',
+                    text: `Save ${pendingPicks.size} pick(s) for Week ${selectedWeek}. This cannot be undone.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Yes, Lock In!',
+                    cancelButtonText: 'Cancel'
+                  })
+
+                  if (!result.isConfirmed) {
                     return
                   }
 
                   setIsSavingPicks(true)
                   try {
-                    const pickPromises = Array.from(pendingPicks.entries()).map(([gameId, pick]) =>
-                      fetch('/api/picks', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          entryId: userEntry.id,
-                          gameId,
-                          teamId: pick.teamId,
-                          confidence: pick.confidence,
-                        }),
-                      })
-                    )
+                    // Convert pending picks to API format
+                    const picks = Array.from(pendingPicks.entries()).map(([gameId, pick]) => ({
+                      gameId,
+                      teamId: pick.teamId,
+                      confidence: pick.confidence,
+                    }))
 
-                    const results = await Promise.all(pickPromises)
-                    const failed = results.filter(r => !r.ok)
+                    const response = await fetch('/api/picks', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        entryId: userEntry.id,
+                        picks,
+                      }),
+                    })
 
-                    if (failed.length > 0) {
-                      throw new Error(`Failed to save ${failed.length} pick(s)`)
+                    if (!response.ok) {
+                      const errorData = await response.json()
+                      throw new Error(errorData.error || 'Failed to save picks')
                     }
 
                     // Update saved picks
@@ -2368,8 +2380,9 @@ export default function PoolDetailPage() {
                     Swal.fire({
                       icon: 'success',
                       title: 'Picks Locked In!',
-                      text: `Successfully saved ${pendingPicks.size} pick(s)`,
-                      confirmButtonColor: '#3b82f6'
+                      text: `Successfully saved ${picks.length} pick(s)`,
+                      timer: 2000,
+                      showConfirmButton: false
                     })
                   } catch (error) {
                     Swal.fire({
