@@ -284,9 +284,11 @@ export class Number1PoolScraperService {
 
   /**
    * Convert scraped games to normalized format for GameMatcherService
+   * Merges spread and over/under rows for the same game into a single entry
    */
   convertToUploadFormat(scrapedData: Number1PoolScrapedData): any[] {
-    const result = scrapedData.games.map(game => ({
+    // First, create initial entries
+    const entries = scrapedData.games.map(game => ({
       home_team: game.homeTeam,
       away_team: game.awayTeam,
       spread_for_home: game.homeSpread,
@@ -296,9 +298,38 @@ export class Number1PoolScraperService {
       issues: []
     }));
 
-    console.log('[Number1Pool] Converted to normalized format for GameMatcher:');
-    result.slice(0, 3).forEach((spread, i) => {
-      if (spread.is_over_under) {
+    // Merge games that appear twice (spread + over/under for same matchup)
+    const mergedMap = new Map<string, any>();
+
+    for (const entry of entries) {
+      const key = `${entry.away_team}@${entry.home_team}`;
+
+      if (mergedMap.has(key)) {
+        // Game already exists - merge the data
+        const existing = mergedMap.get(key);
+        if (entry.is_over_under) {
+          // This entry has over/under data, add it to existing spread entry
+          existing.total = entry.total;
+          console.log(`[Number1Pool] Merged over/under (${entry.total}) with spread for ${entry.away_team} @ ${entry.home_team}`);
+        } else {
+          // This entry has spread data, add it to existing over/under entry
+          existing.spread_for_home = entry.spread_for_home;
+          existing.is_over_under = false; // Has both spread and total now
+          console.log(`[Number1Pool] Merged spread (${entry.spread_for_home}) with over/under for ${entry.away_team} @ ${entry.home_team}`);
+        }
+      } else {
+        // First time seeing this game
+        mergedMap.set(key, entry);
+      }
+    }
+
+    const result = Array.from(mergedMap.values());
+
+    console.log('[Number1Pool] Converted to normalized format for GameMatcher (after merging):');
+    result.forEach((spread, i) => {
+      if (spread.total !== null && spread.total !== undefined && spread.spread_for_home !== null) {
+        console.log(`[Number1Pool]   ${i + 1}. ${spread.away_team} @ ${spread.home_team} (Spread: ${spread.spread_for_home}, Total: ${spread.total})`);
+      } else if (spread.is_over_under) {
         console.log(`[Number1Pool]   ${i + 1}. ${spread.away_team} @ ${spread.home_team} (O/U: ${spread.total})`);
       } else {
         console.log(`[Number1Pool]   ${i + 1}. ${spread.away_team} @ ${spread.home_team} (${spread.spread_for_home})`);

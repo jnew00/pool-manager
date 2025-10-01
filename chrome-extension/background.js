@@ -19,9 +19,12 @@ chrome.runtime.onInstalled.addListener(() => {
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'STORE_GAMES_DATA') {
-    // Store games data in Chrome storage
+    // Store games data in Chrome storage - determine pool type
+    const poolType = message.poolType || 'ATS'; // Default to ATS
+    const storageKey = poolType === 'PP' ? 'poolmanagerGames_PP' : 'poolmanagerGames_ATS';
+
     chrome.storage.local.set({
-      poolmanagerGames: message.games,
+      [storageKey]: message.games,
       lastUpdate: Date.now()
     }, () => {
       sendResponse({ success: true });
@@ -30,10 +33,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'GET_GAMES_DATA') {
-    // Retrieve games data from Chrome storage
-    chrome.storage.local.get(['poolmanagerGames', 'lastUpdate'], (result) => {
+    // Retrieve games data from Chrome storage - both pool types
+    chrome.storage.local.get(['poolmanagerGames_ATS', 'poolmanagerGames_PP', 'lastUpdate'], (result) => {
       sendResponse({
-        games: result.poolmanagerGames || [],
+        atsGames: result.poolmanagerGames_ATS || [],
+        ppGames: result.poolmanagerGames_PP || [],
         lastUpdate: result.lastUpdate || null
       });
     });

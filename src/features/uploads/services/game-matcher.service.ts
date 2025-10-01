@@ -495,92 +495,59 @@ export class GameMatcherService {
 
     for (const match of matches) {
       try {
-        // Check if this is an over/under game or spread game
-        if (match.isOverUnder && match.total !== null && match.total !== undefined) {
-          // Over/Under game
-          const existingLine = await prisma.line.findFirst({
-            where: {
+        // Find or create line for this game
+        const existingLine = await prisma.line.findFirst({
+          where: {
+            gameId: match.gameId,
+            poolId: poolId,
+            source: source,
+          }
+        })
+
+        // Determine what data we have
+        const hasSpread = match.spread !== null && match.spread !== undefined;
+        const hasTotal = match.total !== null && match.total !== undefined;
+
+        if (existingLine) {
+          // Update existing line with whatever data we have
+          await prisma.line.update({
+            where: { id: existingLine.id },
+            data: {
+              spread: hasSpread ? match.spread : existingLine.spread, // Keep existing spread if not provided
+              total: hasTotal ? match.total : existingLine.total, // Keep existing total if not provided
+              capturedAt: new Date(),
+            },
+          })
+
+          const parts = [];
+          if (hasSpread) parts.push(`spread ${match.spread}`);
+          if (hasTotal) parts.push(`total ${match.total}`);
+          console.log(
+            `[GameMatcher] Updated existing line for ${match.awayTeam} @ ${match.homeTeam}: ${parts.join(', ')}`
+          )
+        } else {
+          // Create new line with whatever data we have
+          await prisma.line.create({
+            data: {
               gameId: match.gameId,
               poolId: poolId,
               source: source,
-            }
+              spread: hasSpread ? match.spread : null,
+              total: hasTotal ? match.total : null,
+              moneylineHome: null,
+              moneylineAway: null,
+              isUserProvided: true,
+            },
           })
 
-          if (existingLine) {
-            // Update existing line
-            await prisma.line.update({
-              where: { id: existingLine.id },
-              data: {
-                spread: null, // Over/under games have no spread
-                total: match.total,
-                capturedAt: new Date(),
-              },
-            })
-            console.log(
-              `[GameMatcher] Updated existing over/under line for ${match.awayTeam} @ ${match.homeTeam}: total ${match.total}`
-            )
-          } else {
-            // Create new over/under line
-            await prisma.line.create({
-              data: {
-                gameId: match.gameId,
-                poolId: poolId,
-                source: source,
-                spread: null, // Over/under games have no spread
-                total: match.total,
-                moneylineHome: null,
-                moneylineAway: null,
-                isUserProvided: true,
-              },
-            })
-            console.log(
-              `[GameMatcher] Created over/under line for ${match.awayTeam} @ ${match.homeTeam}: total ${match.total}`
-            )
-          }
-          created++
-        } else if (match.spread !== null) {
-          // Regular spread game
-          const existingLine = await prisma.line.findFirst({
-            where: {
-              gameId: match.gameId,
-              poolId: poolId,
-              source: source,
-            }
-          })
-
-          if (existingLine) {
-            // Update existing line
-            await prisma.line.update({
-              where: { id: existingLine.id },
-              data: {
-                spread: match.spread,
-                total: match.total || null, // Include total if available
-                capturedAt: new Date(),
-              },
-            })
-            console.log(
-              `[GameMatcher] Updated existing line for ${match.awayTeam} @ ${match.homeTeam}: spread ${match.spread}`
-            )
-          } else {
-            // Create new line
-            await prisma.line.create({
-              data: {
-                gameId: match.gameId,
-                poolId: poolId,
-                source: source,
-                spread: match.spread,
-                total: match.total || null, // Include total if available
-                moneylineHome: null,
-                moneylineAway: null,
-                isUserProvided: true,
-              },
-            })
-            console.log(
-              `[GameMatcher] Created line for ${match.awayTeam} @ ${match.homeTeam}: spread ${match.spread}`
-            )
-          }
-          created++
+          const parts = [];
+          if (hasSpread) parts.push(`spread ${match.spread}`);
+          if (hasTotal) parts.push(`total ${match.total}`);
+          console.log(
+            `[GameMatcher] Created line for ${match.awayTeam} @ ${match.homeTeam}: ${parts.join(', ')}`
+          )
         }
+        created++
       } catch (error) {
         const errorMsg = `Failed to create/update line for ${match.awayTeam} @ ${match.homeTeam}: ${error instanceof Error ? error.message : 'Unknown error'}`
         errors.push(errorMsg)

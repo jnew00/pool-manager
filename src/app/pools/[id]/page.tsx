@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Tippy from '@tippyjs/react'
 import 'tippy.js/dist/tippy.css'
+import Swal from 'sweetalert2'
 import {
   Building2,
   Sun,
@@ -147,23 +148,40 @@ export default function PoolDetailPage() {
         setNumber1PoolGames(result.number1poolGames)
         setLastNumber1PoolUrl(url)
         console.log('Stored Number1Pool games for extension:', result.number1poolGames)
+
+        // Trigger localStorage storage with the freshly imported games
+        if (recommendations?.recommendations) {
+          // Call storage directly with the new games (don't wait for state update)
+          storeRecommendationsForExtension(recommendations.recommendations, result.number1poolGames);
+        }
       }
 
-      // Show success message with details
-      const message = [
-        `Successfully scraped ${result.spreadsCount} spreads from Number1Pool`,
-        `Matched ${result.matchedCount} spreads to existing games`,
-        `${result.unmatchedCount} spreads could not be matched`,
-        result.unmatched && result.unmatched.length > 0 ?
-          '\nUnmatched spreads:\n' + result.unmatched.map((s: any) => `  ${s.away_team} @ ${s.home_team}`).join('\n') : ''
-      ].filter(Boolean).join('\n');
-
-      alert(message);
+      // Show success toast
+      Swal.fire({
+        icon: 'success',
+        title: 'Import Successful!',
+        html: `
+          <div class="text-left">
+            <p class="mb-2">✅ <strong>${result.spreadsCount}</strong> spreads imported</p>
+            <p class="mb-2">✅ <strong>${result.matchedCount}</strong> matched to games</p>
+            ${result.unmatchedCount > 0 ? `<p class="text-orange-600">⚠️ <strong>${result.unmatchedCount}</strong> could not be matched</p>` : ''}
+          </div>
+        `,
+        timer: 3000,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
       fetchSpreadsData() // Refresh the spreads data
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to scrape Number1Pool'
       setError(errorMsg)
-      alert(`Error: ${errorMsg}`)
+      Swal.fire({
+        icon: 'error',
+        title: 'Import Failed',
+        text: errorMsg,
+        confirmButtonColor: '#ef4444'
+      });
     } finally {
       setUploadingImage(false)
     }
@@ -192,22 +210,35 @@ export default function PoolDetailPage() {
       }
       
       const result = await response.json()
-      
-      // Success message
-      alert(`Successfully saved ${matchedSpreads.length} spreads!`)
-      
+
+      // Success toast
+      Swal.fire({
+        icon: 'success',
+        title: 'Spreads Saved!',
+        text: `Successfully saved ${matchedSpreads.length} spreads`,
+        timer: 2000,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+
       // Close modal and refresh
       setShowEditableSpreads(false)
       setEditableSpreads(null)
-      
+
       // Refresh data
       fetchGames()
       fetchRecommendations(customWeights)
       fetchSpreadsData()
-      
+
     } catch (error) {
       console.error('Error saving spreads:', error)
-      alert('Failed to save spreads. Please try again.')
+      Swal.fire({
+        icon: 'error',
+        title: 'Save Failed',
+        text: 'Failed to save spreads. Please try again.',
+        confirmButtonColor: '#ef4444'
+      });
     }
   }
 
@@ -261,7 +292,12 @@ export default function PoolDetailPage() {
 
     } catch (error) {
       console.error('[Edit Spreads] Error loading existing spreads:', error)
-      alert('Failed to load existing spreads for editing')
+      Swal.fire({
+        icon: 'error',
+        title: 'Load Failed',
+        text: 'Failed to load existing spreads for editing',
+        confirmButtonColor: '#ef4444'
+      });
     }
   }
 
@@ -306,6 +342,235 @@ export default function PoolDetailPage() {
     }
   }
 
+  // Helper function to store recommendations in localStorage for Chrome extension
+  const storeRecommendationsForExtension = (recommendations: any[], n1pGames: any[], showToast = true) => {
+    if (!recommendations || recommendations.length === 0 || n1pGames.length === 0) {
+      console.log('[storeRecs] Skipping storage - missing data:', {
+        recommendationsCount: recommendations?.length || 0,
+        n1pGamesCount: n1pGames.length
+      });
+      return;
+    }
+
+    console.log('[storeRecs] Storing recommendations for extension:', {
+      recommendationsCount: recommendations.length,
+      n1pGamesCount: n1pGames.length
+    });
+
+    // DEBUG: Log all recommendation matchups
+    console.log('[storeRecs] All recommendation matchups:', recommendations.map((rec: any) => ({
+      home: rec.game?.homeTeam?.nflAbbr || rec.game?.homeTeam?.name,
+      away: rec.game?.awayTeam?.nflAbbr || rec.game?.awayTeam?.name
+    })));
+
+    const atsOuData: any[] = [];
+    const pointsPlusData: any[] = [];
+
+    // Helper to check if abbreviation matches team name
+    // "LAR" matches "Los Angeles Rams" (L-A-R from first letters)
+    // "SF" matches "San Francisco 49ers" (S-F from first letters)
+    const abbrMatchesTeam = (abbr: string, teamName: string) => {
+      if (!abbr || !teamName) return false;
+      const upper = teamName.toUpperCase();
+      const words = upper.split(/\s+/).filter(w => w.length > 0);
+
+      // Check if abbr matches first letters of words
+      if (words.length >= abbr.length) {
+        const initials = words.slice(0, abbr.length).map(w => w[0]).join('');
+        if (initials === abbr) return true;
+      }
+
+      // Also check if any single word equals or contains the abbreviation
+      return words.some(word => word === abbr || word.includes(abbr));
+    };
+
+    n1pGames.forEach((game, index) => {
+      // Find AI recommendation for this game
+      // Normalize team names for matching: lowercase, remove spaces/punctuation
+      const normalizeTeam = (team: string) =>
+        team?.toLowerCase().replace(/[^a-z]/g, '') || '';
+
+      const n1pHomeNorm = normalizeTeam(game.homeTeam);
+      const n1pAwayNorm = normalizeTeam(game.awayTeam);
+
+      // DEBUG: Log first game matching attempt
+      if (index === 0) {
+        console.log('[storeRecs] First N1P game:', {
+          homeTeam: game.homeTeam,
+          awayTeam: game.awayTeam,
+          homeNorm: n1pHomeNorm,
+          awayNorm: n1pAwayNorm
+        });
+        console.log('[storeRecs] First recommendation:', {
+          homeTeam: recommendations[0]?.game?.homeTeam,
+          awayTeam: recommendations[0]?.game?.awayTeam,
+          homeNorm: normalizeTeam(recommendations[0]?.game?.homeTeam?.name || recommendations[0]?.game?.homeTeam?.nflAbbr || ''),
+          awayNorm: normalizeTeam(recommendations[0]?.game?.awayTeam?.name || recommendations[0]?.game?.awayTeam?.nflAbbr || '')
+        });
+      }
+
+      const gameRec = recommendations.find((rec: any) => {
+        // Use nflAbbr (LAR, SF, etc.) - these are 2-3 letter abbreviations
+        const recHomeAbbr = rec.game?.homeTeam?.nflAbbr || '';
+        const recAwayAbbr = rec.game?.awayTeam?.nflAbbr || '';
+
+        // For Number1Pool, extract team abbreviation or city name
+        // "LOS ANGELES RAMS" -> check if contains "LAR" or "RAMS" or "LOS"
+        // "San Francisco 49ers" -> check if contains "SF" or "49ERS" or "SAN"
+
+        const homeMatch = recHomeAbbr && abbrMatchesTeam(recHomeAbbr, game.homeTeam);
+        const awayMatch = recAwayAbbr && abbrMatchesTeam(recAwayAbbr, game.awayTeam);
+
+        const matched = homeMatch && awayMatch;
+
+        // DEBUG: Log matching attempts for first game
+        if (index === 0) {
+          console.log('[storeRecs] Matching attempt:', {
+            n1pHome: game.homeTeam,
+            n1pAway: game.awayTeam,
+            recHome: recHomeAbbr,
+            recAway: recAwayAbbr,
+            homeMatch,
+            awayMatch,
+            matched
+          });
+        }
+
+        return matched;
+      });
+
+      // Convert AI pick to extension format for SPREAD pick
+      let recommendation = null;
+      let recommendedTeam = null;
+
+      if (gameRec?.recommendation?.pick) {
+        recommendedTeam = gameRec.recommendation.team;
+        if (recommendedTeam === game.favorite) {
+          recommendation = '1';
+        } else if (recommendedTeam === game.underdog) {
+          recommendation = '2';
+        }
+      } else if (game.aiPick) {
+        if (game.aiPick === 'HOME') {
+          recommendedTeam = game.homeTeam;
+          const normalizedHome = game.homeTeam?.toLowerCase().replace(/[^a-z]/g, '') || '';
+          const normalizedFav = game.favorite?.toLowerCase().replace(/[^a-z]/g, '') || '';
+
+          if (normalizedHome.includes(normalizedFav.split(' ')[0]) || normalizedFav.includes(normalizedHome.split(' ')[0])) {
+            recommendation = '1';
+          } else {
+            recommendation = '2';
+          }
+        } else if (game.aiPick === 'AWAY') {
+          recommendedTeam = game.awayTeam;
+          const normalizedAway = game.awayTeam?.toLowerCase().replace(/[^a-z]/g, '') || '';
+          const normalizedFav = game.favorite?.toLowerCase().replace(/[^a-z]/g, '') || '';
+
+          if (normalizedAway.includes(normalizedFav.split(' ')[0]) || normalizedFav.includes(normalizedAway.split(' ')[0])) {
+            recommendation = '1';
+          } else {
+            recommendation = '2';
+          }
+        }
+      }
+
+      // Extract only the fields we need as strings
+      const favoriteStr = String(game.favorite || '');
+      const underdogStr = String(game.underdog || '');
+      const homeTeamStr = String(game.homeTeam || '');
+      const awayTeamStr = String(game.awayTeam || '');
+      const spreadNum = Number(game.spread) || 0;
+      const totalNum = Number(game.total) || null;
+
+      // Add spread pick to ATS/O-U data
+      atsOuData.push({
+        favorite: favoriteStr,
+        underdog: underdogStr,
+        spread: spreadNum,
+        homeTeam: homeTeamStr,
+        awayTeam: awayTeamStr,
+        pickType: 'SPREAD',
+        aiPick: gameRec?.recommendation?.pick || game.aiPick || null,
+        confidence: gameRec?.recommendation?.confidence || game.confidence || null,
+        recommendedTeam: recommendedTeam,
+        recommendation: recommendation,
+        sortOrder: game.sortOrder || (index + 1)
+      });
+
+      // Add over/under pick if total is available
+      const overUnderPred = gameRec?.recommendation?.tieBreakerData?.overUnderPrediction;
+      if (totalNum && overUnderPred) {
+        atsOuData.push({
+          favorite: favoriteStr,
+          underdog: underdogStr,
+          spread: spreadNum,
+          total: totalNum,
+          homeTeam: homeTeamStr,
+          awayTeam: awayTeamStr,
+          pickType: 'OVER_UNDER',
+          aiPick: overUnderPred.recommendation,
+          confidence: overUnderPred.confidence,
+          recommendedTeam: overUnderPred.recommendation,
+          recommendation: overUnderPred.recommendation === 'OVER' ? 'OVER' : 'UNDER',
+          sortOrder: game.sortOrder || (index + 1)
+        });
+      }
+
+      // Add Points Plus pick (uses same recommendation as spread pick)
+      pointsPlusData.push({
+        favorite: favoriteStr,
+        underdog: underdogStr,
+        spread: spreadNum,
+        homeTeam: homeTeamStr,
+        awayTeam: awayTeamStr,
+        pickType: 'POINTS_PLUS',
+        aiPick: gameRec?.recommendation?.pick || game.aiPick || null,
+        confidence: gameRec?.recommendation?.confidence || game.confidence || null,
+        recommendedTeam: recommendedTeam,
+        recommendation: recommendation,
+        sortOrder: game.sortOrder || (index + 1)
+      });
+    });
+
+    // Store ATS/O-U picks separately from Points Plus picks
+    localStorage.removeItem('poolmanagerExtensionData_ATS');
+
+    localStorage.setItem('poolmanagerExtensionData_ATS', JSON.stringify({
+      games: atsOuData,
+      lastUpdate: Date.now(),
+      week: selectedWeek,
+      poolId: pool?.id
+    }));
+
+    // IMPORTANT: Don't overwrite Points Plus data from ATS page
+    // Points Plus should only be set from the Points Plus page where user makes selections
+    // Only store PP data if we're on an ATS pool (not overwriting manual PP selections)
+    // Actually, let's NOT store PP data here at all - it should only come from PP page
+    // localStorage.setItem('poolmanagerExtensionData_PP', JSON.stringify({
+    //   games: pointsPlusData,
+    //   lastUpdate: Date.now(),
+    //   week: selectedWeek,
+    //   poolId: pool?.id
+    // }));
+
+    console.log('[storeRecs] Stored extension data:', {
+      atsCount: atsOuData.length
+    });
+
+    // Show a brief success toast notification (only for ATS pool automatic storage)
+    if (showToast && pool?.type === 'ATS') {
+      Swal.fire({
+        icon: 'success',
+        title: 'ATS Picks Saved!',
+        text: `${atsOuData.length} ATS/O-U picks saved for extension`,
+        timer: 2500,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+    }
+  };
+
   const fetchRecommendations = async (weights?: any) => {
     if (!pool) return
 
@@ -321,7 +586,7 @@ export default function PoolDetailPage() {
           weightParams.append(`weights.${key}`, weights[key].toString())
         })
         url += '&' + weightParams.toString()
-        
+
         // Add cache-busting timestamp when custom weights are used
         url += `&_t=${Date.now()}`
       }
@@ -334,76 +599,8 @@ export default function PoolDetailPage() {
         setRecommendations(data.data)
 
         // Store AI recommendations in localStorage for Chrome extension
-        if (data.data?.recommendations && number1PoolGames.length > 0) {
-          // Use all number1PoolGames - they're already for the current week
-          // The "week" field is actually game number (1-16), not NFL week
-          const currentWeekGames = number1PoolGames;
-          const extensionData = currentWeekGames.map(game => {
-            // Find AI recommendation for this game
-            const gameRec = data.data.recommendations.find((rec: any) => {
-              const recHome = rec.game?.homeTeam?.name || '';
-              const recAway = rec.game?.awayTeam?.name || '';
-              return (
-                recHome.includes(game.homeTeam) ||
-                recAway.includes(game.awayTeam) ||
-                game.homeTeam.includes(recHome) ||
-                game.awayTeam.includes(recAway)
-              );
-            });
-
-            // Convert AI pick to extension format
-            let recommendation = null;
-            let recommendedTeam = null;
-
-            if (gameRec?.recommendation?.pick) {
-              recommendedTeam = gameRec.recommendation.team;
-              if (recommendedTeam === game.favorite) {
-                recommendation = '1';
-              } else if (recommendedTeam === game.underdog) {
-                recommendation = '2';
-              }
-            } else if (game.aiPick) {
-              if (game.aiPick === 'HOME') {
-                recommendedTeam = game.homeTeam;
-                const normalizedHome = game.homeTeam?.toLowerCase().replace(/[^a-z]/g, '') || '';
-                const normalizedFav = game.favorite?.toLowerCase().replace(/[^a-z]/g, '') || '';
-
-                if (normalizedHome.includes(normalizedFav.split(' ')[0]) || normalizedFav.includes(normalizedHome.split(' ')[0])) {
-                  recommendation = '1';
-                } else {
-                  recommendation = '2';
-                }
-              } else if (game.aiPick === 'AWAY') {
-                recommendedTeam = game.awayTeam;
-                const normalizedAway = game.awayTeam?.toLowerCase().replace(/[^a-z]/g, '') || '';
-                const normalizedFav = game.favorite?.toLowerCase().replace(/[^a-z]/g, '') || '';
-
-                if (normalizedAway.includes(normalizedFav.split(' ')[0]) || normalizedFav.includes(normalizedAway.split(' ')[0])) {
-                  recommendation = '1';
-                } else {
-                  recommendation = '2';
-                }
-              }
-            }
-
-            return {
-              ...game,
-              aiPick: gameRec?.recommendation?.pick || game.aiPick || null,
-              confidence: gameRec?.recommendation?.confidence || game.confidence || null,
-              recommendedTeam: recommendedTeam,
-              recommendation: recommendation
-            };
-          });
-
-          // Store in localStorage for Chrome extension
-          localStorage.setItem('poolmanagerExtensionData', JSON.stringify({
-            games: extensionData,
-            lastUpdate: Date.now(),
-            week: selectedWeek,
-            poolId: pool?.id
-          }));
-
-          console.log(`[PoolManager] Stored ${extensionData.length} games with AI picks in localStorage for Chrome extension`);
+        if (data.data?.recommendations) {
+          storeRecommendationsForExtension(data.data.recommendations, number1PoolGames);
         }
       } else {
         setRecommendations(null)
@@ -497,17 +694,25 @@ export default function PoolDetailPage() {
         const { gamesFetched, oddsCreated, weatherUpdated, errors } =
           result.data
 
-        let successMessage = [
-          `Processed ${gamesFetched} games`,
-          `Created ${oddsCreated} new odds entries`,
-          `Updated ${weatherUpdated} games with weather data`,
-        ].join('\n')
+        const warningsHtml = errors && errors.length > 0
+          ? `<div class="mt-2 text-left text-sm text-orange-600"><strong>Warnings:</strong><ul class="list-disc ml-4">${errors.map((e: string) =>
+              `<li>${e}</li>`
+            ).join('')}</ul></div>`
+          : '';
 
-        if (errors && errors.length > 0) {
-          successMessage += '\n\nWarnings:\n' + errors.join('\n')
-        }
-
-        alert(successMessage)
+        Swal.fire({
+          icon: errors && errors.length > 0 ? 'warning' : 'success',
+          title: 'Data Updated!',
+          html: `
+            <div class="text-left">
+              <p>✅ <strong>${gamesFetched}</strong> games processed</p>
+              <p>✅ <strong>${oddsCreated}</strong> odds entries created</p>
+              <p>✅ <strong>${weatherUpdated}</strong> games updated with weather</p>
+              ${warningsHtml}
+            </div>
+          `,
+          confirmButtonColor: '#10b981'
+        });
 
         // Refresh recommendations with new data
         fetchRecommendations(customWeights)
@@ -594,31 +799,27 @@ export default function PoolDetailPage() {
       if (result.data.unmatched && result.data.unmatched.length > 0) {
       }
 
-      // Show success message with details
-      const successMessage = [
-        `Successfully processed ${spreadsExtracted} spreads`,
-        `Provider: ${result.data.llmProvider}`,
-        `OCR Confidence: ${result.data.ocrConfidence.toFixed(1)}%`,
-        `Matched ${gamesMatched} spreads to existing games`,
-        ...(linesCreated > 0
-          ? [`Created ${linesCreated} betting lines for this pool`]
-          : []),
-        ...(gamesUnmatched > 0
-          ? [`${gamesUnmatched} spreads could not be matched to games`]
-          : []),
-        ...(result.data.estimatedCostUSD
-          ? [`Cost: $${result.data.estimatedCostUSD.toFixed(4)}`]
-          : []),
-        ...(result.data.unmatched && result.data.unmatched.length > 0
-          ? ['', 'Unmatched spreads:'].concat(
-              result.data.unmatched.map((spread: any) => 
-                `  ${spread.away_team} @ ${spread.home_team} (${spread.spread_for_home})`
-              )
-            )
-          : [])
-      ].join('\n')
+      // Show success toast with details
+      const unmatchedHtml = result.data.unmatched && result.data.unmatched.length > 0
+        ? `<div class="mt-2 text-left text-sm"><strong>Unmatched:</strong><ul class="list-disc ml-4">${result.data.unmatched.map((s: any) =>
+            `<li>${s.away_team} @ ${s.home_team} (${s.spread_for_home})</li>`
+          ).join('')}</ul></div>`
+        : '';
 
-      alert(successMessage)
+      Swal.fire({
+        icon: 'success',
+        title: 'Image Processed!',
+        html: `
+          <div class="text-left">
+            <p>✅ <strong>${spreadsExtracted}</strong> spreads extracted</p>
+            <p>✅ <strong>${gamesMatched}</strong> matched to games</p>
+            ${gamesUnmatched > 0 ? `<p class="text-orange-600">⚠️ <strong>${gamesUnmatched}</strong> unmatched</p>` : ''}
+            <p class="text-sm text-gray-600 mt-2">OCR: ${result.data.ocrConfidence.toFixed(1)}% | ${result.data.llmProvider}</p>
+            ${unmatchedHtml}
+          </div>
+        `,
+        confirmButtonColor: '#10b981'
+      });
 
       // Refresh games list, recommendations, and spreads data
       fetchGames()
@@ -628,7 +829,12 @@ export default function PoolDetailPage() {
       console.error('[Image Upload] Error occurred:', err)
       const errorMessage = err instanceof Error ? err.message : 'Failed to process image'
       setError(`Image upload failed: ${errorMessage}`)
-      alert(`Error uploading image: ${errorMessage}`)
+      Swal.fire({
+        icon: 'error',
+        title: 'Upload Failed',
+        text: errorMessage,
+        confirmButtonColor: '#ef4444'
+      });
     } finally {
       setUploadingImage(false)
       setShowImageUpload(false)
@@ -940,6 +1146,8 @@ export default function PoolDetailPage() {
               poolId={pool.id}
               week={selectedWeek}
               season={pool.season}
+              number1PoolGames={number1PoolGames}
+              recommendations={recommendations}
             />
           </div>
         ) : pool ? (
@@ -1051,8 +1259,25 @@ export default function PoolDetailPage() {
                     {/* Compact Number1Pool Scraper */}
                     <div className="flex flex-col space-y-1">
                       <button
-                        onClick={() => {
-                          const url = prompt('Enter your Number1Pool weekly picks URL:', 'https://number1pool.com/picks_weekly.php?user=GatorBait&verify=970622f774ee22dcef22f41487b87fa3')
+                        onClick={async () => {
+                          const { value: url } = await Swal.fire({
+                            title: 'Import from Number1Pool',
+                            input: 'text',
+                            inputLabel: 'Enter your Number1Pool weekly picks URL',
+                            inputValue: lastNumber1PoolUrl || 'https://number1pool.com/picks_weekly.php?user=GatorBait&verify=970622f774ee22dcef22f41487b87fa3',
+                            showCancelButton: true,
+                            confirmButtonColor: '#10b981',
+                            cancelButtonColor: '#6b7280',
+                            confirmButtonText: 'Import',
+                            inputValidator: (value) => {
+                              if (!value) {
+                                return 'Please enter a URL'
+                              }
+                              if (!value.includes('number1pool.com')) {
+                                return 'Please enter a valid Number1Pool URL'
+                              }
+                            }
+                          })
                           if (url?.trim()) {
                             handleNumber1PoolScrape(url.trim())
                           }
@@ -1062,148 +1287,11 @@ export default function PoolDetailPage() {
                           uploadingImage ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                       >
-                        Number1Pool
+                        {uploadingImage ? 'Importing...' : 'Number1Pool'}
                       </button>
 
 
-                      {/* Copy with Recommendations - Always visible */}
-                      <button
-                        onClick={() => {
-                          if (number1PoolGames.length === 0) {
-                            alert('Please import spreads first to copy AI picks.');
-                            return;
-                          }
-
-                          // Don't filter by week - Number1Pool imports ALL games for the current week
-                          // The "week" field in the data is actually the game number (1-16), not NFL week
-                          console.log('[AI Picks] Total games:', number1PoolGames.length);
-                          console.log('[AI Picks] First game:', number1PoolGames[0]);
-
-                          // Use all games - they're already for the current week
-                          const currentWeekGames = number1PoolGames;
-
-                          console.log('[AI Picks] Using all', currentWeekGames.length, 'games from Number1Pool import');
-
-                          // Enrich games with AI recommendations
-                          const gamesWithPicks = currentWeekGames.map(game => {
-                                // Find the recommendation for this game
-                                const gameRec = recommendations?.recommendations?.find((rec: any) => {
-                                  const recHome = rec.game?.homeTeam?.name || '';
-                                  const recAway = rec.game?.awayTeam?.name || '';
-                                  return (
-                                    recHome.includes(game.homeTeam) ||
-                                    recAway.includes(game.awayTeam) ||
-                                    game.homeTeam.includes(recHome) ||
-                                    game.awayTeam.includes(recAway)
-                                  );
-                                });
-
-                                // Convert AI pick to extension format (1=favorite, 2=underdog)
-                                let recommendation = null;
-                                let recommendedTeam = null;
-
-                                if (gameRec?.recommendation?.pick) {
-                                  const aiPick = gameRec.recommendation.pick;
-                                  recommendedTeam = gameRec.recommendation.team;
-
-                                  // Determine if the recommended team is the favorite or underdog
-                                  if (recommendedTeam === game.favorite) {
-                                    recommendation = '1'; // Favorite
-                                  } else if (recommendedTeam === game.underdog) {
-                                    recommendation = '2'; // Underdog
-                                  }
-                                } else if (game.aiPick) {
-                                  // Handle aiPick field (HOME/AWAY format)
-                                  if (game.aiPick === 'HOME') {
-                                    recommendedTeam = game.homeTeam;
-                                    // Check if home team is favorite or underdog using case-insensitive comparison
-                                    const normalizedHome = game.homeTeam?.toLowerCase().replace(/[^a-z]/g, '') || '';
-                                    const normalizedFav = game.favorite?.toLowerCase().replace(/[^a-z]/g, '') || '';
-                                    const normalizedUnder = game.underdog?.toLowerCase().replace(/[^a-z]/g, '') || '';
-
-                                    if (normalizedHome.includes(normalizedFav.split(' ')[0]) || normalizedFav.includes(normalizedHome.split(' ')[0])) {
-                                      recommendation = '1'; // Home team is favorite
-                                    } else if (normalizedHome.includes(normalizedUnder.split(' ')[0]) || normalizedUnder.includes(normalizedHome.split(' ')[0])) {
-                                      recommendation = '2'; // Home team is underdog
-                                    }
-                                  } else if (game.aiPick === 'AWAY') {
-                                    recommendedTeam = game.awayTeam;
-                                    // Check if away team is favorite or underdog using case-insensitive comparison
-                                    const normalizedAway = game.awayTeam?.toLowerCase().replace(/[^a-z]/g, '') || '';
-                                    const normalizedFav = game.favorite?.toLowerCase().replace(/[^a-z]/g, '') || '';
-                                    const normalizedUnder = game.underdog?.toLowerCase().replace(/[^a-z]/g, '') || '';
-
-                                    if (normalizedAway.includes(normalizedFav.split(' ')[0]) || normalizedFav.includes(normalizedAway.split(' ')[0])) {
-                                      recommendation = '1'; // Away team is favorite
-                                    } else if (normalizedAway.includes(normalizedUnder.split(' ')[0]) || normalizedUnder.includes(normalizedAway.split(' ')[0])) {
-                                      recommendation = '2'; // Away team is underdog
-                                    }
-                                  }
-                                }
-
-                                return {
-                                  ...game,
-                                  aiPick: gameRec?.recommendation?.pick || game.aiPick || null,
-                                  confidence: gameRec?.recommendation?.confidence || game.confidence || null,
-                                  recommendedTeam: recommendedTeam,
-                                  recommendation: recommendation // For extension compatibility
-                                };
-                              });
-
-                              // Store data for Chrome extension
-                              const extensionData = gamesWithPicks.map(game => ({
-                                favorite: game.favorite,
-                                underdog: game.underdog,
-                                spread: game.spread,
-                                homeTeam: game.homeTeam,
-                                awayTeam: game.awayTeam,
-                                aiPick: game.aiPick,
-                                confidence: game.confidence,
-                                recommendation: game.recommendation,
-                                recommendedTeam: game.recommendedTeam,
-                                sortOrder: game.sortOrder
-                              }));
-
-                              // Store in localStorage for immediate access
-                              const storageData = {
-                                games: extensionData,
-                                lastUpdate: Date.now(),
-                                week: selectedWeek,
-                                poolId: pool?.id
-                              };
-                              localStorage.setItem('poolmanagerExtensionData', JSON.stringify(storageData));
-                              console.log('[PoolManager] Stored in localStorage:', storageData);
-                              console.log('[PoolManager] localStorage verification:', localStorage.getItem('poolmanagerExtensionData'));
-
-                              // Send data to Chrome extension via custom event
-                              const extensionEvent = new CustomEvent('poolmanager-data', {
-                                detail: {
-                                  games: extensionData,
-                                  lastUpdate: Date.now(),
-                                  week: selectedWeek,
-                                  poolId: pool?.id
-                                }
-                              });
-                              window.dispatchEvent(extensionEvent);
-                              console.log('[PoolManager] Dispatched data to extension via custom event', {
-                                gamesCount: extensionData.length,
-                                hasAI: extensionData.filter(g => g.aiPick).length
-                              });
-
-                              // Also copy to clipboard
-                              navigator.clipboard.writeText(JSON.stringify(gamesWithPicks, null, 2))
-                              alert(`Game data with AI picks stored for extension!\n\n${gamesWithPicks.filter(g => g.aiPick).length} games have AI recommendations.`)
-                            }}
-                            disabled={number1PoolGames.length === 0}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                              number1PoolGames.length === 0
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-purple-500 text-white hover:bg-purple-600'
-                            }`}
-                            title={number1PoolGames.length === 0 ? "Import spreads first" : "Copy with AI recommendations"}
-                          >
-                            + AI Picks
-                          </button>
+                      {/* AI Picks button removed - storage now happens automatically on Number1Pool import and AI weight changes */}
                     </div>
 
                     {/* Compact Image Upload */}
@@ -1253,23 +1341,57 @@ export default function PoolDetailPage() {
                   gameUploadedSpreads.set(spread.gameId, spread)
                 })
 
-                // Create sortable data
-                const sortableGames = games.map((game: any) => {
+                // Create sortable data - expand games with both spread and total into 2 rows
+                const sortableGames = games.flatMap((game: any) => {
                   const rec = gameRecommendations.get(game.id)
                   const uploadedSpread = gameUploadedSpreads.get(game.id)
-                  return {
-                    ...game,
-                    recommendation: rec,
-                    confidence: rec?.recommendation.confidence || 0,
-                    spread: rec?.line?.spread || null,
-                    uploadedSpread: uploadedSpread?.spread || null,
-                    strength: rec?.recommendation.strength || null,
-                    pickedTeam:
-                      rec?.recommendation.pick === 'HOME'
-                        ? game.homeTeam.nflAbbr
-                        : game.awayTeam.nflAbbr,
-                    weather: null, // TODO: Add weather data
+
+                  const hasSpread = game.lines && game.lines[0]?.spread !== null && game.lines[0]?.spread !== undefined
+                  const hasTotal = game.lines && game.lines[0]?.total !== null && game.lines[0]?.total !== undefined
+
+                  const rows = []
+
+                  // If game has spread, add spread row
+                  if (hasSpread) {
+                    rows.push({
+                      ...game,
+                      pickType: 'SPREAD',
+                      recommendation: rec,
+                      confidence: rec?.recommendation.confidence || 0,
+                      spread: rec?.line?.spread || null,
+                      uploadedSpread: uploadedSpread?.spread || null,
+                      strength: rec?.recommendation.strength || null,
+                      pickedTeam:
+                        rec?.recommendation.pick === 'HOME'
+                          ? game.homeTeam.nflAbbr
+                          : game.awayTeam.nflAbbr,
+                      weather: null, // TODO: Add weather data
+                    })
                   }
+
+                  // If game has total, add over/under row
+                  if (hasTotal) {
+                    // Extract over/under prediction from tieBreakerData
+                    const overUnderPred = rec?.recommendation?.tieBreakerData?.overUnderPrediction
+                    const ouConfidence = overUnderPred?.confidence || 50
+                    const ouRecommendation = overUnderPred?.recommendation || 'OVER'
+
+                    rows.push({
+                      ...game,
+                      pickType: 'OVER_UNDER',
+                      recommendation: rec,
+                      confidence: ouConfidence,
+                      spread: null, // Over/under doesn't have spread
+                      uploadedSpread: null,
+                      total: game.lines[0].total,
+                      strength: ouConfidence > 60 ? 'Strong' : ouConfidence > 50 ? 'Moderate' : 'Weak',
+                      pickedTeam: ouRecommendation,
+                      overUnderPrediction: overUnderPred,
+                      weather: null,
+                    })
+                  }
+
+                  return rows
                 })
 
                 // Sort games using state from component level
@@ -1612,7 +1734,7 @@ export default function PoolDetailPage() {
                         }
 
                         return (
-                          <React.Fragment key={game.id}>
+                          <React.Fragment key={`${game.id}-${game.pickType || 'SPREAD'}`}>
                             <tr className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                               <td className="py-4 px-4">
                                 <div className="flex items-center space-x-3">
@@ -1674,77 +1796,115 @@ export default function PoolDetailPage() {
                               </td>
                               {pool?.type !== 'SU' && (
                                 <>
-                                  {/* ESPN Spread Column */}
+                                  {/* ESPN Spread/Total Column */}
                                   <td className="py-4 px-4">
-                                    {rec?.line?.spread ? (
-                                      <div className="text-sm">
-                                        {rec.line.spread < 0 ? (
-                                          // Home team favored (negative spread means home is favored)
-                                          <div>
-                                            <div className="font-bold text-blue-600 dark:text-blue-400">
-                                              {game.homeTeam.nflAbbr}{' '}
-                                              {rec.line.spread}
-                                            </div>
-                                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                                              {game.awayTeam.nflAbbr} +
-                                              {Math.abs(rec.line.spread)}
-                                            </div>
+                                    {game.pickType === 'OVER_UNDER' ? (
+                                      // Show total for over/under rows
+                                      rec?.line?.total ? (
+                                        <div className="text-sm">
+                                          <div className="font-bold text-orange-600 dark:text-orange-400">
+                                            O/U {Number(rec.line.total).toFixed(1)}
                                           </div>
-                                        ) : (
-                                          // Away team favored (positive spread means away is favored)
-                                          <div>
-                                            <div className="font-bold text-purple-600 dark:text-purple-400">
-                                              {game.awayTeam.nflAbbr} -
-                                              {rec.line.spread}
-                                            </div>
-                                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                                              {game.homeTeam.nflAbbr} +
-                                              {rec.line.spread}
-                                            </div>
+                                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                                            Total
                                           </div>
-                                        )}
-                                      </div>
+                                        </div>
+                                      ) : (
+                                        <div className="text-xs text-gray-400 dark:text-gray-500">
+                                          No line
+                                        </div>
+                                      )
                                     ) : (
-                                      <div className="text-xs text-gray-400 dark:text-gray-500">
-                                        No line
-                                      </div>
+                                      // Show spread for spread rows
+                                      rec?.line?.spread ? (
+                                        <div className="text-sm">
+                                          {rec.line.spread < 0 ? (
+                                            // Home team favored (negative spread means home is favored)
+                                            <div>
+                                              <div className="font-bold text-blue-600 dark:text-blue-400">
+                                                {game.homeTeam.nflAbbr}{' '}
+                                                {rec.line.spread}
+                                              </div>
+                                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                {game.awayTeam.nflAbbr} +
+                                                {Math.abs(rec.line.spread)}
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            // Away team favored (positive spread means away is favored)
+                                            <div>
+                                              <div className="font-bold text-purple-600 dark:text-purple-400">
+                                                {game.awayTeam.nflAbbr} -
+                                                {rec.line.spread}
+                                              </div>
+                                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                {game.homeTeam.nflAbbr} +
+                                                {rec.line.spread}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div className="text-xs text-gray-400 dark:text-gray-500">
+                                          No line
+                                        </div>
+                                      )
                                     )}
                                   </td>
 
-                                  {/* Uploaded Spread Column */}
+                                  {/* Uploaded Spread/Total Column */}
                                   <td className="py-4 px-4">
-                                    {game.uploadedSpread !== null ? (
-                                      <div className="text-sm">
-                                        {game.uploadedSpread < 0 ? (
-                                          // Home team favored (negative spread means home is favored)
-                                          <div>
-                                            <div className="font-bold text-green-600 dark:text-green-400">
-                                              {game.homeTeam.nflAbbr}{' '}
-                                              {game.uploadedSpread}
-                                            </div>
-                                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                                              {game.awayTeam.nflAbbr} +
-                                              {Math.abs(game.uploadedSpread)}
-                                            </div>
+                                    {game.pickType === 'OVER_UNDER' ? (
+                                      // Show total for over/under rows
+                                      game.total ? (
+                                        <div className="text-sm">
+                                          <div className="font-bold text-green-600 dark:text-green-400">
+                                            O/U {Number(game.total).toFixed(1)}
                                           </div>
-                                        ) : (
-                                          // Away team favored (positive spread means away is favored)
-                                          <div>
-                                            <div className="font-bold text-green-600 dark:text-green-400">
-                                              {game.awayTeam.nflAbbr} -
-                                              {game.uploadedSpread}
-                                            </div>
-                                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                                              {game.homeTeam.nflAbbr} +
-                                              {game.uploadedSpread}
-                                            </div>
+                                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                                            Total
                                           </div>
-                                        )}
-                                      </div>
+                                        </div>
+                                      ) : (
+                                        <div className="text-xs text-gray-400 dark:text-gray-500">
+                                          -
+                                        </div>
+                                      )
                                     ) : (
-                                      <div className="text-xs text-gray-400 dark:text-gray-500">
-                                        -
-                                      </div>
+                                      // Show spread for spread rows
+                                      game.uploadedSpread !== null ? (
+                                        <div className="text-sm">
+                                          {game.uploadedSpread < 0 ? (
+                                            // Home team favored (negative spread means home is favored)
+                                            <div>
+                                              <div className="font-bold text-green-600 dark:text-green-400">
+                                                {game.homeTeam.nflAbbr}{' '}
+                                                {game.uploadedSpread}
+                                              </div>
+                                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                {game.awayTeam.nflAbbr} +
+                                                {Math.abs(game.uploadedSpread)}
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            // Away team favored (positive spread means away is favored)
+                                            <div>
+                                              <div className="font-bold text-green-600 dark:text-green-400">
+                                                {game.awayTeam.nflAbbr} -
+                                                {game.uploadedSpread}
+                                              </div>
+                                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                {game.homeTeam.nflAbbr} +
+                                                {game.uploadedSpread}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div className="text-xs text-gray-400 dark:text-gray-500">
+                                          -
+                                        </div>
+                                      )
                                     )}
                                   </td>
                                 </>
@@ -1788,12 +1948,14 @@ export default function PoolDetailPage() {
                                 {rec ? (
                                   <span
                                     className={`px-4 py-2 rounded-lg text-lg font-bold ${
-                                      rec.recommendation.pick === 'HOME'
+                                      game.pickType === 'OVER_UNDER'
+                                        ? 'bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-300'
+                                        : rec.recommendation.pick === 'HOME'
                                         ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300'
                                         : 'bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-300'
                                     }`}
                                   >
-                                    {game.pickedTeam}
+                                    {game.pickType === 'OVER_UNDER' ? 'OVER' : game.pickedTeam}
                                   </span>
                                 ) : (
                                   <div className="text-xs text-gray-400 dark:text-gray-500 text-right">
@@ -1837,6 +1999,7 @@ export default function PoolDetailPage() {
                                       return (
                                         <GameProjection
                                           projection={projection}
+                                          pickType={game.pickType || 'SPREAD'}
                                           gameDetails={{
                                             homeTeam: {
                                               name: game.homeTeam.name,

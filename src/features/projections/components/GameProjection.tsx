@@ -13,12 +13,14 @@ interface GameProjectionProps {
     kickoffTime: Date
     venue?: string
   }
+  pickType?: 'SPREAD' | 'OVER_UNDER'
   className?: string
 }
 
 export function GameProjection({
   projection,
   gameDetails,
+  pickType = 'SPREAD',
   className = '',
 }: GameProjectionProps) {
   const [showDetails, setShowDetails] = useState(false)
@@ -29,7 +31,12 @@ export function GameProjection({
     projection.factors.newsAnalysis
   )
 
-  const confidenceLevel = getConfidenceLevel(projection.confidence)
+  const isOverUnder = pickType === 'OVER_UNDER'
+  const overUnderData = projection.tieBreakerData?.overUnderPrediction
+
+  const confidenceLevel = isOverUnder
+    ? getConfidenceLevel(overUnderData?.confidence || 50)
+    : getConfidenceLevel(projection.confidence)
   const isHomeRecommended = projection.recommendedPick === 'HOME'
 
   return (
@@ -73,13 +80,17 @@ export function GameProjection({
           <div className="flex items-center space-x-3">
             <div
               className={`px-3 py-1 rounded-full text-sm font-medium ${
-                isHomeRecommended
+                isOverUnder
+                  ? 'bg-orange-100 text-orange-800'
+                  : isHomeRecommended
                   ? 'bg-blue-100 text-blue-800'
                   : 'bg-green-100 text-green-800'
               }`}
             >
               Recommended:{' '}
-              {isHomeRecommended
+              {isOverUnder
+                ? overUnderData?.recommendation || 'OVER'
+                : isHomeRecommended
                 ? gameDetails.homeTeam.nflAbbr
                 : gameDetails.awayTeam.nflAbbr}
             </div>
@@ -153,39 +164,77 @@ export function GameProjection({
 
           <div className="text-right">
             <div className="text-2xl font-bold">
-              {projection.confidence.toFixed(1)}%
+              {isOverUnder
+                ? (overUnderData?.confidence || 50).toFixed(1)
+                : projection.confidence.toFixed(1)}%
             </div>
             <div className="text-xs text-gray-500">Confidence</div>
           </div>
         </div>
 
         {/* Quick Factor Summary */}
-        <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-          <div>
-            <span className="text-gray-600">Market Probability:</span>
-            <span className="ml-2 font-medium">
-              {(projection.factors.marketProb * 100).toFixed(1)}%
-            </span>
+        {isOverUnder && overUnderData ? (
+          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+            <div>
+              <span className="text-gray-600">Predicted Total:</span>
+              <span className="ml-2 font-medium">
+                {overUnderData.prediction.toFixed(1)} points
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-600">Market Total:</span>
+              <span className="ml-2 font-medium">
+                {overUnderData.marketTotal?.toFixed(1) || 'N/A'}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-600">Difference:</span>
+              <span className="ml-2 font-medium">
+                {overUnderData.marketTotal
+                  ? (overUnderData.prediction - overUnderData.marketTotal).toFixed(1)
+                  : 'N/A'} points
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-600">Weather Impact:</span>
+              <span className="ml-2 font-medium">
+                {projection.factors.weatherPenalty > 0 ? 'Negative' : projection.factors.weatherPenalty < 0 ? 'Positive' : 'Neutral'}
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="text-gray-600">Elo Advantage:</span>
-            <span className="ml-2 font-medium">
-              {isHomeRecommended ? 'Home' : 'Away'} +
-              {Math.abs(
-                projection.factors.homeElo - projection.factors.awayElo
-              ).toFixed(0)}
-            </span>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+            <div>
+              <span className="text-gray-600">Market Probability:</span>
+              <span className="ml-2 font-medium">
+                {(projection.factors.marketProb * 100).toFixed(1)}%
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-600">Elo Advantage:</span>
+              <span className="ml-2 font-medium">
+                {isHomeRecommended ? 'Home' : 'Away'} +
+                {Math.abs(
+                  projection.factors.homeElo - projection.factors.awayElo
+                ).toFixed(0)}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-600">Home Advantage:</span>
+              <span className="ml-2 font-medium">
+                +{projection.factors.homeAdvantage.toFixed(1)} pts
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="text-gray-600">Home Advantage:</span>
-            <span className="ml-2 font-medium">
-              +{projection.factors.homeAdvantage.toFixed(1)} pts
-            </span>
-          </div>
-          <div>
-            <span className="text-gray-600">Total Adjustments:</span>
-            <span className="ml-2 font-medium">
-              {(() => {
+        )}
+
+        {/* Total Adjustments - only for spread picks */}
+        {!isOverUnder && (
+          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+            <div>
+              <span className="text-gray-600">Total Adjustments:</span>
+              <span className="ml-2 font-medium">
+                {(() => {
                 const homeAdvantage = projection.factors.homeAdvantage || 0
                 const restAdvantage = projection.factors.restAdvantage || 0
                 const divisionalFactor =
@@ -216,8 +265,9 @@ export function GameProjection({
               })()}{' '}
               pts
             </span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Toggle Details */}
         <button

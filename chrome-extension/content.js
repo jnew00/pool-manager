@@ -108,79 +108,83 @@ class PoolManagerAutoFill {
 
   detectGameSelects() {
     // Number1Pool uses hidden inputs + buttons, not select dropdowns
-    // Priority: Weekly ATS > Points Plus > Other pools
-
-    // Try Weekly ATS picks first (Game_XX_Weekly hidden inputs)
-    let gameInputs = document.querySelectorAll('input[name^="Game_"][name*="Weekly"]');
-    console.log(`[PoolManager] Found ${gameInputs.length} Weekly ATS hidden inputs`);
-
-    if (gameInputs.length === 0) {
-      // Try Points Plus picks (Game_XX_Points_Plus hidden inputs)
-      gameInputs = document.querySelectorAll('input[name^="Game_"][name*="Points_Plus"]');
-      console.log(`[PoolManager] Found ${gameInputs.length} Points Plus hidden inputs`);
-    }
-
-    if (gameInputs.length === 0) {
-      // Fallback: try any Game_ inputs
-      gameInputs = document.querySelectorAll('input[name^="Game_"]');
-      console.log(`[PoolManager] Found ${gameInputs.length} inputs with name^="Game_"`);
-    }
-
-    if (gameInputs.length === 0) {
-      // Last resort: try select elements (for other pool types)
-      const selects = document.querySelectorAll('select');
-      console.log(`[PoolManager] Found ${selects.length} select elements (fallback)`);
-      Array.from(selects).slice(0, 5).forEach(select => {
-        console.log(`[PoolManager] Select name: "${select.name}", id: "${select.id}"`);
-      });
-      gameInputs = selects;
-    }
+    // Detect all three pool types simultaneously: Weekly ATS, Over/Under, Points Plus
 
     // Store game elements with their game numbers
     this.gameSelects = {};
-    this.gameButtons = {}; // Store corresponding buttons
-    this.poolType = 'unknown';
+    this.gameButtons = {}; // Store corresponding buttons for spread picks
+    this.overUnderSelects = {}; // Store over/under inputs
+    this.overUnderButtons = {}; // Store over/under buttons
+    this.pointsPlusSelects = {}; // Store Points Plus inputs
+    this.pointsPlusButtons = {}; // Store Points Plus buttons
 
-    gameInputs.forEach((input, index) => {
-      let gameNum = null;
+    // Detect Weekly ATS picks (Game_XX_Weekly hidden inputs)
+    const weeklyInputs = document.querySelectorAll('input[name^="Game_"][name*="Weekly"]');
+    console.log(`[PoolManager] Found ${weeklyInputs.length} Weekly ATS hidden inputs`);
 
-      // Extract game number from various naming patterns
-      if (input.name.includes('Weekly')) {
-        this.poolType = 'ATS';
-        const match = input.name.match(/Game_(\d+)_Weekly/);
-        gameNum = match ? parseInt(match[1]) : index + 1;
+    weeklyInputs.forEach((input) => {
+      const match = input.name.match(/Game_(\d+)_Weekly/);
+      if (match) {
+        const gameNum = parseInt(match[1]);
+        this.gameSelects[gameNum] = input;
 
-        // Find corresponding button
+        // Find corresponding button for spread pick
         const buttonName = `Weekly_${gameNum.toString().padStart(2, '0')}`;
         const button = document.querySelector(`input[name="${buttonName}"]`);
         if (button) {
           this.gameButtons[gameNum] = button;
         }
-      } else if (input.name.includes('Points_Plus')) {
-        this.poolType = 'Points Plus';
-        const match = input.name.match(/Game_(\d+)_Points_Plus/);
-        gameNum = match ? parseInt(match[1]) : index + 1;
 
-        // Find corresponding button
+        console.log(`[PoolManager] Mapped Weekly ATS game ${gameNum}: ${input.name}`);
+      }
+    });
+
+    // Detect Over/Under picks (Game_XX_OU hidden inputs)
+    const ouInputs = document.querySelectorAll('input[name^="Game_"][name$="_OU"]');
+    console.log(`[PoolManager] Found ${ouInputs.length} Over/Under hidden inputs`);
+
+    ouInputs.forEach((input) => {
+      const match = input.name.match(/Game_(\d+)_OU/);
+      if (match) {
+        const gameNum = parseInt(match[1]);
+        this.overUnderSelects[gameNum] = input;
+
+        // Find over/under button (pattern: OU_XX)
+        const ouButtonName = `OU_${gameNum.toString().padStart(2, '0')}`;
+        const ouButton = document.querySelector(`input[name="${ouButtonName}"]`);
+        if (ouButton) {
+          this.overUnderButtons[gameNum] = ouButton;
+        }
+
+        console.log(`[PoolManager] Mapped Over/Under game ${gameNum}: ${input.name}`);
+      }
+    });
+
+    // Detect Points Plus picks (Game_XX_Points_Plus hidden inputs)
+    const ppInputs = document.querySelectorAll('input[name^="Game_"][name*="Points_Plus"]');
+    console.log(`[PoolManager] Found ${ppInputs.length} Points Plus hidden inputs`);
+
+    ppInputs.forEach((input) => {
+      const match = input.name.match(/Game_(\d+)_Points_Plus/);
+      if (match) {
+        const gameNum = parseInt(match[1]);
+        this.pointsPlusSelects[gameNum] = input;
+
+        // Find corresponding button (pattern: PPlus_XX)
         const buttonName = `PPlus_${gameNum.toString().padStart(2, '0')}`;
         const button = document.querySelector(`input[name="${buttonName}"]`);
         if (button) {
-          this.gameButtons[gameNum] = button;
+          this.pointsPlusButtons[gameNum] = button;
         }
-      } else if (input.name.includes('Game_')) {
-        const match = input.name.match(/Game_?(\d+)/i);
-        gameNum = match ? parseInt(match[1]) : index + 1;
-      } else {
-        // Use index as fallback
-        gameNum = index + 1;
-      }
 
-      this.gameSelects[gameNum] = input;
-      console.log(`[PoolManager] Mapped game ${gameNum} to ${this.poolType} input: ${input.name}`);
+        console.log(`[PoolManager] Mapped Points Plus game ${gameNum}: ${input.name}`);
+      }
     });
 
-    console.log(`[PoolManager] Total game inputs mapped: ${Object.keys(this.gameSelects).length}, Pool type: ${this.poolType}`);
-    console.log(`[PoolManager] Total buttons mapped: ${Object.keys(this.gameButtons).length}`);
+    console.log(`[PoolManager] Detection summary:`);
+    console.log(`  - Weekly ATS: ${Object.keys(this.gameSelects).length} inputs, ${Object.keys(this.gameButtons).length} buttons`);
+    console.log(`  - Over/Under: ${Object.keys(this.overUnderSelects).length} inputs, ${Object.keys(this.overUnderButtons).length} buttons`);
+    console.log(`  - Points Plus: ${Object.keys(this.pointsPlusSelects).length} inputs, ${Object.keys(this.pointsPlusButtons).length} buttons`);
   }
 
   createUI() {
@@ -244,9 +248,102 @@ class PoolManagerAutoFill {
     try {
       console.log('[PoolManager] Loading stored data...');
 
+      // Detect which page we're on to load the correct pool type
+      const hasWeeklyInputs = Object.keys(this.gameSelects).length > 0;
+      const hasPointsPlusInputs = Object.keys(this.pointsPlusSelects).length > 0;
+
+      console.log(`[PoolManager] Page detection: Weekly=${hasWeeklyInputs}, PointsPlus=${hasPointsPlusInputs}`);
+
+      // Both pools on same page (Number1Pool shows both ATS and Points Plus columns)
+      if (hasWeeklyInputs && hasPointsPlusInputs) {
+        console.log('[PoolManager] Both pool types detected on same page - loading both datasets');
+
+        // Load ATS/O-U data from localStorage
+        const atsLocalData = localStorage.getItem('poolmanagerExtensionData_ATS');
+        const ppLocalData = localStorage.getItem('poolmanagerExtensionData_PP');
+
+        let atsGames = [];
+        let ppGames = [];
+
+        // Try localStorage first
+        if (atsLocalData) {
+          try {
+            const data = JSON.parse(atsLocalData);
+            if (data.games && data.games.length > 0) {
+              atsGames = data.games;
+              console.log(`[PoolManager] Loaded ${atsGames.length} ATS/O-U picks from localStorage`);
+            }
+          } catch (e) {
+            console.warn('[PoolManager] Failed to parse ATS localStorage data:', e);
+          }
+        }
+
+        if (ppLocalData) {
+          try {
+            const data = JSON.parse(ppLocalData);
+            if (data.games && data.games.length > 0) {
+              ppGames = data.games;
+              console.log(`[PoolManager] Loaded ${ppGames.length} Points Plus picks from localStorage`);
+            }
+          } catch (e) {
+            console.warn('[PoolManager] Failed to parse Points Plus localStorage data:', e);
+          }
+        }
+
+        // Fallback to Chrome storage if localStorage is empty
+        if (atsGames.length === 0 || ppGames.length === 0) {
+          const result = await chrome.storage.local.get(['poolmanagerGames_ATS', 'poolmanagerGames_PP', 'lastUpdate']);
+          console.log('[PoolManager] Chrome storage result:', result);
+
+          if (atsGames.length === 0 && result.poolmanagerGames_ATS) {
+            atsGames = result.poolmanagerGames_ATS;
+            console.log(`[PoolManager] Loaded ${atsGames.length} ATS/O-U picks from Chrome storage`);
+          }
+
+          if (ppGames.length === 0 && result.poolmanagerGames_PP) {
+            ppGames = result.poolmanagerGames_PP;
+            console.log(`[PoolManager] Loaded ${ppGames.length} Points Plus picks from Chrome storage`);
+          }
+        }
+
+        // Combine both datasets
+        this.games = [...atsGames, ...ppGames];
+        this.poolType = 'Combined (ATS/O-U + Points Plus)';
+
+        if (this.games.length > 0) {
+          this.updateUI();
+          this.updateStatus(`✅ ${atsGames.length} ATS/O-U + ${ppGames.length} Points Plus picks loaded`, 'success');
+          console.log(`[PoolManager] Total picks loaded: ${this.games.length}`);
+        } else {
+          this.updateStatus('Generate AI picks in PoolManager first', 'warning');
+        }
+        return;
+      }
+
+      // Single pool type on page
+      let poolType = 'unknown';
+      let storageKey = '';
+      let chromeStorageKey = '';
+
+      if (hasWeeklyInputs) {
+        poolType = 'ATS/O-U';
+        storageKey = 'poolmanagerExtensionData_ATS';
+        chromeStorageKey = 'poolmanagerGames_ATS';
+      } else if (hasPointsPlusInputs) {
+        poolType = 'Points Plus';
+        storageKey = 'poolmanagerExtensionData_PP';
+        chromeStorageKey = 'poolmanagerGames_PP';
+      } else {
+        console.log('[PoolManager] Could not detect pool type');
+        this.updateStatus('No pool inputs detected on page', 'warning');
+        return;
+      }
+
+      console.log(`[PoolManager] Detected single pool type: ${poolType}`);
+
       // First try to get data from localStorage (set automatically by PoolManager)
-      const localStorageData = localStorage.getItem('poolmanagerExtensionData');
-      console.log('[PoolManager] localStorage raw data:', localStorageData);
+      const localStorageData = localStorage.getItem(storageKey);
+      console.log(`[PoolManager] localStorage key: ${storageKey}`, localStorageData);
 
       if (localStorageData) {
         try {
@@ -256,9 +353,10 @@ class PoolManagerAutoFill {
 
           if (data.games && data.games.length > 0) {
             this.games = data.games;
+            this.poolType = poolType;
             this.updateUI();
-            this.updateStatus(`✅ ${this.games.length} games loaded automatically`, 'success');
-            console.log(`[PoolManager] Loaded ${this.games.length} games from localStorage automatically`);
+            this.updateStatus(`✅ ${this.games.length} ${poolType} picks loaded`, 'success');
+            console.log(`[PoolManager] Loaded ${this.games.length} ${poolType} picks from localStorage`);
             return;
           } else {
             console.log('[PoolManager] localStorage has data but no valid games array');
@@ -267,22 +365,23 @@ class PoolManagerAutoFill {
           console.warn('[PoolManager] Failed to parse localStorage data:', e);
         }
       } else {
-        console.log('[PoolManager] No localStorage data found at all');
+        console.log(`[PoolManager] No localStorage data found for ${storageKey}`);
       }
 
       // Fallback: Try to get data from Chrome storage (manual popup method)
-      const result = await chrome.storage.local.get(['poolmanagerGames', 'lastUpdate']);
+      const result = await chrome.storage.local.get([chromeStorageKey, 'lastUpdate']);
       console.log('[PoolManager] Chrome storage result:', result);
 
-      if (result.poolmanagerGames && result.poolmanagerGames.length > 0) {
-        this.games = result.poolmanagerGames;
+      if (result[chromeStorageKey] && result[chromeStorageKey].length > 0) {
+        this.games = result[chromeStorageKey];
+        this.poolType = poolType;
         this.updateUI();
-        this.updateStatus(`✅ ${this.games.length} games loaded from extension storage`, 'success');
-        console.log(`[PoolManager] Loaded ${this.games.length} games from Chrome storage`);
+        this.updateStatus(`✅ ${this.games.length} ${poolType} picks loaded`, 'success');
+        console.log(`[PoolManager] Loaded ${this.games.length} ${poolType} picks from Chrome storage`);
       } else {
         console.log('[PoolManager] No stored data found');
         // Show message to load data via popup
-        this.updateStatus('Generate AI recommendations in PoolManager first', 'warning');
+        this.updateStatus(`Generate ${poolType} AI picks in PoolManager first`, 'warning');
       }
     } catch (error) {
       console.error('[PoolManager] Error loading data:', error);
@@ -314,25 +413,48 @@ class PoolManagerAutoFill {
                                   (game.aiPick && game.recommendedTeam);
 
         let recText = '';
+        let pickTypeLabel = '';
+
         if (hasRecommendation) {
-          if (game.recommendation === '1') {
-            recText = 'FAV';
-          } else if (game.recommendation === '2') {
-            recText = 'DOG';
-          } else if (game.aiPick && game.recommendedTeam) {
-            // Fallback: check if recommended team matches favorite/underdog
-            recText = game.recommendedTeam === game.favorite ? 'FAV' : 'DOG';
+          // Handle over/under picks
+          if (game.pickType === 'OVER_UNDER') {
+            recText = game.recommendation || game.aiPick; // 'OVER' or 'UNDER'
+            pickTypeLabel = 'O/U';
+          } else if (game.pickType === 'POINTS_PLUS') {
+            // Handle Points Plus picks
+            if (game.recommendation === '1') {
+              recText = 'FAV';
+            } else if (game.recommendation === '2') {
+              recText = 'DOG';
+            } else if (game.aiPick && game.recommendedTeam) {
+              // Fallback: check if recommended team matches favorite/underdog
+              recText = game.recommendedTeam === game.favorite ? 'FAV' : 'DOG';
+            }
+            pickTypeLabel = 'PP';
+          } else {
+            // Handle spread picks
+            if (game.recommendation === '1') {
+              recText = 'FAV';
+            } else if (game.recommendation === '2') {
+              recText = 'DOG';
+            } else if (game.aiPick && game.recommendedTeam) {
+              // Fallback: check if recommended team matches favorite/underdog
+              recText = game.recommendedTeam === game.favorite ? 'FAV' : 'DOG';
+            }
+            pickTypeLabel = 'ATS';
           }
         }
+
+        const pickTypeColor = game.pickType === 'OVER_UNDER' ? '#f59e0b' : game.pickType === 'POINTS_PLUS' ? '#8b5cf6' : '#3b82f6';
 
         return `
           <div class="pm-game">
             <span class="pm-game-number">${game.sortOrder || index + 1}</span>
             <span class="pm-game-matchup">
-              <strong>${game.favorite}</strong> vs ${game.underdog}
+              <strong>${game.favorite || game.homeTeam}</strong> vs ${game.underdog || game.awayTeam}
             </span>
-            <span class="pm-game-spread">${game.spread || 'N/A'}</span>
-            ${hasRecommendation ? `<span class="pm-game-rec">${recText}</span>` : ''}
+            <span class="pm-game-spread">${game.pickType === 'OVER_UNDER' ? `O/U ${game.total}` : game.spread || 'N/A'}</span>
+            ${hasRecommendation ? `<span class="pm-game-rec" style="background: ${pickTypeColor}">${pickTypeLabel}: ${recText}</span>` : ''}
           </div>
         `;
       }).join('');
@@ -420,20 +542,108 @@ class PoolManagerAutoFill {
     let filled = 0;
     let errors = [];
 
-    console.log('[PoolManager] Starting auto-fill with', this.games.length, 'games');
+    console.log('[PoolManager] Starting auto-fill with', this.games.length, 'picks (spread + over/under + points plus)');
 
     this.games.forEach((game, index) => {
       const gameNumber = game.sortOrder || (index + 1);
-      const gameInput = this.gameSelects[gameNumber];
-      const gameButton = this.gameButtons[gameNumber];
 
-      console.log(`[PoolManager] Game ${gameNumber}:`, {
+      console.log(`[PoolManager] Game ${gameNumber} (${game.pickType}):`, {
+        pickType: game.pickType,
         aiPick: game.aiPick,
         favorite: game.favorite,
         underdog: game.underdog,
         homeTeam: game.homeTeam,
-        awayTeam: game.awayTeam
+        awayTeam: game.awayTeam,
+        total: game.total
       });
+
+      // Handle over/under picks
+      if (game.pickType === 'OVER_UNDER') {
+        const ouInput = this.overUnderSelects[gameNumber];
+        const ouButton = this.overUnderButtons[gameNumber];
+
+        if (ouInput && ouButton && game.aiPick) {
+          // Map 'OVER' to '1', 'UNDER' to '2'
+          const targetValue = game.aiPick === 'OVER' ? '1' : '2';
+          const currentValue = ouInput.value || '0';
+
+          // Calculate clicks needed (cycle: 0 -> 1 -> 2 -> 0)
+          let clicksNeeded = 0;
+          if (currentValue === '0') {
+            if (targetValue === '1') clicksNeeded = 1;
+            else if (targetValue === '2') clicksNeeded = 2;
+          } else if (currentValue === '1') {
+            if (targetValue === '2') clicksNeeded = 1;
+            else if (targetValue === '0') clicksNeeded = 2;
+          } else if (currentValue === '2') {
+            if (targetValue === '0') clicksNeeded = 1;
+            else if (targetValue === '1') clicksNeeded = 2;
+          }
+
+          // Click the button
+          for (let i = 0; i < clicksNeeded; i++) {
+            ouButton.click();
+          }
+
+          filled++;
+          console.log(`[PoolManager] Filled O/U for game ${gameNumber}: ${game.aiPick}`);
+
+          // Visual feedback
+          ouButton.style.background = '#fef3c7';
+          setTimeout(() => {
+            ouButton.style.background = '';
+          }, 2000);
+        } else if (!ouInput) {
+          console.log(`[PoolManager] O/U input not found for game ${gameNumber} (pool may not support O/U)`);
+        }
+        return; // Skip spread/points plus logic for O/U picks
+      }
+
+      // Handle Points Plus picks
+      if (game.pickType === 'POINTS_PLUS') {
+        const ppInput = this.pointsPlusSelects[gameNumber];
+        const ppButton = this.pointsPlusButtons[gameNumber];
+
+        if (ppInput && ppButton) {
+          // Use recommendation value (1=favorite, 2=underdog)
+          const targetValue = game.recommendation || '1';
+          const currentValue = ppInput.value || '0';
+
+          // Calculate clicks needed (cycle: 0 -> 1 -> 2 -> 0)
+          let clicksNeeded = 0;
+          if (currentValue === '0') {
+            if (targetValue === '1') clicksNeeded = 1;
+            else if (targetValue === '2') clicksNeeded = 2;
+          } else if (currentValue === '1') {
+            if (targetValue === '2') clicksNeeded = 1;
+            else if (targetValue === '0') clicksNeeded = 2;
+          } else if (currentValue === '2') {
+            if (targetValue === '0') clicksNeeded = 1;
+            else if (targetValue === '1') clicksNeeded = 2;
+          }
+
+          // Click the button
+          for (let i = 0; i < clicksNeeded; i++) {
+            ppButton.click();
+          }
+
+          filled++;
+          console.log(`[PoolManager] Filled Points Plus for game ${gameNumber}: ${targetValue === '1' ? 'FAV' : 'DOG'}`);
+
+          // Visual feedback
+          ppButton.style.background = '#ddd6fe';
+          setTimeout(() => {
+            ppButton.style.background = '';
+          }, 2000);
+        } else if (!ppInput) {
+          console.log(`[PoolManager] Points Plus input not found for game ${gameNumber} (pool may not support Points Plus)`);
+        }
+        return; // Skip spread logic for Points Plus picks
+      }
+
+      // Handle spread picks (existing logic)
+      const gameInput = this.gameSelects[gameNumber];
+      const gameButton = this.gameButtons[gameNumber];
 
       if (gameInput) {
         let value;
@@ -526,7 +736,7 @@ class PoolManagerAutoFill {
 
     // Show result
     if (filled > 0) {
-      this.updateStatus(`✅ Filled ${filled} games with AI recommendations`, 'success');
+      this.updateStatus(`✅ Filled ${filled} picks with AI recommendations`, 'success');
     }
 
     if (errors.length > 0) {
@@ -625,13 +835,17 @@ if (document.readyState === 'loading') {
 // Listen for messages from popup and background
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'SET_GAMES_DATA') {
-    // Store the games data
-    chrome.storage.local.set({ poolmanagerGames: message.games }, () => {
+    // Store the games data - determine pool type
+    const poolType = message.poolType || 'ATS';
+    const storageKey = poolType === 'PP' ? 'poolmanagerGames_PP' : 'poolmanagerGames_ATS';
+
+    chrome.storage.local.set({ [storageKey]: message.games }, () => {
       // Refresh the UI
       if (window.poolManagerAutoFill) {
         window.poolManagerAutoFill.games = message.games;
+        window.poolManagerAutoFill.poolType = poolType === 'PP' ? 'Points Plus' : 'ATS/O-U';
         window.poolManagerAutoFill.updateUI();
-        window.poolManagerAutoFill.updateStatus(`✅ ${message.games.length} games loaded`, 'success');
+        window.poolManagerAutoFill.updateStatus(`✅ ${message.games.length} ${window.poolManagerAutoFill.poolType} picks loaded`, 'success');
       }
       sendResponse({ success: true });
     });

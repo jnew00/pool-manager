@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Tippy from '@tippyjs/react'
 import 'tippy.js/dist/tippy.css'
+import Swal from 'sweetalert2'
 import {
   AlertCircle,
   TrendingUp,
@@ -22,6 +23,8 @@ interface PointsPlusStrategyAdvisorProps {
   poolId: string
   week: number
   season: number
+  number1PoolGames?: any[]
+  recommendations?: any
   onPicksSelected?: (picks: { gameId: string; teamId: string }[]) => void
 }
 
@@ -29,6 +32,8 @@ export function PointsPlusStrategyAdvisor({
   poolId,
   week,
   season,
+  number1PoolGames = [],
+  recommendations = null,
   onPicksSelected,
 }: PointsPlusStrategyAdvisorProps) {
   const [strategy, setStrategy] = useState<PointsPlusWeekStrategy | null>(null)
@@ -494,6 +499,111 @@ export function PointsPlusStrategyAdvisor({
             </div>
           </details>
         </div>
+
+        {/* Number1Pool Extension Integration */}
+        {strategy && strategy.availableGames && strategy.availableGames.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <button
+              onClick={() => {
+                // Prepare Points Plus picks for extension from strategy data
+                const pointsPlusData: any[] = [];
+
+                strategy.availableGames.forEach((game, index) => {
+                  // Determine if we should pick favorite or underdog based on user selections
+                  const isFavoriteSelected = selectedFavorites.has(game.gameId);
+                  const isUnderdogSelected = selectedUnderdogs.has(game.gameId);
+
+                  // Skip games with no selection
+                  if (!isFavoriteSelected && !isUnderdogSelected) return;
+
+                  // Extract team names as strings (Team objects have name, nflAbbr properties)
+                  const favoriteTeamStr = String(game.favorite?.team?.name || game.favorite?.team?.nflAbbr || '');
+                  const underdogTeamStr = String(game.underdog?.team?.name || game.underdog?.team?.nflAbbr || '');
+                  const homeTeamStr = String(game.homeTeam?.name || game.homeTeam?.nflAbbr || '');
+                  const awayTeamStr = String(game.awayTeam?.name || game.awayTeam?.nflAbbr || '');
+
+                  let recommendation = null;
+                  let recommendedTeam = null;
+                  let aiPick = null;
+
+                  if (isFavoriteSelected) {
+                    recommendation = '1'; // Favorite
+                    recommendedTeam = favoriteTeamStr;
+                    // Determine if favorite is home or away
+                    aiPick = favoriteTeamStr === homeTeamStr ? 'HOME' : 'AWAY';
+                  } else if (isUnderdogSelected) {
+                    recommendation = '2'; // Underdog
+                    recommendedTeam = underdogTeamStr;
+                    // Determine if underdog is home or away
+                    aiPick = underdogTeamStr === homeTeamStr ? 'HOME' : 'AWAY';
+                  }
+
+                  // Add Points Plus pick
+                  pointsPlusData.push({
+                    favorite: favoriteTeamStr,
+                    underdog: underdogTeamStr,
+                    spread: Number(game.spread) || 0,
+                    homeTeam: homeTeamStr,
+                    awayTeam: awayTeamStr,
+                    pickType: 'POINTS_PLUS',
+                    aiPick: aiPick,
+                    confidence: game.favorite?.confidence || 50,
+                    recommendation: recommendation,
+                    recommendedTeam: recommendedTeam,
+                    sortOrder: index + 1
+                  });
+                });
+
+                if (pointsPlusData.length === 0) {
+                  Swal.fire({
+                    icon: 'info',
+                    title: 'No Picks Selected',
+                    text: 'Please select some picks first! Click on favorites and underdogs from the recommendations below.',
+                    confirmButtonColor: '#8b5cf6'
+                  });
+                  return;
+                }
+
+                // Store Points Plus picks in localStorage
+                const storageData = {
+                  games: pointsPlusData,
+                  lastUpdate: Date.now(),
+                  week: week,
+                  poolId: poolId
+                };
+
+                localStorage.setItem('poolmanagerExtensionData_PP', JSON.stringify(storageData));
+
+                // Send data to Chrome extension via custom event
+                const extensionEvent = new CustomEvent('poolmanager-data', {
+                  detail: {
+                    atsOuGames: [], // Empty for Points Plus pool
+                    pointsPlusGames: pointsPlusData,
+                    lastUpdate: Date.now(),
+                    week: week,
+                    poolId: poolId
+                  }
+                });
+                window.dispatchEvent(extensionEvent);
+
+                console.log('[PoolManager] Stored Points Plus picks:', storageData);
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Picks Saved!',
+                  text: `${pointsPlusData.length} Points Plus picks saved for extension`,
+                  timer: 2500,
+                  showConfirmButton: false,
+                  toast: true,
+                  position: 'top-end'
+                });
+              }}
+              className="px-3 py-1.5 text-xs bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
+              title="Export your selected Points Plus picks to Chrome extension"
+            >
+              + AI Picks ({selectedFavorites.size + selectedUnderdogs.size} picks)
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Pick Status */}

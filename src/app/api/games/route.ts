@@ -25,10 +25,8 @@ export async function GET(request: NextRequest) {
     const poolId = searchParams.get('poolId')
 
     if (week && season) {
-      const games = await gameService.getGamesBySeasonAndWeek(
-        parseInt(season, 10),
-        parseInt(week, 10)
-      )
+      // Use getGamesByWeek with poolId to include pool-specific lines
+      const games = await gameService.getGamesByWeek(parseInt(week, 10), poolId || undefined)
       return createSuccessResponse(games)
     }
 

@@ -7,36 +7,18 @@ window.addEventListener('poolmanager-data', async (event) => {
   console.log('[PoolManager Listener] Received data event:', event.detail);
 
   try {
-    // Store the data in Chrome storage for the extension to access
+    // Store ATS/O-U and Points Plus picks separately in Chrome storage
     await chrome.storage.local.set({
-      poolmanagerGames: event.detail.games,
+      poolmanagerGames_ATS: event.detail.atsOuGames,
+      poolmanagerGames_PP: event.detail.pointsPlusGames,
       lastUpdate: event.detail.lastUpdate,
       week: event.detail.week,
       poolId: event.detail.poolId
     });
 
-    console.log(`[PoolManager Listener] Stored ${event.detail.games.length} games in Chrome storage`);
+    console.log(`[PoolManager Listener] Stored ${event.detail.atsOuGames?.length || 0} ATS/O-U picks + ${event.detail.pointsPlusGames?.length || 0} Points Plus picks in Chrome storage`);
 
-    // Show a brief success indicator
-    const indicator = document.createElement('div');
-    indicator.textContent = '✅ Extension data updated!';
-    indicator.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #10b981;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 14px;
-      z-index: 10000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-    document.body.appendChild(indicator);
-
-    setTimeout(() => {
-      indicator.remove();
-    }, 3000);
+    // Notification removed - now handled by SweetAlert2 in the React app
 
   } catch (error) {
     console.error('[PoolManager Listener] Failed to store data:', error);
@@ -44,24 +26,46 @@ window.addEventListener('poolmanager-data', async (event) => {
 });
 
 // Also monitor localStorage changes as a backup
-let lastLocalStorageCheck = '';
+let lastAtsCheck = '';
+let lastPpCheck = '';
 setInterval(() => {
-  const current = localStorage.getItem('poolmanagerExtensionData');
-  if (current && current !== lastLocalStorageCheck) {
-    lastLocalStorageCheck = current;
+  // Check ATS/O-U localStorage
+  const currentAts = localStorage.getItem('poolmanagerExtensionData_ATS');
+  if (currentAts && currentAts !== lastAtsCheck) {
+    lastAtsCheck = currentAts;
     try {
-      const data = JSON.parse(current);
+      const data = JSON.parse(currentAts);
       if (data.games && data.games.length > 0) {
-        console.log('[PoolManager Listener] Detected localStorage change, storing in Chrome storage');
+        console.log('[PoolManager Listener] Detected ATS/O-U localStorage change, storing in Chrome storage');
         chrome.storage.local.set({
-          poolmanagerGames: data.games,
+          poolmanagerGames_ATS: data.games,
           lastUpdate: data.lastUpdate,
           week: data.week,
           poolId: data.poolId
         });
       }
     } catch (e) {
-      console.warn('[PoolManager Listener] Failed to parse localStorage data:', e);
+      console.warn('[PoolManager Listener] Failed to parse ATS localStorage data:', e);
+    }
+  }
+
+  // Check Points Plus localStorage
+  const currentPp = localStorage.getItem('poolmanagerExtensionData_PP');
+  if (currentPp && currentPp !== lastPpCheck) {
+    lastPpCheck = currentPp;
+    try {
+      const data = JSON.parse(currentPp);
+      if (data.games && data.games.length > 0) {
+        console.log('[PoolManager Listener] Detected Points Plus localStorage change, storing in Chrome storage');
+        chrome.storage.local.set({
+          poolmanagerGames_PP: data.games,
+          lastUpdate: data.lastUpdate,
+          week: data.week,
+          poolId: data.poolId
+        });
+      }
+    } catch (e) {
+      console.warn('[PoolManager Listener] Failed to parse Points Plus localStorage data:', e);
     }
   }
 }, 1000);
