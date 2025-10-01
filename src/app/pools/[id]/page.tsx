@@ -173,10 +173,14 @@ export default function PoolDetailPage() {
         // Keep the saved pick
         newPendingPicks.set(gameId, existingSavedPick)
       } else {
-        // Use AI recommendation
+        // Use AI recommendation - ensure confidence is a number
+        const confidence = typeof rec.recommendation.confidence === 'number'
+          ? rec.recommendation.confidence
+          : parseFloat(rec.recommendation.confidence) || 50
+
         newPendingPicks.set(gameId, {
           teamId: recommendedTeamId,
-          confidence: rec.recommendation.confidence || 50
+          confidence
         })
       }
     }
@@ -2362,7 +2366,7 @@ export default function PoolDetailPage() {
                     const picks = Array.from(pendingPicks.entries()).map(([gameId, pick]) => ({
                       gameId,
                       teamId: pick.teamId,
-                      confidence: pick.confidence,
+                      confidence: typeof pick.confidence === 'string' ? parseFloat(pick.confidence) : pick.confidence,
                     }))
 
                     console.log('Saving picks:', { entryId: userEntry.id, pickCount: picks.length, picks })
@@ -2379,7 +2383,16 @@ export default function PoolDetailPage() {
                     if (!response.ok) {
                       const errorData = await response.json()
                       console.error('API Error:', errorData)
-                      throw new Error(errorData.error || 'Failed to save picks')
+
+                      // Extract error message (handle both string and object formats)
+                      let errorMsg = 'Failed to save picks'
+                      if (typeof errorData.error === 'string') {
+                        errorMsg = errorData.error
+                      } else if (errorData.error && typeof errorData.error === 'object') {
+                        errorMsg = errorData.error.message || JSON.stringify(errorData.error)
+                      }
+
+                      throw new Error(errorMsg)
                     }
 
                     const responseData = await response.json()
