@@ -20,6 +20,8 @@ import {
   Thermometer,
   Droplets,
   Eye,
+  Lock,
+  Unlock,
 } from 'lucide-react'
 import ControlPanel from './control-panel'
 import { GameProjection } from '@/features/projections/components/GameProjection'
@@ -144,8 +146,10 @@ export default function PoolDetailPage() {
         const picksMap = new Map()
         data.data.forEach((pick: any) => {
           picksMap.set(pick.gameId, {
+            id: pick.id,
             teamId: pick.teamId,
-            confidence: pick.confidence
+            confidence: pick.confidence,
+            lockedAt: pick.lockedAt // Track if pick is locked
           })
         })
         setUserPicks(picksMap)
@@ -2102,7 +2106,8 @@ export default function PoolDetailPage() {
                                     const recommendedTeamId = rec.recommendation.pick === 'HOME' ? game.homeTeam.id : game.awayTeam.id
                                     const pickedTeamId = pendingPicks.get(game.id)?.teamId || recommendedTeamId
                                     const confidence = rec.recommendation.confidence || 50
-                                    const isLocked = false // Allow editing picks until they're truly locked via lock-in API
+                                    const savedPick = userPicks.get(game.id)
+                                    const isLocked = savedPick?.lockedAt !== null && savedPick?.lockedAt !== undefined
 
                                     // Debug logging for NYG NO game
                                     if (game.awayTeam.nflAbbr === 'NYG' || game.homeTeam.nflAbbr === 'NYG') {
@@ -2143,10 +2148,13 @@ export default function PoolDetailPage() {
                                               : 'bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300'
                                           }`}
                                         >
-                                          {pickedTeamId === game.awayTeam.id && recommendedTeamId === game.awayTeam.id && (
+                                          {pickedTeamId === game.awayTeam.id && recommendedTeamId === game.awayTeam.id && !isLocked && (
                                             <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
                                               ✓
                                             </span>
+                                          )}
+                                          {isLocked && pickedTeamId === game.awayTeam.id && (
+                                            <Lock className="absolute -top-1 -right-1 w-3 h-3 text-gray-400" />
                                           )}
                                           {game.awayTeam.nflAbbr}
                                         </button>
@@ -2165,10 +2173,13 @@ export default function PoolDetailPage() {
                                               : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300'
                                           }`}
                                         >
-                                          {pickedTeamId === game.homeTeam.id && recommendedTeamId === game.homeTeam.id && (
+                                          {pickedTeamId === game.homeTeam.id && recommendedTeamId === game.homeTeam.id && !isLocked && (
                                             <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
                                               ✓
                                             </span>
+                                          )}
+                                          {isLocked && pickedTeamId === game.homeTeam.id && (
+                                            <Lock className="absolute -top-1 -right-1 w-3 h-3 text-gray-400" />
                                           )}
                                           {game.homeTeam.nflAbbr}
                                         </button>
@@ -2179,7 +2190,8 @@ export default function PoolDetailPage() {
                                   // No recommendation available, but still allow manual selection for SU pools
                                   (() => {
                                     const pickedTeamId = pendingPicks.get(game.id)?.teamId || game.homeTeam.id // Default to home team
-                                    const isLocked = false // Allow editing picks
+                                    const savedPick = userPicks.get(game.id)
+                                    const isLocked = savedPick?.lockedAt !== null && savedPick?.lockedAt !== undefined
 
                                     const handleTeamClick = (teamId: string) => {
                                       if (isLocked) {
@@ -2405,10 +2417,57 @@ export default function PoolDetailPage() {
                   Ready to Lock In?
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {pendingPicks.size} pick{pendingPicks.size !== 1 ? 's' : ''} selected • {userPicks.size} already locked
+                  {pendingPicks.size} pick{pendingPicks.size !== 1 ? 's' : ''} selected • {Array.from(userPicks.values()).filter(p => p.lockedAt).length} locked
                 </p>
               </div>
-              <button
+              <div className="flex gap-3">
+                {/* Unlock All Button */}
+                {Array.from(userPicks.values()).some(p => p.lockedAt) && (
+                  <button
+                    onClick={async () => {
+                      const result = await Swal.fire({
+                        title: 'Unlock All Picks?',
+                        text: 'This will allow you to edit your picks again.',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#f59e0b',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'Yes, Unlock',
+                        cancelButtonText: 'Cancel'
+                      })
+
+                      if (!result.isConfirmed) return
+
+                      try {
+                        // Just reload picks - they won't have lockedAt anymore after deleting
+                        setUserPicks(new Map())
+                        await loadUserPicks()
+
+                        Swal.fire({
+                          icon: 'success',
+                          title: 'Picks Unlocked!',
+                          text: 'You can now edit your selections',
+                          timer: 1500,
+                          showConfirmButton: false
+                        })
+                      } catch (error) {
+                        Swal.fire({
+                          icon: 'error',
+                          title: 'Failed to Unlock',
+                          text: 'Please try again',
+                          confirmButtonColor: '#ef4444'
+                        })
+                      }
+                    }}
+                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2"
+                  >
+                    <Unlock className="w-4 h-4" />
+                    Unlock All
+                  </button>
+                )}
+
+                {/* Lock In Button */}
+                <button
                 onClick={async () => {
                   const result = await Swal.fire({
                     title: 'Lock In Your Picks?',
@@ -2516,6 +2575,7 @@ export default function PoolDetailPage() {
               >
                 {isSavingPicks ? 'Locking In...' : `Lock In ${pendingPicks.size} Picks`}
               </button>
+              </div>
             </div>
           </div>
         )}
