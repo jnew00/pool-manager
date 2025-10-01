@@ -2102,7 +2102,7 @@ export default function PoolDetailPage() {
                                     const recommendedTeamId = rec.recommendation.pick === 'HOME' ? game.homeTeam.id : game.awayTeam.id
                                     const pickedTeamId = pendingPicks.get(game.id)?.teamId || recommendedTeamId
                                     const confidence = rec.recommendation.confidence || 50
-                                    const isLocked = userPicks.has(game.id)
+                                    const isLocked = false // Allow editing picks until they're truly locked via lock-in API
 
                                     // Debug logging for NYG NO game
                                     if (game.awayTeam.nflAbbr === 'NYG' || game.homeTeam.nflAbbr === 'NYG') {
@@ -2179,7 +2179,7 @@ export default function PoolDetailPage() {
                                   // No recommendation available, but still allow manual selection for SU pools
                                   (() => {
                                     const pickedTeamId = pendingPicks.get(game.id)?.teamId || game.homeTeam.id // Default to home team
-                                    const isLocked = userPicks.has(game.id)
+                                    const isLocked = false // Allow editing picks
 
                                     const handleTeamClick = (teamId: string) => {
                                       if (isLocked) {
@@ -2445,6 +2445,13 @@ export default function PoolDetailPage() {
                         method: 'DELETE',
                       })
                     }
+
+                    // Clear the locked picks from local state since we just deleted them
+                    const newUserPicks = new Map(userPicks)
+                    for (const pick of picksToDelete) {
+                      newUserPicks.delete(pick.gameId)
+                    }
+                    setUserPicks(newUserPicks)
 
                     // Convert pending picks to API format
                     const picks = Array.from(pendingPicks.entries()).map(([gameId, pick]) => ({
