@@ -153,4 +153,166 @@ export class PickService extends BaseService {
       throw this.handlePrismaError(error)
     }
   }
+
+  /**
+   * Lock in all picks for a specific entry and week
+   */
+  async lockInPicksForWeek(
+    entryId: string,
+    season: number,
+    week: number
+  ): Promise<{ count: number; picks: Pick[] }> {
+    this.validateRequired(entryId, 'Entry ID')
+    this.validateRequired(season, 'Season')
+    this.validateRequired(week, 'Week')
+
+    try {
+      // Get all picks for this entry and week that aren't already locked
+      const picks = await prisma.pick.findMany({
+        where: {
+          entryId,
+          lockedAt: null,
+          game: {
+            season,
+            week,
+          },
+        },
+        include: {
+          game: true,
+        },
+      })
+
+      if (picks.length === 0) {
+        throw new ValidationError(
+          'No unlocked picks found for this week',
+          'picks'
+        )
+      }
+
+      // Lock all picks at once
+      const lockedAt = new Date()
+      const updateResult = await prisma.pick.updateMany({
+        where: {
+          id: {
+            in: picks.map((p) => p.id),
+          },
+        },
+        data: {
+          lockedAt,
+        },
+      })
+
+      // Fetch updated picks to return
+      const updatedPicks = await prisma.pick.findMany({
+        where: {
+          id: {
+            in: picks.map((p) => p.id),
+          },
+        },
+      })
+
+      return {
+        count: updateResult.count,
+        picks: updatedPicks,
+      }
+    } catch (error: any) {
+      throw this.handlePrismaError(error)
+    }
+  }
+
+  /**
+   * Get picks for a specific entry and week with game results
+   */
+  async getPicksWithResultsForWeek(
+    entryId: string,
+    season: number,
+    week: number
+  ): Promise<any[]> {
+    this.validateRequired(entryId, 'Entry ID')
+    this.validateRequired(season, 'Season')
+    this.validateRequired(week, 'Week')
+
+    try {
+      const picks = await prisma.pick.findMany({
+        where: {
+          entryId,
+          game: {
+            season,
+            week,
+          },
+        },
+        include: {
+          game: {
+            include: {
+              homeTeam: true,
+              awayTeam: true,
+              result: true,
+            },
+          },
+          team: true,
+          grade: true,
+        },
+        orderBy: {
+          game: {
+            kickoff: 'asc',
+          },
+        },
+      })
+
+      return picks.map((pick) => ({
+        ...pick,
+        isCorrect:
+          pick.grade?.outcome === 'WIN'
+            ? true
+            : pick.grade?.outcome === 'LOSS'
+              ? false
+              : null,
+      }))
+    } catch (error: any) {
+      throw this.handlePrismaError(error)
+    }
+  }
+
+  /**
+   * Get win/loss record for a specific entry and week
+   */
+  async getWeekRecord(
+    entryId: string,
+    season: number,
+    week: number
+  ): Promise<{ wins: number; losses: number; pending: number; total: number }> {
+    this.validateRequired(entryId, 'Entry ID')
+    this.validateRequired(season, 'Season')
+    this.validateRequired(week, 'Week')
+
+    try {
+      const picks = await prisma.pick.findMany({
+        where: {
+          entryId,
+          game: {
+            season,
+            week,
+          },
+        },
+        include: {
+          grade: true,
+        },
+      })
+
+      const wins = picks.filter((p) => p.grade?.outcome === 'WIN').length
+      const losses = picks.filter((p) => p.grade?.outcome === 'LOSS').length
+      const pending = picks.filter(
+        (p) => !p.grade || p.grade.outcome === 'PENDING'
+      ).length
+
+      return {
+        wins,
+        losses,
+        pending,
+        total: picks.length,
+      }
+    } catch (error: any) {
+      throw this.handlePrismaError(error)
+    }
+  }
 }
