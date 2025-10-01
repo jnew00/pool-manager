@@ -153,6 +153,11 @@ export default function PoolDetailPage() {
           })
         })
         setUserPicks(picksMap)
+        console.log('Loaded picks:', {
+          count: picksMap.size,
+          lockedCount: Array.from(picksMap.values()).filter(p => p.lockedAt).length,
+          samplePick: data.data[0] // Show first pick structure
+        })
       }
     } catch (err) {
       console.error('Error loading user picks:', err)
