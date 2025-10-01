@@ -2101,9 +2101,14 @@ export default function PoolDetailPage() {
                                     const isLocked = userPicks.has(game.id)
 
                                     const handleTeamClick = (teamId: string) => {
+                                      if (isLocked) {
+                                        console.log('Pick is locked for game:', game.id, game.awayTeam.nflAbbr, '@', game.homeTeam.nflAbbr)
+                                        return
+                                      }
                                       const newPicks = new Map(pendingPicks)
                                       newPicks.set(game.id, { teamId, confidence })
                                       setPendingPicks(newPicks)
+                                      console.log('Updated pending pick:', game.awayTeam.nflAbbr, '@', game.homeTeam.nflAbbr, 'to', teamId === game.homeTeam.id ? game.homeTeam.nflAbbr : game.awayTeam.nflAbbr)
                                     }
 
                                     return (
@@ -2360,6 +2365,8 @@ export default function PoolDetailPage() {
                       confidence: pick.confidence,
                     }))
 
+                    console.log('Saving picks:', { entryId: userEntry.id, pickCount: picks.length, picks })
+
                     const response = await fetch('/api/picks', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
@@ -2371,8 +2378,12 @@ export default function PoolDetailPage() {
 
                     if (!response.ok) {
                       const errorData = await response.json()
+                      console.error('API Error:', errorData)
                       throw new Error(errorData.error || 'Failed to save picks')
                     }
+
+                    const responseData = await response.json()
+                    console.log('Picks saved successfully:', responseData)
 
                     // Update saved picks
                     setUserPicks(new Map(pendingPicks))
@@ -2385,10 +2396,11 @@ export default function PoolDetailPage() {
                       showConfirmButton: false
                     })
                   } catch (error) {
+                    console.error('Lock in error:', error)
                     Swal.fire({
                       icon: 'error',
                       title: 'Failed to Save Picks',
-                      text: error instanceof Error ? error.message : 'Please try again',
+                      text: error instanceof Error ? error.message : JSON.stringify(error),
                       confirmButtonColor: '#ef4444'
                     })
                   } finally {
